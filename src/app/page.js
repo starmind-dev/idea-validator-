@@ -716,6 +716,36 @@ export default function Home() {
             <section style={{ marginBottom: 48 }}>
               <SectionHeader icon="🌐" title="Competition Landscape" subtitle="Similar existing products in the market" />
 
+              {analysis.competition.data_source === "verified" ? (
+                <div style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginBottom: 16,
+                  padding: "6px 14px",
+                  borderRadius: 9999,
+                  background: "rgba(16,185,129,0.08)",
+                  border: "1px solid rgba(16,185,129,0.2)",
+                }}>
+                  <span style={{ fontSize: 12, color: "#34d399", fontWeight: 600 }}>Verified Sources</span>
+                  <span style={{ fontSize: 11, color: "#737373" }}>via GitHub & Google</span>
+                </div>
+              ) : (
+                <div style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginBottom: 16,
+                  padding: "6px 14px",
+                  borderRadius: 9999,
+                  background: "rgba(245,158,11,0.08)",
+                  border: "1px solid rgba(245,158,11,0.2)",
+                }}>
+                  <span style={{ fontSize: 12, color: "#fbbf24", fontWeight: 600 }}>AI-Generated</span>
+                  <span style={{ fontSize: 11, color: "#737373" }}>use as directional guide</span>
+                </div>
+              )}
+
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16, marginBottom: 16 }}>
                 {analysis.competition.competitors.map((comp, i) => {
                   const sourceColors = {
@@ -785,39 +815,6 @@ export default function Home() {
                     {analysis.competition.differentiation}
                   </p>
                 </Card>
-              )}
-
-              {analysis.competition.data_source === "verified" ? (
-                <div style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 10,
-                  background: "rgba(16,185,129,0.06)",
-                  border: "1px solid rgba(16,185,129,0.2)",
-                  borderRadius: 12,
-                  padding: "14px 20px",
-                }}>
-                  <span style={{ color: "#34d399", fontSize: 14, marginTop: 2 }}>✓</span>
-                  <p style={{ fontSize: 12, color: "#a3a3a3", lineHeight: 1.5, margin: 0 }}>
-                    <span style={{ color: "#34d399", fontWeight: 600 }}>Verified Sources</span> — Competitors were found via live GitHub and Google searches. Some AI-supplemented entries may also be included.
-                  </p>
-                </div>
-              ) : (
-                <div style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 10,
-                  background: "rgba(23,23,23,0.3)",
-                  border: "1px solid rgba(38,38,38,0.4)",
-                  borderRadius: 12,
-                  padding: "14px 20px",
-                }}>
-                  <span style={{ color: "rgba(245,158,11,0.7)", fontSize: 14, marginTop: 2 }}>⚠</span>
-                  <p style={{ fontSize: 12, color: "#737373", lineHeight: 1.5, margin: 0 }}>
-                    This competition data is AI-generated and may not reflect real-time
-                    market conditions. Use it as a directional guide, not a definitive source.
-                  </p>
-                </div>
               )}
             </section>
 
