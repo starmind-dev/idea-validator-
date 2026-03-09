@@ -656,20 +656,63 @@ export default function Home() {
               <SectionHeader icon="🌐" title="Competition Landscape" subtitle="Similar existing products in the market" />
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16, marginBottom: 16 }}>
-                {analysis.competition.competitors.map((comp, i) => (
-                  <Card key={i} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                      <h3 style={{ fontSize: 14, fontWeight: 700, color: "#f5f5f5", margin: 0 }}>{comp.name}</h3>
-                      <StatusBadge status={comp.status} />
-                    </div>
-                    <p style={{ fontSize: 14, color: "#a3a3a3", lineHeight: 1.6, margin: 0, flex: 1 }}>
-                      {comp.description}
-                    </p>
-                    <p style={{ fontSize: 12, color: "#34d399", fontWeight: 600, lineHeight: 1.5, margin: 0 }}>
-                      {comp.outcome}
-                    </p>
-                  </Card>
-                ))}
+                {analysis.competition.competitors.map((comp, i) => {
+                  const sourceColors = {
+                    github: { bg: "rgba(110,84,148,0.15)", color: "#a78bfa", border: "rgba(110,84,148,0.3)", label: "GitHub" },
+                    google: { bg: "rgba(59,130,246,0.15)", color: "#60a5fa", border: "rgba(59,130,246,0.3)", label: "Google" },
+                    llm: { bg: "rgba(115,115,115,0.15)", color: "#a3a3a3", border: "rgba(115,115,115,0.3)", label: "AI" },
+                  };
+                  const src = sourceColors[comp.source] || sourceColors.llm;
+
+                  return (
+                    <Card key={i} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                        <h3 style={{ fontSize: 14, fontWeight: 700, color: "#f5f5f5", margin: 0, flex: 1, minWidth: 0 }}>{comp.name}</h3>
+                        <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+                          <span style={{
+                            fontSize: 10,
+                            fontWeight: 600,
+                            padding: "2px 8px",
+                            borderRadius: 9999,
+                            border: `1px solid ${src.border}`,
+                            background: src.bg,
+                            color: src.color,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            whiteSpace: "nowrap",
+                          }}>
+                            {src.label}
+                          </span>
+                          <StatusBadge status={comp.status} />
+                        </div>
+                      </div>
+                      <p style={{ fontSize: 14, color: "#a3a3a3", lineHeight: 1.6, margin: 0, flex: 1 }}>
+                        {comp.description}
+                      </p>
+                      <p style={{ fontSize: 12, color: "#34d399", fontWeight: 600, lineHeight: 1.5, margin: 0 }}>
+                        {comp.outcome}
+                      </p>
+                      {comp.url && (
+                        <a
+                          href={comp.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            fontSize: 12,
+                            color: "#60a5fa",
+                            textDecoration: "none",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            marginTop: 2,
+                          }}
+                        >
+                          Visit →
+                        </a>
+                      )}
+                    </Card>
+                  );
+                })}
               </div>
 
               {analysis.competition.differentiation && (
@@ -683,21 +726,38 @@ export default function Home() {
                 </Card>
               )}
 
-              <div style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 10,
-                background: "rgba(23,23,23,0.3)",
-                border: "1px solid rgba(38,38,38,0.4)",
-                borderRadius: 12,
-                padding: "14px 20px",
-              }}>
-                <span style={{ color: "rgba(245,158,11,0.7)", fontSize: 14, marginTop: 2 }}>⚠</span>
-                <p style={{ fontSize: 12, color: "#737373", lineHeight: 1.5, margin: 0 }}>
-                  This competition data is AI-generated and may not reflect real-time
-                  market conditions. Use it as a directional guide, not a definitive source.
-                </p>
-              </div>
+              {analysis.competition.data_source === "verified" ? (
+                <div style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  background: "rgba(16,185,129,0.06)",
+                  border: "1px solid rgba(16,185,129,0.2)",
+                  borderRadius: 12,
+                  padding: "14px 20px",
+                }}>
+                  <span style={{ color: "#34d399", fontSize: 14, marginTop: 2 }}>✓</span>
+                  <p style={{ fontSize: 12, color: "#a3a3a3", lineHeight: 1.5, margin: 0 }}>
+                    <span style={{ color: "#34d399", fontWeight: 600 }}>Verified Sources</span> — Competitors were found via live GitHub and Google searches. Some AI-supplemented entries may also be included.
+                  </p>
+                </div>
+              ) : (
+                <div style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  background: "rgba(23,23,23,0.3)",
+                  border: "1px solid rgba(38,38,38,0.4)",
+                  borderRadius: 12,
+                  padding: "14px 20px",
+                }}>
+                  <span style={{ color: "rgba(245,158,11,0.7)", fontSize: 14, marginTop: 2 }}>⚠</span>
+                  <p style={{ fontSize: 12, color: "#737373", lineHeight: 1.5, margin: 0 }}>
+                    This competition data is AI-generated and may not reflect real-time
+                    market conditions. Use it as a directional guide, not a definitive source.
+                  </p>
+                </div>
+              )}
             </section>
 
             {/* Phases */}
