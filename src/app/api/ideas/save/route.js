@@ -38,7 +38,7 @@ export async function POST(request) {
     // 2. Parse request body
     // ------------------------------------------------
     const body = await request.json();
-    const { idea_text, profile, analysis } = body;
+    const { idea_text, idea_name, profile, analysis } = body;
 
     if (!idea_text || !analysis) {
       return NextResponse.json(
@@ -53,7 +53,8 @@ export async function POST(request) {
     const { count, error: countError } = await supabaseAdmin
       .from("ideas")
       .select("*", { count: "exact", head: true })
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .eq("status", "active");
 
     if (countError) {
       console.error("Count check failed:", countError);
@@ -75,7 +76,7 @@ export async function POST(request) {
     }
 
     // ------------------------------------------------
-    // 4. Derive a title from the idea text
+    // 4. Determine title: use user-provided name, fall back to auto-derive
     // ------------------------------------------------
     const deriveTitle = (text) => {
       const firstSentence = text.split(/[.!?\n]/)[0].trim();
@@ -83,16 +84,18 @@ export async function POST(request) {
       return firstSentence.substring(0, 77) + "...";
     };
 
+    const title = idea_name && idea_name.trim()
+      ? idea_name.trim().substring(0, 80)
+      : deriveTitle(idea_text);
+
     // ------------------------------------------------
     // 5. Insert idea row
-    //    Columns: id(auto), user_id, title, raw_idea_text,
-    //             profile_context_json, status, created_at, updated_at
     // ------------------------------------------------
     const { data: ideaRow, error: ideaError } = await supabaseAdmin
       .from("ideas")
       .insert({
         user_id: user.id,
-        title: deriveTitle(idea_text),
+        title,
         raw_idea_text: idea_text,
         profile_context_json: profile || {},
         status: "active",
@@ -110,18 +113,10 @@ export async function POST(request) {
 
     // ------------------------------------------------
     // 6. Insert evaluation row
-    //    Columns: id(auto), idea_id, user_id, evaluation_mode,
-    //    prompt_version, search_strategy_version, score_formula_version,
-    //    keywords_used(jsonb), evidence_json, meta_json, competitors_json,
-    //    competition_summary, data_source, classification, scope_warning,
-    //    scoring_json, roadmap_json, tools_json, estimates_json,
-    //    market_demand_score, originality_score, monetization_score,
-    //    technical_complexity_score, weighted_overall_score,
-    //    summary_text, created_at
     // ------------------------------------------------
     const eval_ = analysis.evaluation;
 
-    const { error: evalError } = await supabaseAdmin
+    const { data: evalRow, error: evalError } = await supabaseAdmin
       .from("evaluations")
       .insert({
         idea_id: ideaRow.id,
@@ -154,7 +149,9 @@ export async function POST(request) {
         technical_complexity_score: eval_.technical_complexity?.score || 0,
         weighted_overall_score: eval_.overall_score || 0,
         summary_text: eval_.summary || "",
-      });
+      })
+      .select("id")
+      .single();
 
     if (evalError) {
       // Rollback: delete the idea row if evaluation insert fails
@@ -167,11 +164,12 @@ export async function POST(request) {
     }
 
     // ------------------------------------------------
-    // 7. Return success
+    // 7. Return success with both IDs
     // ------------------------------------------------
     return NextResponse.json({
       success: true,
       idea_id: ideaRow.id,
+      evaluation_id: evalRow.id,
       saved_count: count + 1,
       remaining: FREE_TIER_IDEA_LIMIT - (count + 1),
     });

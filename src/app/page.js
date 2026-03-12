@@ -6,7 +6,7 @@ import { supabase } from "../lib/supabase";
 // ============================================
 // STEP PROGRESS BAR
 // ============================================
-function StepProgress({ currentStep }) {
+function StepProgress({ currentStep, savedMode }) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -20,7 +20,7 @@ function StepProgress({ currentStep }) {
     { number: 1, label: "Profile" },
     { number: 2, label: "Idea" },
     { number: 3, label: "Analysis" },
-    { number: 4, label: "Build Plan" },
+    { number: 4, label: savedMode ? "Roadmap" : "Build Plan" },
   ];
 
   const circleSize = isMobile ? 28 : 40;
@@ -500,11 +500,29 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
-  const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
+  const [saveStatus, setSaveStatus] = useState("idle"); // idle | naming | saving | saved | error
   const [saveError, setSaveError] = useState("");
   const [savedIdeasCount, setSavedIdeasCount] = useState(0);
   const [savedIdeaId, setSavedIdeaId] = useState(null);
+  const [ideaName, setIdeaName] = useState(""); // user-chosen name when saving
   const SAVED_IDEA_LIMIT = 5;
+
+  // My Ideas Hub state
+  const [myIdeas, setMyIdeas] = useState([]);
+  const [myIdeasLoading, setMyIdeasLoading] = useState(false);
+  const [myIdeasError, setMyIdeasError] = useState("");
+  const [deletingIdeaId, setDeletingIdeaId] = useState(null);
+  const [viewingFromSaved, setViewingFromSaved] = useState(false); // tracks if we opened from My Ideas
+
+  // Progress tracking state
+  const [currentEvaluationId, setCurrentEvaluationId] = useState(null);
+  const [currentIdeaId, setCurrentIdeaId] = useState(null);
+  const [phaseProgress, setPhaseProgress] = useState({}); // { phase_1: { completed, note }, ... }
+  const [progressLoading, setProgressLoading] = useState(false);
+  const [savingProgress, setSavingProgress] = useState({}); // tracks which phase_keys are currently saving
+  const [editingNotePhase, setEditingNotePhase] = useState(null); // which phase is having its note edited
+  const [noteText, setNoteText] = useState(""); // temp text for note editing
+  const [dbNextResetTime, setDbNextResetTime] = useState(null); // DB-based reset time for logged-in users
 
   // Listen for auth state changes (login, logout, session restore)
   useEffect(() => {
@@ -529,18 +547,24 @@ export default function Home() {
     const localProfile = JSON.parse(saved);
     // Only migrate if the local profile has data
     if (localProfile.coding || localProfile.ai || localProfile.education) {
-      supabase
-        .from("profiles")
-        .upsert({
-          id: user.id,
-          coding_level: localProfile.coding,
-          ai_experience: localProfile.ai,
-          education: localProfile.education,
-          updated_at: new Date().toISOString(),
-        })
-        .then(({ error }) => {
-          if (error) console.error("Profile migration failed:", error);
+      // Use server-side API route to bypass RLS
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) return;
+        fetch("/api/profile", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            coding_level: localProfile.coding,
+            ai_experience: localProfile.ai,
+            education: localProfile.education,
+          }),
+        }).then((res) => {
+          if (!res.ok) res.json().then((d) => console.error("Profile migration failed:", d.error));
         });
+      });
     }
   }, [user]);
 
@@ -554,9 +578,32 @@ export default function Home() {
       .from("ideas")
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
+      .eq("status", "active")
       .then(({ count, error }) => {
         if (!error && count !== null) setSavedIdeasCount(count);
       });
+  }, [user]);
+
+  // Sync eval usage from database for logged-in users
+  useEffect(() => {
+    if (!user) return;
+    const syncEvalUsage = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const res = await fetch("/api/eval-usage", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setEvalsRemaining(data.remaining);
+          if (data.next_reset_time) setDbNextResetTime(data.next_reset_time);
+        }
+      } catch (err) {
+        console.error("Eval usage sync failed:", err);
+      }
+    };
+    syncEvalUsage();
   }, [user]);
 
   const handleLogout = async () => {
@@ -599,17 +646,40 @@ export default function Home() {
   const currentPhases = editedPhases || (analysis ? analysis.phases : []);
 
   const getStepNumber = () => {
-    const map = { profile: 1, input: 2, results1: 3, results2: 4 };
+    const map = { profile: 1, input: 2, myideas: 2, results1: 3, results2: 4 };
     return map[currentScreen] || 1;
   };
 
   const handleAnalyze = async () => {
     if (!idea.trim()) return;
 
-    const remaining = getEvalsRemaining();
-    if (remaining <= 0) {
-      setError(`You've used all ${EVAL_LIMIT} free evaluations this week. Next slot opens in ${getNextResetTime()}.`);
-      return;
+    // For logged-in users, check DB-based limits; for anon, use localStorage
+    if (user) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const res = await fetch("/api/eval-usage", {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          });
+          const data = await res.json();
+          if (res.ok && data.remaining <= 0) {
+            const resetTime = data.next_reset_time
+              ? formatResetTime(data.next_reset_time)
+              : "soon";
+            setError(`You've used all ${EVAL_LIMIT} free evaluations this week. Next slot opens in ${resetTime}.`);
+            return;
+          }
+        }
+      } catch (err) {
+        // Fall through to localStorage check if DB check fails
+        console.error("DB eval check failed, using localStorage:", err);
+      }
+    } else {
+      const remaining = getEvalsRemaining();
+      if (remaining <= 0) {
+        setError(`You've used all ${EVAL_LIMIT} free evaluations this week. Next slot opens in ${getNextResetTime()}.`);
+        return;
+      }
     }
 
     setIsAnalyzing(true);
@@ -618,6 +688,11 @@ export default function Home() {
     setSaveStatus("idle");
     setSaveError("");
     setSavedIdeaId(null);
+    setIdeaName("");
+    setCurrentEvaluationId(null);
+    setCurrentIdeaId(null);
+    setPhaseProgress({});
+    setViewingFromSaved(false);
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -631,8 +706,30 @@ export default function Home() {
         return;
       }
 
-      recordEval();
-      setEvalsRemaining(getEvalsRemaining());
+      // Record eval usage: DB for logged-in users, localStorage for anon
+      if (user) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            const usageRes = await fetch("/api/eval-usage", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session.access_token}`,
+              },
+            });
+            const usageData = await usageRes.json();
+            if (usageRes.ok) {
+              setEvalsRemaining(usageData.remaining);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to record eval usage in DB:", err);
+        }
+      } else {
+        recordEval();
+        setEvalsRemaining(getEvalsRemaining());
+      }
 
       setAnalysis(data);
       setEditedPhases(null);
@@ -645,9 +742,34 @@ export default function Home() {
     }
   };
 
-  // Save evaluation to database
+  // Helper: format a reset time ISO string to human-readable
+  const formatResetTime = (isoString) => {
+    const resetDate = new Date(isoString);
+    const now = new Date();
+    const diffMs = resetDate - now;
+    if (diffMs <= 0) return "< 1h";
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h`;
+    return "< 1h";
+  };
+
+  // Save evaluation to database — two-step: first show name input, then save
   const handleSaveIdea = async () => {
     if (!user || !analysis || saveStatus === "saving" || saveStatus === "saved") return;
+
+    // First click: show the naming input
+    if (saveStatus !== "naming") {
+      setSaveStatus("naming");
+      // Pre-fill with a sensible default from the idea text
+      const firstLine = idea.split(/[.!?\n]/)[0].trim();
+      setIdeaName(firstLine.length <= 60 ? firstLine : firstLine.substring(0, 57) + "...");
+      return;
+    }
+
+    // Second click (confirm): actually save with the chosen name
+    if (!ideaName.trim()) return;
 
     setSaveStatus("saving");
     setSaveError("");
@@ -669,6 +791,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           idea_text: idea,
+          idea_name: ideaName.trim(),
           profile,
           analysis,
         }),
@@ -687,11 +810,230 @@ export default function Home() {
 
       setSaveStatus("saved");
       setSavedIdeaId(data.idea_id);
+      setCurrentIdeaId(data.idea_id);
+      setCurrentEvaluationId(data.evaluation_id);
       setSavedIdeasCount(data.saved_count);
     } catch (err) {
       setSaveStatus("error");
       setSaveError("Something went wrong. Please try again.");
     }
+  };
+
+  // Fetch saved ideas for My Ideas Hub
+  const fetchMyIdeas = async () => {
+    if (!user) return;
+    setMyIdeasLoading(true);
+    setMyIdeasError("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch("/api/ideas/list", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setMyIdeas(data.ideas || []);
+      setSavedIdeasCount(data.count || 0);
+    } catch (err) {
+      setMyIdeasError(err.message || "Failed to load ideas.");
+    } finally {
+      setMyIdeasLoading(false);
+    }
+  };
+
+  // Load a saved idea's full evaluation and show it
+  const loadSavedIdea = async (ideaId) => {
+    if (!user) return;
+    setMyIdeasLoading(true);
+    setMyIdeasError("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch(`/api/ideas/${ideaId}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      // Set state to show the evaluation screens
+      setIdea(data.idea.raw_idea_text);
+      setAnalysis(data.analysis);
+      setEditedPhases(null);
+      setExpandedPhases({});
+      setSaveStatus("saved"); // already saved, don't show save button again
+      setSavedIdeaId(ideaId);
+      setCurrentIdeaId(ideaId);
+      setCurrentEvaluationId(data.evaluation_id);
+      setViewingFromSaved(true);
+
+      // Fetch progress for this evaluation
+      if (data.evaluation_id) {
+        fetchProgress(data.evaluation_id, session.access_token);
+      }
+
+      setCurrentScreen("results1");
+    } catch (err) {
+      setMyIdeasError(err.message || "Failed to load idea.");
+    } finally {
+      setMyIdeasLoading(false);
+    }
+  };
+
+  // Fetch progress data for a specific evaluation
+  const fetchProgress = async (evaluationId, accessToken) => {
+    setProgressLoading(true);
+    try {
+      let token = accessToken;
+      if (!token) {
+        const { data: { session } } = await supabase.auth.getSession();
+        token = session?.access_token;
+      }
+      if (!token) return;
+
+      const res = await fetch(`/api/progress?evaluation_id=${evaluationId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPhaseProgress(data.progress || {});
+      }
+    } catch (err) {
+      console.error("Failed to fetch progress:", err);
+    } finally {
+      setProgressLoading(false);
+    }
+  };
+
+  // Toggle a phase checkbox
+  const togglePhaseProgress = async (phaseKey) => {
+    if (!currentEvaluationId || !currentIdeaId) return;
+
+    const current = phaseProgress[phaseKey];
+    const newCompleted = !(current?.completed);
+
+    // Optimistic update
+    setPhaseProgress((prev) => ({
+      ...prev,
+      [phaseKey]: {
+        ...prev[phaseKey],
+        completed: newCompleted,
+        completed_at: newCompleted ? new Date().toISOString() : null,
+      },
+    }));
+    setSavingProgress((prev) => ({ ...prev, [phaseKey]: true }));
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch("/api/progress", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          evaluation_id: currentEvaluationId,
+          idea_id: currentIdeaId,
+          phase_key: phaseKey,
+          completed: newCompleted,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setPhaseProgress((prev) => ({
+          ...prev,
+          [phaseKey]: {
+            ...prev[phaseKey],
+            ...data.progress,
+          },
+        }));
+      }
+    } catch (err) {
+      // Revert optimistic update on failure
+      setPhaseProgress((prev) => ({
+        ...prev,
+        [phaseKey]: current || { completed: false, note: "" },
+      }));
+      console.error("Failed to toggle progress:", err);
+    } finally {
+      setSavingProgress((prev) => ({ ...prev, [phaseKey]: false }));
+    }
+  };
+
+  // Save a note for a phase
+  const savePhaseNote = async (phaseKey, noteValue) => {
+    if (!currentEvaluationId || !currentIdeaId) return;
+
+    setSavingProgress((prev) => ({ ...prev, [phaseKey]: true }));
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch("/api/progress", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          evaluation_id: currentEvaluationId,
+          idea_id: currentIdeaId,
+          phase_key: phaseKey,
+          note: noteValue,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setPhaseProgress((prev) => ({
+          ...prev,
+          [phaseKey]: {
+            ...prev[phaseKey],
+            ...data.progress,
+          },
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to save note:", err);
+    } finally {
+      setSavingProgress((prev) => ({ ...prev, [phaseKey]: false }));
+    }
+  };
+
+  // Delete a saved idea
+  const deleteSavedIdea = async (ideaId) => {
+    if (!user) return;
+    setDeletingIdeaId(ideaId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch(`/api/ideas/${ideaId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      // Remove from local list
+      setMyIdeas((prev) => prev.filter((i) => i.id !== ideaId));
+      setSavedIdeasCount((prev) => Math.max(0, prev - 1));
+    } catch (err) {
+      setMyIdeasError(err.message || "Failed to delete idea.");
+    } finally {
+      setDeletingIdeaId(null);
+    }
+  };
+
+  // Navigate to My Ideas Hub
+  const goToMyIdeas = () => {
+    setCurrentScreen("myideas");
+    fetchMyIdeas();
   };
 
   // Shared header style
@@ -717,12 +1059,16 @@ export default function Home() {
         <header style={headerStyle}>
           <PageContainer>
             <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h1 style={{ fontSize: 14, fontFamily: "monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "#525252", margin: 0 }}>
+              <h1 onClick={() => setCurrentScreen(profile.coding && profile.ai ? "input" : "profile")} style={{ fontSize: 14, fontFamily: "monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "#525252", margin: 0, cursor: "pointer" }}>
                 Idea Validator
               </h1>
               {!authLoading && (
                 user ? (
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <button onClick={goToMyIdeas} style={{ fontSize: 12, color: "#60a5fa", background: "none", border: "none", cursor: "pointer", fontWeight: 500 }}>
+                      My Ideas
+                    </button>
+                    <span style={{ color: "#262626" }}>|</span>
                     <span style={{ fontSize: 12, color: "#525252" }}>{user.email}</span>
                     <button onClick={handleLogout} style={{ fontSize: 12, color: "#525252", background: "none", border: "none", cursor: "pointer" }}>
                       Log out
@@ -748,7 +1094,7 @@ export default function Home() {
           />
         )}
 
-        <StepProgress currentStep={getStepNumber()} />
+        <StepProgress currentStep={getStepNumber()} savedMode={viewingFromSaved} />
 
         <main style={{ flex: 1, paddingBottom: 48 }}>
           <PageContainer>
@@ -851,20 +1197,25 @@ export default function Home() {
             <button
               onClick={() => {
                 localStorage.setItem("iv_profile", JSON.stringify(profile));
-                // Also save to database if logged in
+                // Save to database via server-side API route (bypasses RLS)
                 if (user) {
-                  supabase
-                    .from("profiles")
-                    .upsert({
-                      id: user.id,
-                      coding_level: profile.coding,
-                      ai_experience: profile.ai,
-                      education: profile.education,
-                      updated_at: new Date().toISOString(),
-                    })
-                    .then(({ error }) => {
-                      if (error) console.error("Profile save to DB failed:", error);
+                  supabase.auth.getSession().then(({ data: { session } }) => {
+                    if (!session) return;
+                    fetch("/api/profile", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${session.access_token}`,
+                      },
+                      body: JSON.stringify({
+                        coding_level: profile.coding,
+                        ai_experience: profile.ai,
+                        education: profile.education,
+                      }),
+                    }).then((res) => {
+                      if (!res.ok) res.json().then((d) => console.error("Profile save to DB failed:", d.error));
                     });
+                  });
                 }
                 setCurrentScreen("input");
               }}
@@ -908,7 +1259,7 @@ export default function Home() {
         <header style={headerStyle}>
           <PageContainer>
             <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h1 style={{ fontSize: 14, fontFamily: "monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "#525252", margin: 0 }}>
+              <h1 onClick={() => setCurrentScreen(profile.coding && profile.ai ? "input" : "profile")} style={{ fontSize: 14, fontFamily: "monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "#525252", margin: 0, cursor: "pointer" }}>
                 Idea Validator
               </h1>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -919,7 +1270,10 @@ export default function Home() {
                   user ? (
                     <>
                       <span style={{ color: "#262626" }}>|</span>
-                      <span style={{ fontSize: 12, color: "#525252" }}>{user.email}</span>
+                      <button onClick={goToMyIdeas} style={{ fontSize: 12, color: "#60a5fa", background: "none", border: "none", cursor: "pointer", fontWeight: 500 }}>
+                        My Ideas
+                      </button>
+                      <span style={{ color: "#262626" }}>|</span>
                       <button onClick={handleLogout} style={{ fontSize: 12, color: "#525252", background: "none", border: "none", cursor: "pointer" }}>
                         Log out
                       </button>
@@ -948,7 +1302,7 @@ export default function Home() {
           />
         )}
 
-        <StepProgress currentStep={getStepNumber()} />
+        <StepProgress currentStep={getStepNumber()} savedMode={viewingFromSaved} />
 
         <main style={{ flex: 1, paddingBottom: 48 }}>
           <PageContainer>
@@ -1030,7 +1384,7 @@ export default function Home() {
                 color: evalsRemaining <= 0 ? "#f87171" : evalsRemaining === 1 ? "#fbbf24" : "#737373",
               }}>
                 {evalsRemaining <= 0
-                  ? `No evaluations remaining this week. Next slot opens in ${getNextResetTime()}.`
+                  ? `No evaluations remaining this week. Next slot opens in ${user && dbNextResetTime ? formatResetTime(dbNextResetTime) : getNextResetTime()}.`
                   : `${evalsRemaining} of ${EVAL_LIMIT} free evaluations remaining this week`}
               </span>
             </div>
@@ -1067,6 +1421,317 @@ export default function Home() {
   }
 
   // ==========================================
+  // MY IDEAS HUB
+  // ==========================================
+  if (currentScreen === "myideas") {
+    const getScoreColor = (s) => {
+      if (s >= 8) return "#10b981";
+      if (s >= 6) return "#3b82f6";
+      if (s >= 4) return "#f59e0b";
+      return "#ef4444";
+    };
+
+    return (
+      <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#f5f5f5", display: "flex", flexDirection: "column" }}>
+        <header style={headerStyle}>
+          <PageContainer>
+            <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h1 onClick={() => setCurrentScreen(profile.coding && profile.ai ? "input" : "profile")} style={{ fontSize: 14, fontFamily: "monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "#525252", margin: 0, cursor: "pointer" }}>
+                Idea Validator
+              </h1>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <button onClick={() => setCurrentScreen("input")} style={{ fontSize: 12, color: "#525252", background: "none", border: "none", cursor: "pointer" }}>
+                  ← New Evaluation
+                </button>
+                {!authLoading && user && (
+                  <>
+                    <span style={{ color: "#262626" }}>|</span>
+                    <span style={{ fontSize: 12, color: "#525252" }}>{user.email}</span>
+                    <button onClick={handleLogout} style={{ fontSize: 12, color: "#525252", background: "none", border: "none", cursor: "pointer" }}>
+                      Log out
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </PageContainer>
+        </header>
+
+        <main style={{ flex: 1, paddingBottom: 48, paddingTop: 32 }}>
+          <PageContainer>
+            <div style={{ marginBottom: 32 }}>
+              <h2 style={{ fontSize: 24, fontWeight: 600, margin: "0 0 8px 0" }}>My Ideas</h2>
+              <p style={{ fontSize: 14, color: "#737373", margin: 0 }}>
+                {savedIdeasCount > 0
+                  ? `${savedIdeasCount} of ${SAVED_IDEA_LIMIT} ideas saved`
+                  : "Your saved evaluations will appear here."}
+              </p>
+            </div>
+
+            {myIdeasError && (
+              <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 12, padding: "12px 20px", marginBottom: 24 }}>
+                <p style={{ fontSize: 14, color: "#f87171", margin: 0 }}>{myIdeasError}</p>
+              </div>
+            )}
+
+            {myIdeasLoading && myIdeas.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "48px 0" }}>
+                <div style={{
+                  display: "inline-block",
+                  width: 32,
+                  height: 32,
+                  border: "2px solid #404040",
+                  borderTopColor: "#fff",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite",
+                }} />
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                <p style={{ fontSize: 14, color: "#737373", marginTop: 16 }}>Loading your ideas...</p>
+              </div>
+            ) : myIdeas.length === 0 ? (
+              <Card style={{ padding: 48, textAlign: "center" }}>
+                <p style={{ fontSize: 48, margin: "0 0 16px 0" }}>💡</p>
+                <p style={{ fontSize: 16, color: "#a3a3a3", margin: "0 0 8px 0" }}>No saved ideas yet</p>
+                <p style={{ fontSize: 14, color: "#525252", margin: "0 0 24px 0" }}>
+                  Run an evaluation and click "Save to My Ideas" to keep it here.
+                </p>
+                <button
+                  onClick={() => setCurrentScreen("input")}
+                  style={{
+                    padding: "10px 24px",
+                    borderRadius: 12,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    border: "none",
+                    background: "#fff",
+                    color: "#0a0a0a",
+                    cursor: "pointer",
+                  }}
+                >
+                  Evaluate an Idea
+                </button>
+              </Card>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {myIdeas.map((savedIdea) => {
+                  const eval_ = savedIdea.evaluations?.[0];
+                  const score = eval_?.weighted_overall_score || 0;
+                  const date = new Date(savedIdea.created_at).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  });
+
+                  return (
+                    <div
+                      key={savedIdea.id}
+                      style={{
+                        background: "rgba(23,23,23,0.6)",
+                        border: "1px solid rgba(38,38,38,0.8)",
+                        borderRadius: 16,
+                        overflow: "hidden",
+                        transition: "border-color 0.2s",
+                      }}
+                    >
+                      <div
+                        onClick={() => loadSavedIdea(savedIdea.id)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 16,
+                          padding: "20px 24px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {/* Score circle */}
+                        <div style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: "50%",
+                          background: `rgba(${score >= 7 ? "16,185,129" : score >= 5 ? "59,130,246" : score >= 3 ? "245,158,11" : "239,68,68"},0.15)`,
+                          border: `2px solid ${getScoreColor(score)}`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}>
+                          <span style={{
+                            fontSize: 16,
+                            fontWeight: 700,
+                            fontFamily: "monospace",
+                            color: getScoreColor(score),
+                          }}>
+                            {score.toFixed(1)}
+                          </span>
+                        </div>
+
+                        {/* Title + meta */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h3 style={{
+                            fontSize: 14,
+                            fontWeight: 600,
+                            color: "#f5f5f5",
+                            margin: 0,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}>
+                            {savedIdea.title}
+                          </h3>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                            <span style={{ fontSize: 12, color: "#525252" }}>{date}</span>
+                            {eval_?.classification && (
+                              <>
+                                <span style={{ fontSize: 12, color: "#333" }}>·</span>
+                                <span style={{
+                                  fontSize: 10,
+                                  fontWeight: 600,
+                                  padding: "2px 8px",
+                                  borderRadius: 9999,
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.05em",
+                                  ...(eval_.classification === "social_impact"
+                                    ? { background: "rgba(16,185,129,0.12)", color: "#34d399", border: "1px solid rgba(16,185,129,0.25)" }
+                                    : { background: "rgba(59,130,246,0.12)", color: "#60a5fa", border: "1px solid rgba(59,130,246,0.25)" }),
+                                }}>
+                                  {eval_.classification === "social_impact" ? "Social Impact" : "Commercial"}
+                                </span>
+                              </>
+                            )}
+                            {eval_?.data_source === "verified" && (
+                              <>
+                                <span style={{ fontSize: 12, color: "#333" }}>·</span>
+                                <span style={{ fontSize: 10, color: "#34d399", fontWeight: 500 }}>Verified</span>
+                              </>
+                            )}
+                          </div>
+                          {eval_?.summary_text && (
+                            <p style={{
+                              fontSize: 12,
+                              color: "#525252",
+                              margin: "6px 0 0 0",
+                              lineHeight: 1.4,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                            }}>
+                              {eval_.summary_text}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Score bars mini */}
+                        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                          {[
+                            { label: "MD", score: eval_?.market_demand_score },
+                            { label: "MO", score: eval_?.monetization_score },
+                            { label: "OR", score: eval_?.originality_score },
+                            { label: "TC", score: eval_?.technical_complexity_score },
+                          ].map((m, i) => (
+                            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                              <div style={{
+                                width: 6,
+                                height: 32,
+                                background: "#1a1a1a",
+                                borderRadius: 3,
+                                overflow: "hidden",
+                                display: "flex",
+                                flexDirection: "column-reverse",
+                              }}>
+                                <div style={{
+                                  width: "100%",
+                                  height: `${((m.score || 0) / 10) * 100}%`,
+                                  background: i === 3
+                                    ? (m.score >= 8 ? "#ef4444" : m.score >= 6 ? "#f59e0b" : "#3b82f6")
+                                    : getScoreColor(m.score || 0),
+                                  borderRadius: 3,
+                                }} />
+                              </div>
+                              <span style={{ fontSize: 8, color: "#404040", fontWeight: 500 }}>{m.label}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Arrow */}
+                        <span style={{ color: "#404040", fontSize: 16, flexShrink: 0 }}>→</span>
+                      </div>
+
+                      {/* Delete row */}
+                      <div style={{
+                        padding: "0 24px 12px 24px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}>
+                        {/* Progress indicator */}
+                        {savedIdea.progress?.has_progress ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <div style={{ display: "flex", gap: 2 }}>
+                              {Array.from({ length: savedIdea.progress.total_phases || 0 }).map((_, idx) => {
+                                const phaseKey = `phase_${idx + 1}`;
+                                const isCompleted = (savedIdea.progress.completed_phases || []).includes(phaseKey);
+                                return (
+                                  <div key={idx} style={{
+                                    width: 16,
+                                    height: 4,
+                                    borderRadius: 2,
+                                    background: isCompleted ? "#10b981" : "#262626",
+                                  }} />
+                                );
+                              })}
+                            </div>
+                            <span style={{ fontSize: 11, color: "#737373" }}>
+                              {savedIdea.progress.completed}/{savedIdea.progress.total_phases}
+                            </span>
+                          </div>
+                        ) : savedIdea.progress?.total_phases > 0 ? (
+                          <span style={{ fontSize: 11, color: "#404040" }}>
+                            {savedIdea.progress.total_phases} phases · no progress yet
+                          </span>
+                        ) : (
+                          <span />
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm("Delete this saved idea? This cannot be undone.")) {
+                              deleteSavedIdea(savedIdea.id);
+                            }
+                          }}
+                          disabled={deletingIdeaId === savedIdea.id}
+                          style={{
+                            fontSize: 11,
+                            color: deletingIdeaId === savedIdea.id ? "#404040" : "#525252",
+                            background: "none",
+                            border: "none",
+                            cursor: deletingIdeaId === savedIdea.id ? "not-allowed" : "pointer",
+                          }}
+                        >
+                          {deletingIdeaId === savedIdea.id ? "Deleting..." : "Delete"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </PageContainer>
+        </main>
+
+        <footer style={footerStyle}>
+          <PageContainer>
+            <p style={{ fontSize: 12, color: "#404040", margin: 0 }}>
+              IdeaValidator — All analysis is AI-generated. Use as a guide, not a definitive assessment.
+            </p>
+          </PageContainer>
+        </footer>
+      </div>
+    );
+  }
+
+  // ==========================================
   // SCREEN 2: COMPETITION + EVALUATION
   // ==========================================
   if (currentScreen === "results1" && analysis) {
@@ -1075,18 +1740,36 @@ export default function Home() {
         <header style={headerStyle}>
           <PageContainer wide>
             <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h1 style={{ fontSize: 14, fontFamily: "monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "#525252", margin: 0 }}>
+              <h1 onClick={() => setCurrentScreen(profile.coding && profile.ai ? "input" : "profile")} style={{ fontSize: 14, fontFamily: "monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "#525252", margin: 0, cursor: "pointer" }}>
                 Idea Validator
               </h1>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <button onClick={() => setCurrentScreen("input")} style={{ fontSize: 12, color: "#525252", background: "none", border: "none", cursor: "pointer" }}>
-                  ← Back to idea
+                <button onClick={() => {
+                  if (viewingFromSaved) {
+                    setViewingFromSaved(false);
+                    goToMyIdeas();
+                  } else {
+                    setCurrentScreen("input");
+                  }
+                }} style={{ fontSize: 12, color: "#525252", background: "none", border: "none", cursor: "pointer" }}>
+                  {viewingFromSaved ? "← Back to My Ideas" : "← Back to idea"}
                 </button>
                 {!authLoading && (
                   user ? (
                     <>
                       <span style={{ color: "#262626" }}>|</span>
+                      {!viewingFromSaved && (
+                        <>
+                          <button onClick={goToMyIdeas} style={{ fontSize: 12, color: "#60a5fa", background: "none", border: "none", cursor: "pointer", fontWeight: 500 }}>
+                            My Ideas
+                          </button>
+                          <span style={{ color: "#262626" }}>|</span>
+                        </>
+                      )}
                       <span style={{ fontSize: 12, color: "#525252" }}>{user.email}</span>
+                      <button onClick={handleLogout} style={{ fontSize: 12, color: "#525252", background: "none", border: "none", cursor: "pointer" }}>
+                        Log out
+                      </button>
                     </>
                   ) : (
                     <>
@@ -1112,7 +1795,7 @@ export default function Home() {
           />
         )}
 
-        <StepProgress currentStep={getStepNumber()} />
+        <StepProgress currentStep={getStepNumber()} savedMode={viewingFromSaved} />
 
         <main style={{ flex: 1, paddingBottom: 64 }}>
           <PageContainer wide>
@@ -1365,88 +2048,6 @@ export default function Home() {
               </Card>
             </section>
 
-            {/* Save to My Ideas */}
-            <div style={{ marginBottom: 16 }}>
-              {user ? (
-                // Logged in — show save button
-                saveStatus === "saved" ? (
-                  <div style={{
-                    width: "100%",
-                    padding: "14px 0",
-                    borderRadius: 12,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    textAlign: "center",
-                    background: "rgba(16,185,129,0.1)",
-                    border: "1px solid rgba(16,185,129,0.3)",
-                    color: "#34d399",
-                  }}>
-                    ✓ Saved to My Ideas ({savedIdeasCount}/{SAVED_IDEA_LIMIT})
-                  </div>
-                ) : savedIdeasCount >= SAVED_IDEA_LIMIT ? (
-                  <div style={{
-                    width: "100%",
-                    padding: "14px 0",
-                    borderRadius: 12,
-                    fontSize: 14,
-                    fontWeight: 500,
-                    textAlign: "center",
-                    background: "rgba(245,158,11,0.08)",
-                    border: "1px solid rgba(245,158,11,0.2)",
-                    color: "#fbbf24",
-                  }}>
-                    Free tier limit reached ({SAVED_IDEA_LIMIT}/{SAVED_IDEA_LIMIT} ideas saved)
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      onClick={handleSaveIdea}
-                      disabled={saveStatus === "saving"}
-                      style={{
-                        width: "100%",
-                        padding: "14px 0",
-                        borderRadius: 12,
-                        fontSize: 14,
-                        fontWeight: 600,
-                        border: "1px solid rgba(59,130,246,0.4)",
-                        cursor: saveStatus === "saving" ? "not-allowed" : "pointer",
-                        background: saveStatus === "saving" ? "rgba(38,38,38,0.6)" : "rgba(59,130,246,0.12)",
-                        color: saveStatus === "saving" ? "#525252" : "#60a5fa",
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      {saveStatus === "saving" ? "Saving..." : `Save to My Ideas (${savedIdeasCount}/${SAVED_IDEA_LIMIT})`}
-                    </button>
-                    {saveStatus === "error" && saveError && (
-                      <p style={{ fontSize: 12, color: "#f87171", textAlign: "center", marginTop: 8 }}>
-                        {saveError}
-                      </p>
-                    )}
-                  </>
-                )
-              ) : (
-                // Not logged in — show signup prompt
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  style={{
-                    width: "100%",
-                    padding: "14px 0",
-                    borderRadius: 12,
-                    fontSize: 14,
-                    fontWeight: 500,
-                    border: "1px solid rgba(64,64,64,0.6)",
-                    background: "transparent",
-                    color: "#737373",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  Sign up to save your evaluations
-                </button>
-              )}
-            </div>
-
-
             <button
               onClick={() => setCurrentScreen("results2")}
               style={{
@@ -1461,7 +2062,7 @@ export default function Home() {
                 cursor: "pointer",
               }}
             >
-              Continue to Build Plan
+              {viewingFromSaved ? "View Your Roadmap" : "Continue to Build Plan"}
             </button>
           </PageContainer>
         </main>
@@ -1486,7 +2087,7 @@ export default function Home() {
         <header style={headerStyle}>
           <PageContainer wide>
             <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h1 style={{ fontSize: 14, fontFamily: "monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "#525252", margin: 0 }}>
+              <h1 onClick={() => setCurrentScreen(profile.coding && profile.ai ? "input" : "profile")} style={{ fontSize: 14, fontFamily: "monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "#525252", margin: 0, cursor: "pointer" }}>
                 Idea Validator
               </h1>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -1496,7 +2097,18 @@ export default function Home() {
                 {!authLoading && user && (
                   <>
                     <span style={{ color: "#262626" }}>|</span>
+                    {!viewingFromSaved && (
+                      <>
+                        <button onClick={goToMyIdeas} style={{ fontSize: 12, color: "#60a5fa", background: "none", border: "none", cursor: "pointer", fontWeight: 500 }}>
+                          My Ideas
+                        </button>
+                        <span style={{ color: "#262626" }}>|</span>
+                      </>
+                    )}
                     <span style={{ fontSize: 12, color: "#525252" }}>{user.email}</span>
+                    <button onClick={handleLogout} style={{ fontSize: 12, color: "#525252", background: "none", border: "none", cursor: "pointer" }}>
+                      Log out
+                    </button>
                   </>
                 )}
               </div>
@@ -1511,66 +2123,160 @@ export default function Home() {
           />
         )}
 
-        <StepProgress currentStep={getStepNumber()} />
+        <StepProgress currentStep={getStepNumber()} savedMode={viewingFromSaved} />
 
         <main style={{ flex: 1, paddingBottom: 64 }}>
           <PageContainer wide>
             {/* Phases */}
             <section style={{ marginBottom: 48 }}>
-              <SectionHeader icon="⚙" title="Execution Phases" subtitle="Recommended roadmap for building your idea" />
+              <SectionHeader icon="⚙" title="Execution Phases" subtitle={viewingFromSaved ? "Track your progress across each phase" : "Recommended roadmap for building your idea"} />
+
+              {/* Progress summary bar — only show for saved ideas */}
+              {viewingFromSaved && currentEvaluationId && currentPhases.length > 0 && (
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  marginBottom: 16,
+                  padding: "12px 16px",
+                  borderRadius: 12,
+                  background: "rgba(38,38,38,0.4)",
+                  border: "1px solid rgba(64,64,64,0.3)",
+                }}>
+                  <div style={{
+                    display: "flex",
+                    gap: 3,
+                    flex: 1,
+                  }}>
+                    {currentPhases.map((_, idx) => {
+                      const phaseKey = `phase_${idx + 1}`;
+                      const isCompleted = phaseProgress[phaseKey]?.completed;
+                      return (
+                        <div key={idx} style={{
+                          flex: 1,
+                          height: 6,
+                          borderRadius: 3,
+                          background: isCompleted ? "#10b981" : "#262626",
+                          transition: "background 0.3s",
+                        }} />
+                      );
+                    })}
+                  </div>
+                  <span style={{ fontSize: 12, color: "#737373", flexShrink: 0 }}>
+                    {currentPhases.filter((_, idx) => phaseProgress[`phase_${idx + 1}`]?.completed).length}/{currentPhases.length} complete
+                  </span>
+                </div>
+              )}
 
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {currentPhases.map((phase, i) => (
+                {currentPhases.map((phase, i) => {
+                  const phaseKey = `phase_${i + 1}`;
+                  const progress = phaseProgress[phaseKey];
+                  const isCompleted = progress?.completed;
+                  const isSaving = savingProgress[phaseKey];
+                  const canTrackProgress = viewingFromSaved && !!currentEvaluationId;
+
+                  return (
                   <div
                     key={i}
                     style={{
                       background: "rgba(23,23,23,0.6)",
-                      border: "1px solid rgba(38,38,38,0.8)",
+                      border: `1px solid ${isCompleted ? "rgba(16,185,129,0.3)" : "rgba(38,38,38,0.8)"}`,
                       borderRadius: 16,
                       overflow: "hidden",
+                      transition: "border-color 0.3s",
                     }}
                   >
                     <div
-                      onClick={() => togglePhase(i)}
                       style={{
                         display: "flex",
                         alignItems: "center",
                         gap: 16,
                         padding: "20px 24px",
-                        cursor: "pointer",
                       }}
                     >
-                      <div style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: "50%",
-                        background: "rgba(59,130,246,0.15)",
-                        border: "1px solid rgba(59,130,246,0.3)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 14,
-                        fontWeight: 700,
-                        color: "#60a5fa",
-                        flexShrink: 0,
-                      }}>
-                        {phase.number}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <h3 style={{ fontSize: 14, fontWeight: 700, color: "#f5f5f5", margin: 0 }}>
+                      {/* Checkbox — only for saved ideas */}
+                      {canTrackProgress ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            togglePhaseProgress(phaseKey);
+                          }}
+                          disabled={isSaving}
+                          style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: "50%",
+                            background: isCompleted ? "rgba(16,185,129,0.2)" : "rgba(59,130,246,0.15)",
+                            border: `2px solid ${isCompleted ? "rgba(16,185,129,0.5)" : "rgba(59,130,246,0.3)"}`,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: isCompleted ? 16 : 14,
+                            fontWeight: 700,
+                            color: isCompleted ? "#34d399" : "#60a5fa",
+                            flexShrink: 0,
+                            cursor: isSaving ? "not-allowed" : "pointer",
+                            transition: "all 0.2s",
+                            opacity: isSaving ? 0.5 : 1,
+                            padding: 0,
+                          }}
+                        >
+                          {isCompleted ? "✓" : phase.number}
+                        </button>
+                      ) : (
+                        <div style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          background: "rgba(59,130,246,0.15)",
+                          border: "1px solid rgba(59,130,246,0.3)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: "#60a5fa",
+                          flexShrink: 0,
+                        }}>
+                          {phase.number}
+                        </div>
+                      )}
+
+                      <div
+                        onClick={() => togglePhase(i)}
+                        style={{ flex: 1, minWidth: 0, cursor: "pointer" }}
+                      >
+                        <h3 style={{
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: isCompleted ? "#737373" : "#f5f5f5",
+                          margin: 0,
+                          textDecoration: isCompleted ? "line-through" : "none",
+                          transition: "all 0.2s",
+                        }}>
                           {phase.title}
                         </h3>
-                        <p style={{ fontSize: 14, color: "#737373", margin: "4px 0 0 0", lineHeight: 1.5 }}>
+                        <p style={{
+                          fontSize: 14,
+                          color: isCompleted ? "#404040" : "#737373",
+                          margin: "4px 0 0 0",
+                          lineHeight: 1.5,
+                        }}>
                           {phase.summary}
                         </p>
                       </div>
-                      <span style={{
-                        color: "#525252",
-                        transition: "transform 0.2s",
-                        transform: expandedPhases[i] ? "rotate(180deg)" : "rotate(0deg)",
-                        flexShrink: 0,
-                        fontSize: 18,
-                      }}>
+                      <span
+                        onClick={() => togglePhase(i)}
+                        style={{
+                          color: "#525252",
+                          transition: "transform 0.2s",
+                          transform: expandedPhases[i] ? "rotate(180deg)" : "rotate(0deg)",
+                          flexShrink: 0,
+                          fontSize: 18,
+                          cursor: "pointer",
+                        }}
+                      >
                         ▾
                       </span>
                     </div>
@@ -1628,18 +2334,124 @@ export default function Home() {
                             <p style={{ fontSize: 14, color: "#a3a3a3", lineHeight: 1.7, margin: "0 0 16px 0", whiteSpace: "pre-line" }}>
                               {(editedPhases || analysis.phases)[i].details}
                             </p>
-                            <button
-                              onClick={() => startEditingPhase(i)}
-                              style={{ fontSize: 12, fontWeight: 500, color: "#525252", background: "none", border: "none", cursor: "pointer" }}
-                            >
-                              Edit this phase
-                            </button>
+
+                            {/* Notes section — only for saved ideas */}
+                            {canTrackProgress && (
+                              <div style={{
+                                marginTop: 16,
+                                padding: "12px 16px",
+                                borderRadius: 12,
+                                background: "rgba(38,38,38,0.3)",
+                                border: "1px solid rgba(64,64,64,0.3)",
+                              }}>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                                  <span style={{ fontSize: 12, fontWeight: 600, color: "#737373", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                    Notes
+                                  </span>
+                                  {progress?.note && editingNotePhase !== phaseKey && (
+                                    <button
+                                      onClick={() => {
+                                        setEditingNotePhase(phaseKey);
+                                        setNoteText(progress.note);
+                                      }}
+                                      style={{ fontSize: 11, color: "#525252", background: "none", border: "none", cursor: "pointer" }}
+                                    >
+                                      Edit
+                                    </button>
+                                  )}
+                                </div>
+
+                                {editingNotePhase === phaseKey ? (
+                                  <div>
+                                    <textarea
+                                      value={noteText}
+                                      onChange={(e) => setNoteText(e.target.value)}
+                                      placeholder="Add notes about your progress on this phase..."
+                                      rows={3}
+                                      style={{
+                                        width: "100%",
+                                        background: "rgba(23,23,23,0.8)",
+                                        border: "1px solid rgba(64,64,64,0.6)",
+                                        borderRadius: 8,
+                                        padding: "10px 12px",
+                                        fontSize: 13,
+                                        color: "#d4d4d4",
+                                        outline: "none",
+                                        resize: "none",
+                                        lineHeight: 1.5,
+                                        boxSizing: "border-box",
+                                        fontFamily: "inherit",
+                                      }}
+                                    />
+                                    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                                      <button
+                                        onClick={() => {
+                                          savePhaseNote(phaseKey, noteText);
+                                          setEditingNotePhase(null);
+                                        }}
+                                        disabled={isSaving}
+                                        style={{
+                                          fontSize: 12,
+                                          fontWeight: 500,
+                                          color: "#34d399",
+                                          background: "none",
+                                          border: "none",
+                                          cursor: isSaving ? "not-allowed" : "pointer",
+                                        }}
+                                      >
+                                        {isSaving ? "Saving..." : "Save note"}
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setEditingNotePhase(null);
+                                          setNoteText("");
+                                        }}
+                                        style={{ fontSize: 12, color: "#525252", background: "none", border: "none", cursor: "pointer" }}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : progress?.note ? (
+                                  <p style={{ fontSize: 13, color: "#a3a3a3", lineHeight: 1.5, margin: 0, whiteSpace: "pre-line" }}>
+                                    {progress.note}
+                                  </p>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      setEditingNotePhase(phaseKey);
+                                      setNoteText("");
+                                    }}
+                                    style={{
+                                      fontSize: 12,
+                                      color: "#525252",
+                                      background: "none",
+                                      border: "none",
+                                      cursor: "pointer",
+                                      padding: 0,
+                                    }}
+                                  >
+                                    + Add a note
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
+                              <button
+                                onClick={() => startEditingPhase(i)}
+                                style={{ fontSize: 12, fontWeight: 500, color: "#525252", background: "none", border: "none", cursor: "pointer" }}
+                              >
+                                Edit this phase
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
 
@@ -1707,33 +2519,213 @@ export default function Home() {
               </Card>
             </section>
 
+            {/* Save to My Ideas — shown after user has seen everything */}
+            {!viewingFromSaved && (
+              <div style={{ marginBottom: 16 }}>
+                {user ? (
+                  saveStatus === "saved" ? (
+                    <div style={{
+                      width: "100%",
+                      padding: "14px 0",
+                      borderRadius: 12,
+                      fontSize: 14,
+                      fontWeight: 600,
+                      textAlign: "center",
+                      background: "rgba(16,185,129,0.1)",
+                      border: "1px solid rgba(16,185,129,0.3)",
+                      color: "#34d399",
+                    }}>
+                      ✓ Saved to My Ideas ({savedIdeasCount}/{SAVED_IDEA_LIMIT})
+                    </div>
+                  ) : savedIdeasCount >= SAVED_IDEA_LIMIT ? (
+                    <div style={{
+                      width: "100%",
+                      padding: "14px 0",
+                      borderRadius: 12,
+                      fontSize: 14,
+                      fontWeight: 500,
+                      textAlign: "center",
+                      background: "rgba(245,158,11,0.08)",
+                      border: "1px solid rgba(245,158,11,0.2)",
+                      color: "#fbbf24",
+                    }}>
+                      Free tier limit reached ({SAVED_IDEA_LIMIT}/{SAVED_IDEA_LIMIT} ideas saved)
+                    </div>
+                  ) : saveStatus === "naming" ? (
+                    <div style={{
+                      padding: "16px 20px",
+                      borderRadius: 12,
+                      background: "rgba(23,23,23,0.6)",
+                      border: "1px solid rgba(59,130,246,0.3)",
+                    }}>
+                      <label style={{ fontSize: 13, fontWeight: 500, color: "#a3a3a3", display: "block", marginBottom: 8 }}>
+                        Name this idea
+                      </label>
+                      <input
+                        type="text"
+                        value={ideaName}
+                        onChange={(e) => setIdeaName(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && ideaName.trim() && handleSaveIdea()}
+                        placeholder="e.g., AI Nutrition Coach, Learning OS..."
+                        autoFocus
+                        maxLength={80}
+                        style={{
+                          width: "100%",
+                          background: "rgba(23,23,23,0.8)",
+                          border: "1px solid rgba(64,64,64,0.6)",
+                          borderRadius: 10,
+                          padding: "10px 14px",
+                          fontSize: 14,
+                          color: "#f5f5f5",
+                          outline: "none",
+                          boxSizing: "border-box",
+                          marginBottom: 12,
+                        }}
+                      />
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          onClick={handleSaveIdea}
+                          disabled={!ideaName.trim()}
+                          style={{
+                            flex: 1,
+                            padding: "10px 0",
+                            borderRadius: 10,
+                            fontSize: 13,
+                            fontWeight: 600,
+                            border: "none",
+                            cursor: !ideaName.trim() ? "not-allowed" : "pointer",
+                            background: !ideaName.trim() ? "rgba(38,38,38,0.6)" : "rgba(59,130,246,0.15)",
+                            color: !ideaName.trim() ? "#525252" : "#60a5fa",
+                          }}
+                        >
+                          Save ({savedIdeasCount}/{SAVED_IDEA_LIMIT})
+                        </button>
+                        <button
+                          onClick={() => { setSaveStatus("idle"); setIdeaName(""); }}
+                          style={{
+                            padding: "10px 16px",
+                            borderRadius: 10,
+                            fontSize: 13,
+                            fontWeight: 500,
+                            border: "1px solid rgba(64,64,64,0.4)",
+                            background: "transparent",
+                            color: "#525252",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleSaveIdea}
+                        disabled={saveStatus === "saving"}
+                        style={{
+                          width: "100%",
+                          padding: "14px 0",
+                          borderRadius: 12,
+                          fontSize: 14,
+                          fontWeight: 600,
+                          border: "1px solid rgba(59,130,246,0.4)",
+                          cursor: saveStatus === "saving" ? "not-allowed" : "pointer",
+                          background: saveStatus === "saving" ? "rgba(38,38,38,0.6)" : "rgba(59,130,246,0.12)",
+                          color: saveStatus === "saving" ? "#525252" : "#60a5fa",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        {saveStatus === "saving" ? "Saving..." : `Save to My Ideas (${savedIdeasCount}/${SAVED_IDEA_LIMIT})`}
+                      </button>
+                      {saveStatus === "error" && saveError && (
+                        <p style={{ fontSize: 12, color: "#f87171", textAlign: "center", marginTop: 8 }}>
+                          {saveError}
+                        </p>
+                      )}
+                    </>
+                  )
+                ) : (
+                  <button
+                    onClick={() => setShowAuthModal(true)}
+                    style={{
+                      width: "100%",
+                      padding: "14px 0",
+                      borderRadius: 12,
+                      fontSize: 14,
+                      fontWeight: 500,
+                      border: "1px solid rgba(64,64,64,0.6)",
+                      background: "transparent",
+                      color: "#737373",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    Sign up to save your evaluations
+                  </button>
+                )}
+              </div>
+            )}
 
-            <button
-              onClick={() => {
-                setCurrentScreen("input");
-                setAnalysis(null);
-                setIdea("");
-                setEditedPhases(null);
-                setExpandedPhases({});
-                setEvalsRemaining(getEvalsRemaining());
-                setSaveStatus("idle");
-                setSaveError("");
-                setSavedIdeaId(null);
-              }}
-              style={{
-                width: "100%",
-                padding: "14px 0",
-                borderRadius: 12,
-                fontSize: 14,
-                fontWeight: 600,
-                border: "1px solid rgba(64,64,64,0.6)",
-                background: "transparent",
-                color: "#a3a3a3",
-                cursor: "pointer",
-              }}
-            >
-              Analyze Another Idea
-            </button>
+            {viewingFromSaved ? (
+              <button
+                onClick={() => {
+                  setViewingFromSaved(false);
+                  setPhaseProgress({});
+                  setCurrentEvaluationId(null);
+                  setCurrentIdeaId(null);
+                  setEditingNotePhase(null);
+                  setNoteText("");
+                  goToMyIdeas();
+                }}
+                style={{
+                  width: "100%",
+                  padding: "14px 0",
+                  borderRadius: 12,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  border: "1px solid rgba(64,64,64,0.6)",
+                  background: "transparent",
+                  color: "#a3a3a3",
+                  cursor: "pointer",
+                }}
+              >
+                ← Back to My Ideas
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setCurrentScreen("input");
+                  setAnalysis(null);
+                  setIdea("");
+                  setEditedPhases(null);
+                  setExpandedPhases({});
+                  setEvalsRemaining(user ? evalsRemaining : getEvalsRemaining());
+                  setSaveStatus("idle");
+                  setSaveError("");
+                  setSavedIdeaId(null);
+                  setIdeaName("");
+                  setCurrentEvaluationId(null);
+                  setCurrentIdeaId(null);
+                  setPhaseProgress({});
+                  setViewingFromSaved(false);
+                  setEditingNotePhase(null);
+                  setNoteText("");
+                }}
+                style={{
+                  width: "100%",
+                  padding: "14px 0",
+                  borderRadius: 12,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  border: "1px solid rgba(64,64,64,0.6)",
+                  background: "transparent",
+                  color: "#a3a3a3",
+                  cursor: "pointer",
+                }}
+              >
+                Analyze Another Idea
+              </button>
+            )}
           </PageContainer>
         </main>
 
