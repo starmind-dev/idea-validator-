@@ -1967,6 +1967,55 @@ export default function Home() {
                 </p>
               </Card>
 
+              {/* Confidence Level */}
+              {analysis.evaluation.confidence_level && (
+                <div style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  marginBottom: 16,
+                  padding: "12px 16px",
+                  borderRadius: 12,
+                  background: analysis.evaluation.confidence_level.level === "HIGH"
+                    ? "rgba(16,185,129,0.06)"
+                    : analysis.evaluation.confidence_level.level === "LOW"
+                    ? "rgba(239,68,68,0.06)"
+                    : "rgba(245,158,11,0.06)",
+                  border: `1px solid ${
+                    analysis.evaluation.confidence_level.level === "HIGH"
+                      ? "rgba(16,185,129,0.2)"
+                      : analysis.evaluation.confidence_level.level === "LOW"
+                      ? "rgba(239,68,68,0.2)"
+                      : "rgba(245,158,11,0.2)"
+                  }`,
+                }}>
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: "2px 8px",
+                    borderRadius: 6,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    flexShrink: 0,
+                    background: analysis.evaluation.confidence_level.level === "HIGH"
+                      ? "rgba(16,185,129,0.15)"
+                      : analysis.evaluation.confidence_level.level === "LOW"
+                      ? "rgba(239,68,68,0.15)"
+                      : "rgba(245,158,11,0.15)",
+                    color: analysis.evaluation.confidence_level.level === "HIGH"
+                      ? "#34d399"
+                      : analysis.evaluation.confidence_level.level === "LOW"
+                      ? "#f87171"
+                      : "#fbbf24",
+                  }}>
+                    {analysis.evaluation.confidence_level.level}
+                  </span>
+                  <span style={{ fontSize: 13, color: "#a3a3a3", lineHeight: 1.5 }}>
+                    {analysis.evaluation.confidence_level.reason}
+                  </span>
+                </div>
+              )}
+
               {/* Metrics */}
               <Card style={{ padding: 32, marginBottom: 16 }}>
                 <ScoreBar
@@ -2053,6 +2102,11 @@ export default function Home() {
                   {analysis.evaluation.summary}
                 </p>
               </Card>
+
+              {/* Disclaimer */}
+              <p style={{ fontSize: 12, color: "#404040", textAlign: "center", margin: "16px 0 24px 0", lineHeight: 1.5 }}>
+                Scores evaluate the idea's potential. Actual outcomes also depend on execution quality, distribution, timing, and market conditions.
+              </p>
             </section>
 
             <button
@@ -2134,6 +2188,37 @@ export default function Home() {
 
         <main style={{ flex: 1, paddingBottom: 64 }}>
           <PageContainer wide>
+            {/* Failure Risks */}
+            {analysis.evaluation.failure_risks && analysis.evaluation.failure_risks.length > 0 && (
+              <section style={{ marginBottom: 48 }}>
+                <SectionHeader icon="⚠️" title="Key Risks" subtitle="Most likely reasons this idea could fail" />
+                <Card style={{
+                  padding: 24,
+                  background: "rgba(239,68,68,0.04)",
+                  border: "1px solid rgba(239,68,68,0.15)",
+                }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {analysis.evaluation.failure_risks.map((risk, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                        <span style={{
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "#f87171",
+                          flexShrink: 0,
+                          marginTop: 1,
+                        }}>
+                          {i + 1}.
+                        </span>
+                        <p style={{ fontSize: 14, color: "#a3a3a3", lineHeight: 1.6, margin: 0 }}>
+                          {risk}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </section>
+            )}
+
             {/* Phases */}
             <section style={{ marginBottom: 48 }}>
               <SectionHeader icon="⚙" title="Execution Phases" subtitle={viewingFromSaved ? "Track your progress across each phase" : "Recommended roadmap for building your idea"} />

@@ -268,30 +268,61 @@ Determine if the idea is "commercial" (built to generate revenue and profit) or 
 Score exactly 4 metrics. Follow each rubric precisely.
 
 METRIC 1: MARKET DEMAND (Weight: 30%)
-Evaluate the IDEA ONLY. This metric evaluates CAPTURABLE demand — not whether people want something in this category, but whether a new entrant could realistically capture demand. A massive market fully dominated by incumbents using the same approach does not constitute capturable demand.
-For marketplace/platform ideas: evaluate demand for the underlying transaction, not the platform itself.
+Evaluate the IDEA ONLY. Do not reference user profile. This metric evaluates CAPTURABLE demand — not whether people want something in this category, but whether a new entrant could realistically acquire and retain paying users.
+
+Before scoring, answer these questions internally:
+1. Who is the specific buyer (the person who pays, not just the user)?
+2. What triggers them to actively seek a solution right now?
+3. What friction stands between awareness and adoption (trust, procurement, behavior change, onboarding, switching costs)?
+4. What demand remains after accounting for that friction?
+
+Score based on the demand that SURVIVES friction, not the demand that exists before friction.
+
+Anti-inflation rules — apply before assigning any score above 6.0:
+- ENTERPRISE: If the buyer is an organization, account for procurement cycles, committee decisions, security review, and incumbent preference. "Large enterprise need" without clear buyer urgency and accessible entry point caps at 6.0.
+- CONSUMER: Score behavioral demand, not aspirational demand. "People would love this" is not demand. Demand means repeated, habitual usage. If the product requires significant onboarding (cataloging, uploading, profile-building), score based on post-onboarding retention, not pre-onboarding interest. If natural usage frequency is low (a few times per year), cap at 5.0-6.0. Trial interest is not demand — if the idea is naturally interesting on first use but weak as an enduring habit, score post-novelty usage, not initial curiosity.
+- REGULATED (health, finance, legal, safety): Trust and liability are demand filters, not footnotes. If users must trust the product with consequential decisions or sensitive data, the demand that survives that trust barrier is the score — not the size of the affected population. Disease prevalence is NOT market demand. Legal pain is NOT market demand. The demand is only what converts after trust is established.
+- RESEARCH/ACADEMIC: Research value and intellectual impressiveness are NOT commercial demand. If the primary audience is researchers or academics, score the commercial demand path, not the intellectual value. If there is no clear commercial path, cap at 4.0-5.0.
+- MARKETPLACE: Demand for the transaction does not equal demand for the platform. Score based on likelihood of achieving initial liquidity (minimum viable supply AND demand on the platform simultaneously). If the market currently operates on personal relationships or informal networks, displacing those intermediaries is the hardest adoption barrier — score accordingly.
+- OS/PLATFORM/LAYER FRAMING: If the idea uses "operating system," "intelligence layer," "platform," or similar expansive language, identify the ONE narrow sticky behavior first. Score demand for that specific behavior, not the platform vision. If no narrow sticky behavior is clearly identified, treat the vision as aspirational marketing and cap at 5.0-6.0.
 
 Score levels:
-1-2: No capturable demand. Either no one wants this, OR need is real but fully served by dominant players and the idea does not offer a structurally different approach. A large existing market does not constitute capturable demand if entering with the same approach incumbents use.
-3-4: Niche audience, small. Problem real but low urgency. Some capturable demand but not enough for meaningful growth.
-5-6: Clear target audience with demonstrated need. Gaps remain in existing solutions. A new entrant with differentiated approach could realistically capture a portion.
-7-8: Large addressable market with active demand. Users seeking solutions and willing to pay. Growing trend. Clear entry point.
-9-10: Massive proven market with urgent unmet need. Willingness to pay. Rapid growth. Significant gaps incumbents are not addressing.
+1-2: No capturable demand. Either no one wants this, OR need is real but fully served by dominant players with no structurally different approach possible. OR demand exists in theory but friction (trust, procurement, behavior change) eliminates it for a new entrant.
+3-4: Niche audience, small. Problem real but low urgency or high friction. Some capturable demand but not enough for meaningful growth. Includes: research tools with no commercial path, products with severe trust barriers and no clear trust-building strategy.
+5-6: Clear target audience with demonstrated need. Gaps remain in existing solutions. A new entrant with differentiated approach could realistically capture a portion. Friction is present but manageable. Buyer is identifiable and reachable.
+7-8: Large addressable market with active demand that SURVIVES friction analysis. Buyers actively seeking solutions, willing to pay, and reachable through viable channels. Friction exists but entry points are clear and tested by comparable products. Growing trend with evidence.
+9-10: Massive proven market with urgent unmet need. Willingness to pay demonstrated by adjacent products. Rapid growth. Friction is low relative to urgency. Significant gaps incumbents are not addressing. Extremely rare — most ideas do not qualify.
+
+After scoring, cross-check: Re-read your explanation. If you described major barriers (slow procurement, trust requirements, behavior change needed, low frequency, onboarding burden), verify your numerical score reflects those barriers. Do not give a score above 6.0 while describing reasons it should be lower.
 
 If the idea targets an emerging trend that is currently small but growing, add a trajectory_note. Do NOT adjust the score for future projections.
 If the idea targets a regional or non-English-speaking market, add a geographic_note.
 
 METRIC 2: MONETIZATION POTENTIAL (Weight: 25%)
-Evaluate the IDEA ONLY. Consider ALL revenue models: subscriptions, commissions, advertising, API licensing, enterprise contracts, affiliate revenue, data licensing, transaction fees, freemium, white-labeling. Score the REALISTIC path, not theoretical. If dominant competitors make revenue models unviable for new entrants, score accordingly.
+Evaluate the IDEA ONLY. Do not reference user profile. This metric evaluates the likelihood of durable paid usage — not whether revenue models exist in theory, but whether real users would pay real money after considering substitutes and adoption friction.
 
-This score evaluates the idea's revenue potential in isolation. Actual outcomes depend on distribution, timing, and market conditions.
+Before scoring, answer these questions internally:
+1. Who pays (specific buyer, not "companies" or "users")?
+2. How much would they realistically pay, and how often?
+3. What must be true for the FIRST dollar of revenue (not the tenth customer — the first)?
+4. What free or cheap substitutes exist, including general-purpose tools (ChatGPT, spreadsheets, manual processes, hiring a person)?
+5. After accounting for substitutes and friction, is there durable willingness to pay?
+
+Score based on LIKELY paid usage after substitution and friction, not on the number of theoretically possible revenue models.
+
+Anti-inflation rules — apply before assigning any score above 6.0:
+- LISTING REVENUE MODELS IS NOT EVIDENCE. "Could do SaaS + enterprise + API licensing" is theory. Score based on the ONE most likely revenue path and how strong it is. Multiple theoretical models do not add up to a higher score.
+- FREE SUBSTITUTION CHECK: If a general-purpose LLM (ChatGPT, Claude) can deliver 70%+ of the value through prompting, monetization is structurally weak. Score the delta value only — what does this product provide that prompting cannot?
+- LOW FREQUENCY PENALTY: If natural usage is episodic or a few times per year, subscription models are structurally weak. Score based on the revenue model that matches actual usage frequency.
+- MARKETPLACE MONETIZATION: Transaction fees and commissions are downstream of liquidity. If the marketplace hasn't solved the cold-start problem, monetization is theoretical. Score based on likelihood of reaching the point where fees can be charged, not the fee structure itself.
+- REGULATED DOMAINS: If the product touches health, finance, legal, or safety decisions, compliance costs, liability insurance, and trust-building investment reduce margins and delay revenue. Factor these into the score.
 
 For COMMERCIAL ideas:
-1-2: No viable revenue path. Market expects free.
-3-4: One weak revenue stream. Low pricing power. Competitors suppress earnings.
-5-6: At least one proven revenue model with willingness to pay. Moderate pricing power.
-7-8: Multiple viable streams. Strong pricing power. Layered monetization.
-9-10: Exceptional revenue mechanics. High margins. Strong lock-in. Compounding model.
+1-2: No viable revenue path. Market expects free, or substitutes are free and nearly equivalent. No realistic first-dollar scenario.
+3-4: One weak revenue stream. Low pricing power. Strong free substitutes exist. First dollar requires overcoming significant trust or adoption barriers. Includes: products where users can get similar results from ChatGPT or manual processes.
+5-6: At least one proven revenue model with identifiable willingness to pay. Moderate pricing power. Substitutes exist but the product offers meaningful delta value. First dollar is achievable with reasonable effort.
+7-8: Clear, strong revenue path with demonstrated willingness to pay in comparable products. Pricing power supported by lock-in, switching costs, or unique value that substitutes cannot replicate. First dollar path is short and credible.
+9-10: Exceptional revenue mechanics. High margins. Strong lock-in. Compounding model with expanding revenue per user. Extremely rare.
 
 For SOCIAL IMPACT ideas (label as "Sustainability Potential"):
 1-2: No sustainability path. Dies when creator stops funding.
@@ -300,17 +331,34 @@ For SOCIAL IMPACT ideas (label as "Sustainability Potential"):
 7-8: Multiple sustainability paths. Institutional funding AND organic growth.
 9-10: Self-sustaining. Social impact generates resources through adoption or hybrid models.
 
+After scoring, cross-check: If your explanation mentions weak pricing power, strong free alternatives, unclear buyer, or adoption barriers, verify your score reflects those concerns. Do not describe fragile monetization while scoring above 6.0.
+
 METRIC 3: ORIGINALITY (Weight: 25%)
-Evaluate the IDEA ONLY. Evaluate at the APPROACH level: does any existing product solve the same specific problem, for the same specific audience, using the same specific method?
-For marketplace ideas: evaluate whether the marketplace MODEL is novel, not just whether the platform exists.
+Evaluate the IDEA ONLY. Do not reference user profile. This metric evaluates structural defensibility — not whether the idea sounds novel, but whether the advantage is hard to replicate.
 
-TIEBREAKER for 5-6 vs 7-8: Could a competitor match this by adding 1-2 features? Score 5-6. Would they need to redesign core workflow/data model/user journey? Score 7-8. If genuinely ambiguous, default to 6.0-6.5.
+Key distinction: Narrative originality (a new label, clever framing, vertical positioning) is NOT defensibility. "AI debugging memory OS" is a narrative. "Proprietary dataset from 10,000 incident reports that no competitor has" is structural. Score structural advantage only.
 
-1-2: Direct copy. Exists exactly as described.
-3-4: Minor twist on existing concept. Competitors add feature trivially.
-5-6: Approach has clear parallels. Competitors need only minor additions. Differentiation real but not defensible.
-7-8: Approach combines audience+problem+method uniquely. Competitors need fundamental rethink.
-9-10: Paradigm shift. Creates a category. Extremely rare.
+Before scoring, answer these questions internally:
+1. Could an existing competitor add this capability with 1-2 features or a minor product update?
+2. Could a competent team replicate the core value in 2-3 months with standard tools and public APIs?
+3. Is the idea naturally a standalone product, or is it a feature that belongs inside a larger platform?
+4. Are incumbents in this space actively adding AI/LLM capabilities that overlap with this idea?
+
+Anti-inflation rules:
+- OS/PLATFORM/LAYER LANGUAGE: Labels like "operating system," "intelligence layer," "memory engine," or "platform" do not add defensibility. Score the core behavior, not the framing. If you remove the ambitious label and the idea is "LLM + database + UI for [domain]," score it as that.
+- VERTICAL POSITIONING IS NOT MOAT: "Contract analysis for SMEs" vs "contract analysis for enterprises" is a marketing decision, not a structural advantage. Targeting a niche audience does not make the product harder to replicate.
+- FEATURE VS PRODUCT: If the idea's core capability is something incumbents would naturally add as a feature (e.g., "AI narratives for BI dashboards" when Tableau/Power BI are already adding this), flag this as a shelf-life risk and cap at 5.0-6.0.
+- COMBINATION IS NOT ORIGINALITY: Combining two existing capabilities (e.g., "matching + community + recommendations") is integration, not structural novelty. Unless the combination creates emergent value that neither component provides alone, score as 4.0-5.0.
+- DISTRIBUTION IS NOT ORIGINALITY: Audience access, founder credibility, niche community, or content reach may improve go-to-market, but do not make the product structurally harder to replicate. Do not score originality based on distribution advantage.
+
+Score levels:
+1-2: Direct copy. Exists exactly as described. No structural differentiation.
+3-4: Minor twist on existing concept. Competitors replicate trivially. Narrative originality only — new label on existing capability.
+5-6: Real differentiation in approach, but not defensible. Competitors could match with moderate effort (months, not years). Includes: vertical positioning, clever UX, and recombination of existing capabilities.
+7-8: Structural advantage that competitors cannot easily replicate. Requires unique data, proprietary methodology, network effects with critical mass, or fundamental workflow redesign. Competitors would need to rethink their approach, not just add features.
+9-10: Paradigm shift. Creates a new category. Structural advantage is deep and multi-layered. Extremely rare.
+
+After scoring, cross-check: If the idea's differentiation relies primarily on framing, positioning, or label rather than structural advantage, the score should not exceed 5.0-6.0. If incumbents are actively adding the core capability, note shelf-life risk.
 
 METRIC 4: TECHNICAL COMPLEXITY (Weight: 20%, inverted in overall)
 ONLY metric using user profile. Score how hard this is FOR THIS SPECIFIC USER.
@@ -344,7 +392,26 @@ If the idea is a marketplace/platform depending on network effects, set marketpl
 3. Most scores should be 3-7. Scores 1-2 and 9-10 are rare.
 4. Each explanation MUST reference which rubric level the score maps to.
 5. Market Demand, Monetization, Originality evaluate the IDEA ONLY.
-6. Technical Complexity is the ONLY metric using user profile.
+6. Technical Complexity is the ONLY metric using user profile. Do not reference user background in any other metric's explanation. If the user's background has minimal relevance to Technical Complexity, say so honestly — do not invent soft connections.
+7. SCORE-EXPLANATION CONSISTENCY: After writing each metric's explanation, re-read it and verify the numerical score matches the risks and barriers described. If the explanation mentions major friction (slow procurement, trust barriers, strong free substitutes, low usage frequency, crowded incumbents, regulatory burden), the score MUST reflect those concerns. A score above 6.0 with an explanation describing significant barriers is a contradiction — resolve it by lowering the score.
+
+=== CONFIDENCE LEVEL ===
+After scoring all four metrics, assess your overall confidence in this evaluation.
+
+HIGH: The idea targets a well-understood market with clear comparables, established buyer behavior, and strong evidence from competitor data. Scores are grounded in verifiable signals.
+MEDIUM: The idea has some market signal but significant uncertainty in at least one dimension — emerging market, indirect competitor data, unclear buyer behavior, or the idea sits between established categories. Most ideas should be MEDIUM.
+LOW: The idea targets an unproven market with no close comparables, requires untested behavior change, or operates in a domain with very limited market data. Scores are best-effort estimates with high uncertainty.
+
+Provide a one-sentence reason explaining what drives the confidence level. Be specific — name the source of uncertainty, not just "this is uncertain."
+
+=== FAILURE RISKS ===
+Identify the top 2-3 most likely reasons this specific idea might fail. These must be specific to THIS idea based on your analysis — not generic startup risks.
+
+Good failure risks reference specific barriers found during evaluation: adoption friction, competitor threats, trust/regulatory barriers, weak monetization mechanics, low usage frequency, cold-start problems, or LLM substitution risk.
+
+Bad failure risks are generic: "might run out of funding," "market could change," "competition is tough." Do not use these.
+
+Each risk should be one sentence, direct and concrete.
 
 === JSON STRUCTURE ===
 
@@ -387,6 +454,15 @@ If the idea is a marketplace/platform depending on network effects, set marketpl
     "explanation": "Why this estimate, calibrated to user profile"
   },
   "evaluation": {
+    "confidence_level": {
+      "level": "HIGH | MEDIUM | LOW",
+      "reason": "One sentence explaining what drives the confidence level"
+    },
+    "failure_risks": [
+      "Specific risk 1 — one sentence, concrete, based on this evaluation",
+      "Specific risk 2 — one sentence, concrete, based on this evaluation",
+      "Specific risk 3 (optional) — one sentence, concrete, based on this evaluation"
+    ],
     "market_demand": {
       "score": 6.5,
       "explanation": "2-3 sentences referencing rubric level",
