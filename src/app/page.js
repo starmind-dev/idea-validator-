@@ -508,6 +508,7 @@ export default function Home() {
   const [savedIdeasCount, setSavedIdeasCount] = useState(0);
   const [savedIdeaId, setSavedIdeaId] = useState(null);
   const [ideaName, setIdeaName] = useState(""); // user-chosen name when saving
+  const [showScoreGuide, setShowScoreGuide] = useState(false);
   const SAVED_IDEA_LIMIT = 5;
 
   // My Ideas Hub state
@@ -2009,7 +2010,161 @@ export default function Home() {
                   {analysis.evaluation.overall_score.toFixed(1)}
                   <span style={{ fontSize: 20, fontWeight: 400, color: "#525252" }}>/10</span>
                 </p>
+                <button
+                  onClick={() => setShowScoreGuide(true)}
+                  style={{
+                    marginTop: 12,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "4px 10px",
+                    borderRadius: 8,
+                    color: "#525252",
+                    fontSize: 11,
+                    fontWeight: 500,
+                    transition: "color 0.2s",
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = "#737373"}
+                  onMouseLeave={(e) => e.currentTarget.style.color = "#525252"}
+                >
+                  <span style={{ fontSize: 13 }}>ⓘ</span> What does this score mean?
+                </button>
               </Card>
+
+              {/* Score Guide Popup */}
+              {showScoreGuide && (
+                <div
+                  onClick={() => setShowScoreGuide(false)}
+                  style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: "rgba(0,0,0,0.7)",
+                    backdropFilter: "blur(4px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 9999,
+                    padding: 16,
+                  }}
+                >
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      background: "#171717",
+                      border: "1px solid rgba(64,64,64,0.6)",
+                      borderRadius: 16,
+                      padding: 28,
+                      maxWidth: 480,
+                      width: "100%",
+                      maxHeight: "80vh",
+                      overflowY: "auto",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                      <h3 style={{ fontSize: 16, fontWeight: 700, color: "#f5f5f5", margin: 0 }}>
+                        Score Guide
+                      </h3>
+                      <button
+                        onClick={() => setShowScoreGuide(false)}
+                        style={{
+                          background: "rgba(38,38,38,0.6)",
+                          border: "1px solid rgba(64,64,64,0.4)",
+                          borderRadius: 8,
+                          width: 28,
+                          height: 28,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          color: "#737373",
+                          fontSize: 14,
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <p style={{ fontSize: 13, color: "#737373", lineHeight: 1.6, margin: "0 0 20px 0" }}>
+                      This evaluator is deliberately rigorous. A 7+ is rare and means a genuinely strong startup opportunity. Most real ideas land between 5–7, and that's normal.
+                    </p>
+
+                    {[
+                      {
+                        range: "9 – 10",
+                        color: "#10b981",
+                        title: "Category Creators",
+                        desc: "Ideas that redefine behavior for hundreds of millions. Think Google, iPhone, WhatsApp, Uber. Almost no idea scores here at conception — these scores are essentially theoretical.",
+                      },
+                      {
+                        range: "8 – 9",
+                        color: "#10b981",
+                        title: "Exceptional Opportunities",
+                        desc: "Massive proven markets with strong structural moats. Think Shopify, Stripe, Zoom. Very few ideas score here — many that became 8–9 companies would have scored 6–7 at the idea stage.",
+                      },
+                      {
+                        range: "7 – 8",
+                        color: "#3b82f6",
+                        title: "Strong Startup Ideas",
+                        desc: "Clear demand, real differentiation, viable revenue path. This is what a genuinely good startup idea looks like. Most successful startups began in this range.",
+                      },
+                      {
+                        range: "5 – 7",
+                        color: "#3b82f6",
+                        title: "Real Potential, Real Challenges",
+                        desc: "Where most decent ideas land. Real pain exists, but there's friction — competitive pressure, unclear monetization, or weak differentiation. Many successful companies started here and executed their way up.",
+                      },
+                      {
+                        range: "3 – 5",
+                        color: "#f59e0b",
+                        title: "Fundamental Issues",
+                        desc: "Missing buyer clarity, saturated market, or unproven core value proposition. Needs significant pivoting or rethinking before building.",
+                      },
+                      {
+                        range: "1 – 3",
+                        color: "#ef4444",
+                        title: "Critical Flaws",
+                        desc: "No real demand, no viable revenue path, or depends on unproven assumptions across every dimension.",
+                      },
+                    ].map((tier, i) => (
+                      <div key={i} style={{
+                        padding: "12px 14px",
+                        marginBottom: 8,
+                        borderRadius: 10,
+                        background: "rgba(23,23,23,0.6)",
+                        border: "1px solid rgba(38,38,38,0.6)",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                          <span style={{
+                            fontSize: 13,
+                            fontWeight: 700,
+                            fontFamily: "monospace",
+                            color: tier.color,
+                            minWidth: 44,
+                          }}>
+                            {tier.range}
+                          </span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: "#e5e5e5" }}>
+                            {tier.title}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: 12, color: "#737373", lineHeight: 1.5, margin: 0 }}>
+                          {tier.desc}
+                        </p>
+                      </div>
+                    ))}
+
+                    <p style={{ fontSize: 11, color: "#404040", lineHeight: 1.5, margin: "16px 0 0 0", textAlign: "center" }}>
+                      A score of 5–6 doesn't mean "bad idea" — it means "real challenges to solve."
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Confidence Level */}
               {analysis.evaluation.confidence_level && (

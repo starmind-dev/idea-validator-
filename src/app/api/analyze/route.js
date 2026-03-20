@@ -379,7 +379,7 @@ For SOCIAL IMPACT ideas (label as "Sustainability Potential"):
 After scoring, cross-check: If your explanation mentions weak pricing power, strong free alternatives, unclear buyer, or adoption barriers, verify your score reflects those concerns. Do not describe fragile monetization while scoring above 6.0.
 
 METRIC 3: ORIGINALITY (Weight: 25%)
-Evaluate the IDEA ONLY. Do not reference user profile. This metric evaluates structural defensibility — not whether the idea sounds novel, but whether the advantage is hard to replicate.
+Evaluate the IDEA ONLY. Do not reference user profile. Originality should measure whether a new entrant has a credible structural wedge — not whether the idea is unprecedented. This metric evaluates structural defensibility — not whether the idea sounds novel, but whether the advantage is hard to replicate.
 
 Key distinction: Narrative originality (a new label, clever framing, vertical positioning) is NOT defensibility. "AI debugging memory OS" is a narrative. "Proprietary dataset from 10,000 incident reports that no competitor has" is structural. Score structural advantage only.
 
@@ -392,8 +392,8 @@ Before scoring, answer these questions internally:
 Anti-inflation rules:
 - OS/PLATFORM/LAYER LANGUAGE: Labels like "operating system," "intelligence layer," "memory engine," or "platform" do not add defensibility. Score the core behavior, not the framing. If you remove the ambitious label and the idea is "LLM + database + UI for [domain]," score it as that.
 - VERTICAL POSITIONING IS NOT MOAT: "Contract analysis for SMEs" vs "contract analysis for enterprises" is a marketing decision, not a structural advantage. Targeting a niche audience does not make the product harder to replicate.
-- FEATURE VS PRODUCT: If the idea's core capability is something incumbents would naturally add as a feature (e.g., "AI narratives for BI dashboards" when Tableau/Power BI are already adding this), flag this as a shelf-life risk and cap at 5.0-6.0.
-- COMBINATION IS NOT ORIGINALITY: Combining two existing capabilities (e.g., "matching + community + recommendations") is integration, not structural novelty. Unless the combination creates emergent value that neither component provides alone, score as 4.0-5.0.
+- FEATURE VS PRODUCT: If the core capability could be added to an incumbent product as a straightforward feature without meaningfully changing user behavior or workflow, treat shelf-life risk as high and typically cap at 5.0-6.0. However, do NOT apply this cap when the idea is built around a dedicated multi-step workflow, buyer-specific process, or cross-functional operating model that would require incumbents to redesign product flow, permissions, collaboration patterns, or system boundaries to match. In that case, evaluate the depth of the workflow advantage directly rather than assuming it is just a feature.
+- COMBINATION IS NOT ORIGINALITY: If the idea merely bundles existing capabilities that users could already combine with little extra coordination (e.g., "matching + community + recommendations"), score low, typically 4.0-5.0. However, if the combination creates a tightly integrated workflow that solves an end-to-end problem more effectively than separate tools — especially where the current alternative requires significant manual coordination, repeated context transfer, fragmented ownership, or approval handoffs — this can count as real structural differentiation rather than simple bundling. In those cases, score 6.0-7.5 based on how much workflow friction is removed and how difficult the integrated experience would be for incumbents to match cleanly.
 - DISTRIBUTION IS NOT ORIGINALITY: Audience access, founder credibility, niche community, or content reach may improve go-to-market, but do not make the product structurally harder to replicate. Do not score originality based on distribution advantage.
 
 Score levels:
