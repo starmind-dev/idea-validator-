@@ -619,7 +619,7 @@ export default function LandingView({
   <footer style={{ maxWidth: '1180px', margin: '120px auto 0', padding: '80px 24px 50px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
       <div style={{ display: 'flex', alignItems: 'center' }}><img src="/idealoop-wordmark.png" alt="IdeaLoop Core" style={{ display: 'block', height: '26px', width: 'auto' }} /></div>
-      <div style={{ display: 'flex', gap: '26px', fontSize: '13.5px' }}><a className="navlink" href="#the-loop">The loop</a><a className="navlink" href="#explore">Explore</a><a className="navlink" href="#pricing">Pricing</a><span onClick={onLogIn} style={{ color: '#9a9aa3', cursor: 'pointer' }}>Log in</span></div>
+      <div style={{ display: 'flex', gap: '26px', fontSize: '13.5px', flexWrap: 'wrap' }}><a className="navlink" href="#the-loop">The loop</a><a className="navlink" href="#explore">Explore</a><a className="navlink" href="#pricing">Pricing</a><a className="navlink" href="/privacy">Privacy</a><a className="navlink" href="/terms">Terms</a><a className="navlink" href="/disclaimer">Disclaimer</a><span onClick={onLogIn} style={{ color: '#9a9aa3', cursor: 'pointer' }}>Log in</span></div>
       <div style={{ fontSize: '13px', color: '#52525b' }}>© 2026 IdeaLoop Core</div>
     </div>
     <div style={{ fontFamily: '\'JetBrains Mono\',monospace', fontSize: '11.5px', color: '#52525b', marginTop: '26px', lineHeight: '1.5' }}>All analysis is AI-generated. Use as a guide, not a definitive assessment.</div>

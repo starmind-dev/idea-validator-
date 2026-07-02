@@ -313,7 +313,7 @@ export function AuthModal({ onClose, onAuth, t }) {
 
           {!isLogin && (
             <p style={{ fontSize: 11, color: C.fine, textAlign: "center", margin: "14px auto 0", maxWidth: 300, lineHeight: 1.5 }}>
-              By creating an account you agree to our <span style={{ color: C.sub, cursor: "pointer" }}>Terms</span> and <span style={{ color: C.sub, cursor: "pointer" }}>Privacy Policy</span>.
+              By creating an account you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: C.sub, textDecoration: "underline", cursor: "pointer" }}>Terms</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: C.sub, textDecoration: "underline", cursor: "pointer" }}>Privacy Policy</a>.
             </p>
           )}
 

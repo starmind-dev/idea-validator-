@@ -200,6 +200,11 @@ export default function DashboardShell({ t, active = "overview", onNavigate, use
           <p style={{ fontSize: 12, color: t.mut, margin: 0 }}>
             IdeaLoop Core — All analysis is AI-generated. Use as a guide, not a definitive assessment.
           </p>
+          <div style={{ display: "flex", gap: 18, marginTop: 8, fontSize: 12 }}>
+            <a href="/privacy" style={{ color: t.mut, textDecoration: "none" }}>Privacy</a>
+            <a href="/terms" style={{ color: t.mut, textDecoration: "none" }}>Terms</a>
+            <a href="/disclaimer" style={{ color: t.mut, textDecoration: "none" }}>Disclaimer</a>
+          </div>
         </footer>
       </main>
     </div>
