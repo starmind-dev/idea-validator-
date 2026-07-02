@@ -1,4 +1,5 @@
 "use client";
+import CapacityWall from "./CapacityWall";
 
 // DashboardShell.js — the new left-rail app chrome (the "Dashboard").
 //
@@ -116,7 +117,7 @@ function RailItem({ t, item, active, onNavigate }) {
   );
 }
 
-export default function DashboardShell({ t, active = "overview", onNavigate, userEmail, authLoading = false, onLogin, onLogout, children }) {
+export default function DashboardShell({ t, active = "overview", onNavigate, userEmail, authLoading = false, onLogin, onLogout, capacityWall = false, onCapacityClose, children }) {
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: t.bg, color: t.text }}>
       {/* ── left rail ── */}
@@ -207,6 +208,7 @@ export default function DashboardShell({ t, active = "overview", onNavigate, use
           </div>
         </footer>
       </main>
+      {capacityWall && <CapacityWall onClose={onCapacityClose} />}
     </div>
   );
 }

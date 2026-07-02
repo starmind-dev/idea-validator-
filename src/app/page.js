@@ -280,6 +280,9 @@ export default function Home() {
   const [evalUnlimited, setEvalUnlimited] = useState(false); // dev plan → no eval limit
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  // Global capacity wall — opened when an analyze is refused with 503/"CAPACITY"
+  // (the weekly budget guard tripped for everyone). Distinct from a per-user LIMIT.
+  const [capacityWall, setCapacityWall] = useState(false);
   // Public marketing landing gate. Stays false during SSR/first paint to avoid a
   // hydration flash; an effect (below, after auth resolves) flips it on only for a
   // genuine logged-out first-touch visit (no saved nav snapshot, no deep-link). Any
@@ -934,6 +937,14 @@ export default function Home() {
 
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
+      // Global capacity guard (503 / code "CAPACITY"): the whole beta hit its weekly
+      // ceiling. Raise the capacity wall + waitlist instead of a generic error, and
+      // signal callers to bail quietly. A per-user LIMIT (402) still throws below and
+      // surfaces the existing "your runs refill {day}" copy.
+      if (res.status === 503 || errData.code === "CAPACITY") {
+        setCapacityWall(true);
+        return { capacity: true };
+      }
       throw new Error(errData.error || "Analysis failed");
     }
 
@@ -1142,6 +1153,7 @@ export default function Home() {
       const endpoint = mode === "explore" ? "/api/analyze-explore" : "/api/analyze-pro";
       const result = await analyzeWithStream(ideaToUse, profile, endpoint, mode);
 
+      if (result.capacity) return; // capacity wall already raised
       if (result.ethicsBlocked) {
         setError(result.message);
         return;
@@ -1215,6 +1227,7 @@ export default function Home() {
     setWalkthroughData(null);
     try {
       const result = await analyzeWithStream(ideaText, profile, "/api/analyze-pro", "reeval");
+      if (result.capacity) return; // capacity wall already raised
       if (result.ethicsBlocked) {
         setError(result.message || "Re-judge could not complete.");
         return;
@@ -1400,6 +1413,7 @@ export default function Home() {
       const reEvalEndpoint = "/api/analyze-pro";
       const result = await analyzeWithStream(modifiedIdea, profile, reEvalEndpoint, "reeval");
 
+      if (result.capacity) return; // capacity wall already raised
       if (result.ethicsBlocked) {
         setError(result.message);
         return;
@@ -2520,7 +2534,7 @@ export default function Home() {
   // ==========================================
   if (historicalExploreRead && historicalExploreRead.explore) {
     return (
-      <DashboardShell
+      <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
         active=""
         userEmail={user?.email}
@@ -2565,7 +2579,7 @@ export default function Home() {
   if (currentScreen === "dashboard" && !lineageMode && !compareMode) {
     return (
       <>
-      <DashboardShell
+      <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
         active={dashView}
         userEmail={user?.email}
@@ -2664,7 +2678,7 @@ export default function Home() {
     const bgFieldLabel = { fontSize: 13.5, fontWeight: 600, color: t.text, display: "block", marginBottom: 8 };
 
     return (
-      <DashboardShell
+      <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
         active=""
         userEmail={user?.email}
@@ -2890,7 +2904,7 @@ export default function Home() {
   // shared screen below. Routed by inputMode, set from the Overview mode cards.
   if (currentScreen === "input" && inputMode === "explore") {
     return (
-      <DashboardShell
+      <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
         active=""
         userEmail={user?.email}
@@ -2929,7 +2943,7 @@ export default function Home() {
   // harmless fallback (both inputMode values now early-return).
   if (currentScreen === "input" && inputMode === "deep") {
     return (
-      <DashboardShell
+      <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
         active=""
         userEmail={user?.email}
@@ -2965,7 +2979,7 @@ export default function Home() {
 
   if (currentScreen === "input") {
     return (
-      <DashboardShell
+      <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
         active=""
         userEmail={user?.email}
@@ -3131,7 +3145,7 @@ export default function Home() {
     // inert while mid-edit (save or cancel first).
     const roughDoorsLocked = roughEditing;
     return (
-      <DashboardShell
+      <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
         active=""
         userEmail={user?.email}
@@ -3367,7 +3381,7 @@ export default function Home() {
     // COMPARISON MODE: render ComparisonView instead of hub (subscribers only)
     if (compareMode && compareData) {
       return (
-        <DashboardShell
+        <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
           t={t}
           active="hub"
           userEmail={user?.email}
@@ -3400,7 +3414,7 @@ export default function Home() {
     if (lineageMode && lineageTargetId) {
       return (
         <>
-        <DashboardShell
+        <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
           t={t}
           active="hub"
           userEmail={user?.email}
@@ -3609,7 +3623,7 @@ export default function Home() {
       : "Your profile";
 
     return (
-      <DashboardShell
+      <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
         active=""
         userEmail={user?.email}
@@ -3706,7 +3720,7 @@ export default function Home() {
       angleStatus[aid] = slot;
     });
     return (
-      <DashboardShell
+      <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
         active=""
         userEmail={user?.email}
@@ -3843,7 +3857,7 @@ export default function Home() {
       (analysis.execution_brief && Object.keys(analysis.execution_brief).length > 0)
     );
     return (
-      <DashboardShell
+      <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
         active=""
         userEmail={user?.email}
@@ -3921,7 +3935,7 @@ export default function Home() {
   // ============================================
   if (currentScreen === "brief" && analysis) {
     return (
-      <DashboardShell
+      <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
         active=""
         userEmail={user?.email}

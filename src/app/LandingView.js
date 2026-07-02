@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 
 /*
  * LandingView — IdeaLoop Core public marketing landing page.
@@ -14,17 +14,16 @@ import React, { useRef, useEffect } from "react";
  * ───────────────────────────────────────────────────────────────────────────
  *  EASY-TO-FILL STUBS (left intentionally inert for now — see memory):
  *
- *  1. PRICING — the numbers below are the ONLY place pricing copy lives. When the
- *     real PAYG / free-tier model is confirmed, edit this object; the cards read
- *     from it. (Until then it mirrors the current design exactly.)
+ *  1. BETA — the "#beta" section carries free-beta framing only; no prices or
+ *     credits are shown. Its "Save your spot" waitlist posts to /api/waitlist
+ *     (source: landing). When the paid model ships, add the pricing UI here then.
  *
  *  2. SAMPLE_LOOP_URL — set this to a real read-only sample-lineage URL to make the
  *     "View a sample loop" buttons appear + work. While it is null, those buttons
  *     are hidden (the rest of the layout is unaffected). Flip one constant to ship.
  *
- *  3. Handlers (onStartLoop / onLogIn / onStartFree / onGetCredits / onViewSample)
- *     are passed in as props so the routing gate in page.js decides what
- *     "enter the app" means.
+ *  3. Handlers (onStartLoop / onLogIn / onViewSample) are passed in as props so
+ *     the routing gate in page.js decides what "enter the app" means.
  *
  *  4. showFooting — render toggle for the "footing" (Deep/Re-eval/Compare)
  *     section. Default true.
@@ -36,11 +35,7 @@ const SAMPLE_LOOP_URL = null;
 
 // ── Pricing config (single source of truth for the pricing section copy/numbers).
 //    NOTE: reconcile against the real credit model before launch.
-const PRICING = {
-  free:    { price: "$0",  meta: "to start · 150 credits on sign-up" },
-  credits: { price: "$19", per: "/ 1,000 credits", meta: "no subscription · never expires" },
-  rates:   { explore: "≈ 20 credits", deep: "≈ 120 credits", reeval: "≈ 80 credits", compare: "included" },
-};
+// (Pricing config removed — no pricing or credits are shown during beta.)
 
 function smoothScrollTo(el) {
   if (!el) return;
@@ -118,6 +113,27 @@ export default function LandingView({
     onViewSample || (() => { if (SAMPLE_LOOP_URL) window.open(SAMPLE_LOOP_URL, "_blank"); });
   const showSample = !!SAMPLE_LOOP_URL || !!onViewSample;
 
+  // ── Beta waitlist ("Save your spot") — self-contained: own state, own POST to
+  //    /api/waitlist (source: landing). Anonymous; the email is the key.
+  const [wlOpen, setWlOpen] = useState(false);
+  const [wlEmail, setWlEmail] = useState("");
+  const [wlState, setWlState] = useState("idle"); // idle | sending | done | error
+  const [wlErr, setWlErr] = useState("");
+  const submitWaitlist = async () => {
+    const e = wlEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { setWlErr("Enter a valid email."); return; }
+    setWlState("sending"); setWlErr("");
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: e, source: "landing" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setWlErr(data.error || "Could not save. Try again."); setWlState("error"); return; }
+      setWlState("done");
+    } catch (_) { setWlErr("Could not save. Try again."); setWlState("error"); }
+  };
+
   return (
 
 <div style={{ background: '#09090b', color: '#f4f4f5', fontFamily: '-apple-system,BlinkMacSystemFont,\'Segoe UI\',Helvetica,Arial,sans-serif', WebkitFontSmoothing: 'antialiased', overflowX: 'hidden' }}>
@@ -125,7 +141,7 @@ export default function LandingView({
   {/* NAV */}
   <header style={{ position: 'sticky', top: '0', zIndex: '50', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 40px', background: 'rgba(9,9,11,0.82)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
     <div style={{ display: 'flex', alignItems: 'center' }}><img src="/idealoop-wordmark.png" alt="IdeaLoop Core" style={{ display: 'block', height: '46px', width: 'auto' }} /></div>
-    <nav style={{ display: 'flex', alignItems: 'center', gap: '30px', fontSize: '14px' }}><a className="navlink" href="#the-loop">The loop</a><a className="navlink" href="#explore">Explore</a><a className="navlink" href="#pricing">Pricing</a></nav>
+    <nav style={{ display: 'flex', alignItems: 'center', gap: '30px', fontSize: '14px' }}><a className="navlink" href="#the-loop">The loop</a><a className="navlink" href="#explore">Explore</a><a className="navlink" href="#beta">Beta</a></nav>
     <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}><span onClick={onLogIn} style={{ fontSize: '14px', color: '#a1a1aa', cursor: 'pointer' }}>Log in</span><span onClick={onStartLoop} style={{ fontSize: '14px', fontWeight: '600', color: '#fff', background: '#8b7ff0', padding: '9px 18px', borderRadius: '10px', cursor: 'pointer' }}>Start an idea loop</span></div>
   </header>
 
@@ -196,7 +212,7 @@ export default function LandingView({
         <span onClick={onStartLoop} style={{ fontSize: '15.5px', fontWeight: '600', color: '#fff', background: '#8b7ff0', padding: '14px 28px', borderRadius: '12px', cursor: 'pointer', boxShadow: '0 8px 30px rgba(139,127,240,0.3)' }}>Start an idea loop →</span>
         {showSample && (<span style={{ fontSize: '15.5px', fontWeight: '500', color: '#d4d4d8', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', padding: '14px 24px', borderRadius: '12px', cursor: 'pointer' }} onClick={onViewSampleFn}>View a sample loop</span>)}
       </div>
-      <div style={{ fontFamily: '\'JetBrains Mono\',monospace', fontSize: '12px', color: '#52525b', marginTop: '18px' }}>NO CARD TO START · FREE CREDITS ON SIGN-UP</div>
+      <div style={{ fontFamily: '\'JetBrains Mono\',monospace', fontSize: '12px', color: '#52525b', marginTop: '18px' }}>NO CARD · YOUR FIRST RUN IS FREE</div>
     </div>
   </section>
 
@@ -590,19 +606,37 @@ export default function LandingView({
     </div>
   </section>
 
-  {/* 10 PRICING */}
-  <section id="pricing" style={{ maxWidth: '1000px', margin: '0 auto', padding: '128px 24px 0', scrollMarginTop: '88px' }}>
-    <div style={{ textAlign: 'center' }}><div style={{ fontFamily: '\'JetBrains Mono\',monospace', fontSize: '12px', letterSpacing: '.18em', color: '#6b7280' }}>PRICING</div><h2 style={{ fontFamily: '\'Spectral\',serif', fontWeight: '500', fontSize: '40px', lineHeight: '1.12', margin: '14px auto 0', color: '#fafafa' }}>Pay as you think.</h2><p style={{ fontSize: '16.5px', color: '#a1a1aa', margin: '14px auto 0', maxWidth: '560px', lineHeight: '1.6' }}>Every Explore, Deep Analysis, and Re-evaluation spends credits. Start free, spend credits only when you run the loop.</p></div>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginTop: '44px' }}>
-      <div style={{ background: 'rgba(255,255,255,0.018)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', padding: '30px' }}><div style={{ fontSize: '15px', color: '#d4d4d8', fontWeight: '600' }}>Free</div><div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '14px' }}><span style={{ fontFamily: '\'Spectral\',serif', fontSize: '42px', color: '#fafafa' }}>$0</span></div><div style={{ fontSize: '13.5px', color: '#9a9aa3', marginTop: '4px' }}>to start · 150 credits on sign-up</div><div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px', fontSize: '13.5px', color: '#9a9aa3' }}><div>✓  Your first idea loop</div><div>✓  Explore + one Deep Analysis</div><div>✓  Full lineage & memory</div></div><div style={{ marginTop: '24px', textAlign: 'center', fontSize: '14px', fontWeight: '600', color: '#e8e8ea', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '11px', padding: '12px', cursor: 'pointer' }} onClick={onStartFreeFn}>Start free</div></div>
-      <div style={{ background: 'linear-gradient(180deg,rgba(139,127,240,0.08),rgba(255,255,255,0.012))', border: '1px solid rgba(139,127,240,0.32)', borderRadius: '18px', padding: '30px', boxShadow: '0 0 50px rgba(139,127,240,0.08)' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: '15px', color: '#f4f4f5', fontWeight: '600' }}>Credits</span><span style={{ fontFamily: '\'JetBrains Mono\',monospace', fontSize: '10px', color: '#bdb4f0', background: 'rgba(139,127,240,0.16)', border: '1px solid rgba(139,127,240,0.3)', padding: '3px 9px', borderRadius: '5px' }}>PAY AS YOU GO</span></div><div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '14px' }}><span style={{ fontFamily: '\'Spectral\',serif', fontSize: '42px', color: '#fafafa' }}>$19</span><span style={{ fontSize: '14px', color: '#71717a' }}>/ 1,000 credits</span></div><div style={{ fontSize: '13.5px', color: '#9a9aa3', marginTop: '4px' }}>no subscription · never expires</div><div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px', fontSize: '13.5px', color: '#c8c8cc' }}><div style={{ color: '#bdb4f0' }}>✓  Unlimited saved ideas & branches</div><div style={{ color: '#bdb4f0' }}>✓  Credits only spent when you run analysis</div><div style={{ color: '#bdb4f0' }}>✓  Deep Analysis with verified sources</div></div><div style={{ marginTop: '24px', textAlign: 'center', fontSize: '14px', fontWeight: '600', color: '#fff', background: '#8b7ff0', borderRadius: '11px', padding: '12px', cursor: 'pointer' }} onClick={onGetCreditsFn}>Get credits</div></div>
+  {/* 10 BETA — free while in beta, with the overflow waitlist. Replaces the old
+      placeholder pricing section; no credits or prices are shown during beta. */}
+  <section id="beta" style={{ maxWidth: '760px', margin: '0 auto', padding: '128px 24px 0', scrollMarginTop: '88px', textAlign: 'center' }}>
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '9px', fontFamily: "'JetBrains Mono',monospace", fontSize: '12px', letterSpacing: '.2em', color: '#9a9aa3', textTransform: 'uppercase' }}><span style={{ color: '#34d8a8', fontSize: '15px', lineHeight: '1' }}>&infin;</span> The beta</div>
+    <h2 style={{ fontFamily: "'Spectral',serif", fontWeight: '500', fontSize: '40px', lineHeight: '1.12', letterSpacing: '-0.01em', margin: '16px auto 0', color: '#fafafa' }}>It&rsquo;s free while it&rsquo;s in beta.</h2>
+    <p style={{ fontSize: '16.5px', color: '#a1a1aa', margin: '16px auto 0', maxWidth: '600px', lineHeight: '1.62' }}>No card, no credits, no catch — full access to Explore and Deep while the engine&rsquo;s being tuned. When the beta ends you&rsquo;ll hear the pricing here first, and nothing is ever charged without you choosing it.</p>
+
+    <div style={{ maxWidth: '640px', margin: '34px auto 0', textAlign: 'left', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', padding: '26px 30px' }}>
+      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '10px', letterSpacing: '.2em', color: '#9a9aa3', textTransform: 'uppercase', marginBottom: '16px' }}>How the beta runs</div>
+      <div style={{ display: 'flex', gap: '14px', paddingBottom: '13px' }}><span style={{ color: '#34d8a8', fontSize: '14px', marginTop: '1px' }}>✓</span><div><div style={{ fontSize: '14px', color: '#fafafa', fontWeight: '500' }}>Free, full access.</div><div style={{ fontSize: '13.5px', color: '#9a9aa3', lineHeight: '1.58', marginTop: '3px' }}>Explore and Deep, no paywall, no card on file.</div></div></div>
+      <div style={{ display: 'flex', gap: '14px', padding: '13px 0', borderTop: '1px solid rgba(255,255,255,0.07)' }}><span style={{ color: '#34d8a8', fontSize: '14px', marginTop: '1px' }}>✓</span><div><div style={{ fontSize: '14px', color: '#fafafa', fontWeight: '500' }}>A loop&rsquo;s worth of runs each week.</div><div style={{ fontSize: '13.5px', color: '#9a9aa3', lineHeight: '1.58', marginTop: '3px' }}>Enough to put one real idea through Explore &rarr; Deep &rarr; Re-evaluate. Compare is always free.</div></div></div>
+      <div style={{ display: 'flex', gap: '14px', paddingTop: '13px', borderTop: '1px solid rgba(255,255,255,0.07)' }}><span style={{ color: '#34d8a8', fontSize: '14px', marginTop: '1px' }}>✓</span><div><div style={{ fontSize: '14px', color: '#fafafa', fontWeight: '500' }}>Kept small on purpose.</div><div style={{ fontSize: '13.5px', color: '#9a9aa3', lineHeight: '1.58', marginTop: '3px' }}>A weekly cap keeps the beta something one person can watch closely and stand behind. If a week is full when you arrive, save your spot and I&rsquo;ll open one.</div></div></div>
     </div>
-    <div style={{ marginTop: '24px', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px' }}>
-      <span style={{ fontFamily: '\'JetBrains Mono\',monospace', fontSize: '12px', color: '#a1a1aa', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '8px 13px' }}>Explore  <span style={{ color: '#8aa9f7' }}>≈ 20 credits</span></span>
-      <span style={{ fontFamily: '\'JetBrains Mono\',monospace', fontSize: '12px', color: '#a1a1aa', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '8px 13px' }}>Deep Analysis  <span style={{ color: '#b3a3f5' }}>≈ 120 credits</span></span>
-      <span style={{ fontFamily: '\'JetBrains Mono\',monospace', fontSize: '12px', color: '#a1a1aa', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '8px 13px' }}>Re-evaluate  <span style={{ color: '#5fe3bd' }}>≈ 80 credits</span></span>
-      <span style={{ fontFamily: '\'JetBrains Mono\',monospace', fontSize: '12px', color: '#a1a1aa', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '8px 13px' }}>Compare  <span style={{ color: '#a6b6f5' }}>included</span></span>
+
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginTop: '30px', flexWrap: 'wrap' }}>
+      <span onClick={onStartLoop} style={{ fontSize: '15.5px', fontWeight: '600', color: '#fff', background: '#8b7ff0', padding: '14px 28px', borderRadius: '12px', cursor: 'pointer', boxShadow: '0 8px 30px rgba(139,127,240,0.28)' }}>Start an idea loop &rarr;</span>
+      {wlState !== "done" && (<span onClick={() => setWlOpen((v) => !v)} style={{ fontSize: '15px', fontWeight: '500', color: '#d4d4d8', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.14)', padding: '14px 24px', borderRadius: '12px', cursor: 'pointer' }}>Save your spot</span>)}
     </div>
+
+    {wlOpen && wlState !== "done" && (
+      <div style={{ maxWidth: '420px', margin: '18px auto 0' }}>
+        <div style={{ display: 'flex', gap: '9px' }}>
+          <input type="email" value={wlEmail} onChange={(ev) => setWlEmail(ev.target.value)} onKeyDown={(ev) => { if (ev.key === "Enter") submitWaitlist(); }} placeholder="you@email.com" disabled={wlState === "sending"} style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '10px', padding: '11px 13px', fontSize: '13.5px', color: '#fafafa', outline: 'none' }} />
+          <span onClick={submitWaitlist} style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '12.5px', fontWeight: '500', color: '#062b22', background: '#34d8a8', borderRadius: '10px', padding: '11px 16px', cursor: 'pointer', whiteSpace: 'nowrap', opacity: wlState === "sending" ? 0.7 : 1 }}>{wlState === "sending" ? "Saving…" : "Save my spot"}</span>
+        </div>
+        {wlErr && (<div style={{ fontSize: '12px', color: '#ee8a8a', marginTop: '8px', textAlign: 'left' }}>{wlErr}</div>)}
+      </div>
+    )}
+    {wlState === "done" && (<div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '12.5px', color: '#34d8a8', marginTop: '20px' }}>&#10003; You&rsquo;re on the list — I&rsquo;ll email when a spot opens.</div>)}
+
+    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '12px', color: '#52525b', marginTop: '20px' }}>NO CARD · YOUR FIRST RUN IS FREE</div>
   </section>
 
   {/* 11 FINAL CTA — recognition close */}
@@ -611,7 +645,7 @@ export default function LandingView({
       <h2 style={{ fontFamily: '\'Spectral\',serif', fontWeight: '500', fontSize: '44px', lineHeight: '1.12', letterSpacing: '-0.01em', color: '#fafafa' }}>You already run this loop.<br />Give it somewhere to live.</h2>
       <p style={{ fontSize: '17px', color: '#a1a1aa', margin: '16px auto 0', maxWidth: '520px', lineHeight: '1.6' }}>Bring one rough idea. Leave with grounded directions, a first read, and a record you can return to.</p>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginTop: '30px' }}><span onClick={onStartLoop} style={{ fontSize: '16px', fontWeight: '600', color: '#fff', background: '#8b7ff0', padding: '15px 30px', borderRadius: '12px', cursor: 'pointer', boxShadow: '0 8px 30px rgba(139,127,240,0.3)' }}>Start an idea loop →</span>{showSample && (<span style={{ fontSize: '16px', fontWeight: '500', color: '#d4d4d8', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', padding: '15px 26px', borderRadius: '12px', cursor: 'pointer' }} onClick={onViewSampleFn}>View a sample loop</span>)}</div>
-      <div style={{ fontFamily: '\'JetBrains Mono\',monospace', fontSize: '12px', color: '#52525b', marginTop: '22px' }}>NO CARD TO START · FREE CREDITS ON SIGN-UP</div>
+      <div style={{ fontFamily: '\'JetBrains Mono\',monospace', fontSize: '12px', color: '#52525b', marginTop: '22px' }}>NO CARD · YOUR FIRST RUN IS FREE</div>
     </div>
   </section>
 
@@ -619,7 +653,7 @@ export default function LandingView({
   <footer style={{ maxWidth: '1180px', margin: '120px auto 0', padding: '80px 24px 50px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
       <div style={{ display: 'flex', alignItems: 'center' }}><img src="/idealoop-wordmark.png" alt="IdeaLoop Core" style={{ display: 'block', height: '26px', width: 'auto' }} /></div>
-      <div style={{ display: 'flex', gap: '26px', fontSize: '13.5px', flexWrap: 'wrap' }}><a className="navlink" href="#the-loop">The loop</a><a className="navlink" href="#explore">Explore</a><a className="navlink" href="#pricing">Pricing</a><a className="navlink" href="/privacy">Privacy</a><a className="navlink" href="/terms">Terms</a><a className="navlink" href="/disclaimer">Disclaimer</a><span onClick={onLogIn} style={{ color: '#9a9aa3', cursor: 'pointer' }}>Log in</span></div>
+      <div style={{ display: 'flex', gap: '26px', fontSize: '13.5px', flexWrap: 'wrap' }}><a className="navlink" href="#the-loop">The loop</a><a className="navlink" href="#explore">Explore</a><a className="navlink" href="#beta">Beta</a><a className="navlink" href="/privacy">Privacy</a><a className="navlink" href="/terms">Terms</a><a className="navlink" href="/disclaimer">Disclaimer</a><span onClick={onLogIn} style={{ color: '#9a9aa3', cursor: 'pointer' }}>Log in</span></div>
       <div style={{ fontSize: '13px', color: '#52525b' }}>© 2026 IdeaLoop Core</div>
     </div>
     <div style={{ fontFamily: '\'JetBrains Mono\',monospace', fontSize: '11.5px', color: '#52525b', marginTop: '26px', lineHeight: '1.5' }}>All analysis is AI-generated. Use as a guide, not a definitive assessment.</div>
