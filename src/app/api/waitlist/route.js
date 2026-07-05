@@ -33,7 +33,7 @@ function confirmText() {
   return [
     "Hey — you're on the list for the IdeaLoop Core beta.",
     "",
-    "The beta runs a small number of idea loops each week, kept small on purpose so I can watch it closely. When a spot opens I'll email you — nothing to do until then, and no card.",
+    "The beta runs a small number of idea loops each week, kept small on purpose so I can watch it closely. When there's room again I'll email you — nothing to do until then, and no card.",
     "",
     "If you want to tell me what you're building, or what you'd want out of it, just reply. I read every one.",
     "",
@@ -51,7 +51,7 @@ function confirmHtml() {
           <tr><td style="padding:34px 30px;">
             <p style="margin:0 0 26px;color:#8a82c2;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:600;">IdeaLoop Core</p>
             <p style="margin:0 0 18px;color:#1a1d24;font-size:16px;line-height:1.6;">Hey — you're on the list for the IdeaLoop Core beta.</p>
-            <p style="margin:0 0 18px;color:#454b57;font-size:15px;line-height:1.65;">The beta runs a small number of idea loops each week, kept small on purpose so I can watch it closely. When a spot opens I'll email you — nothing to do until then, and no card.</p>
+            <p style="margin:0 0 18px;color:#454b57;font-size:15px;line-height:1.65;">The beta runs a small number of idea loops each week, kept small on purpose so I can watch it closely. When there's room again I'll email you — nothing to do until then, and no card.</p>
             <p style="margin:0 0 18px;color:#454b57;font-size:15px;line-height:1.65;">If you want to tell me what you're building, or what you'd want out of it, just reply. I read every one.</p>
             <p style="margin:26px 0 0;color:#1a1d24;font-size:15px;">— Emre</p>
           </td></tr>

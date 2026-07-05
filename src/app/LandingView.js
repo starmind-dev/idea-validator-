@@ -617,7 +617,7 @@ export default function LandingView({
       <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '10px', letterSpacing: '.2em', color: '#9a9aa3', textTransform: 'uppercase', marginBottom: '16px' }}>How the beta runs</div>
       <div style={{ display: 'flex', gap: '14px', paddingBottom: '13px' }}><span style={{ color: '#34d8a8', fontSize: '14px', marginTop: '1px' }}>✓</span><div><div style={{ fontSize: '14px', color: '#fafafa', fontWeight: '500' }}>Free, full access.</div><div style={{ fontSize: '13.5px', color: '#9a9aa3', lineHeight: '1.58', marginTop: '3px' }}>Explore and Deep, no paywall, no card on file.</div></div></div>
       <div style={{ display: 'flex', gap: '14px', padding: '13px 0', borderTop: '1px solid rgba(255,255,255,0.07)' }}><span style={{ color: '#34d8a8', fontSize: '14px', marginTop: '1px' }}>✓</span><div><div style={{ fontSize: '14px', color: '#fafafa', fontWeight: '500' }}>A loop&rsquo;s worth of runs each week.</div><div style={{ fontSize: '13.5px', color: '#9a9aa3', lineHeight: '1.58', marginTop: '3px' }}>Enough to put one real idea through Explore &rarr; Deep &rarr; Re-evaluate. Compare is always free.</div></div></div>
-      <div style={{ display: 'flex', gap: '14px', paddingTop: '13px', borderTop: '1px solid rgba(255,255,255,0.07)' }}><span style={{ color: '#34d8a8', fontSize: '14px', marginTop: '1px' }}>✓</span><div><div style={{ fontSize: '14px', color: '#fafafa', fontWeight: '500' }}>Kept small on purpose.</div><div style={{ fontSize: '13.5px', color: '#9a9aa3', lineHeight: '1.58', marginTop: '3px' }}>A weekly cap keeps the beta something one person can watch closely and stand behind. If a week is full when you arrive, save your spot and I&rsquo;ll open one.</div></div></div>
+      <div style={{ display: 'flex', gap: '14px', paddingTop: '13px', borderTop: '1px solid rgba(255,255,255,0.07)' }}><span style={{ color: '#34d8a8', fontSize: '14px', marginTop: '1px' }}>✓</span><div><div style={{ fontSize: '14px', color: '#fafafa', fontWeight: '500' }}>Kept small on purpose.</div><div style={{ fontSize: '13.5px', color: '#9a9aa3', lineHeight: '1.58', marginTop: '3px' }}>A weekly cap keeps the beta something one person can watch closely and stand behind. If a week is full when you arrive, save your spot and I&rsquo;ll email you when there&rsquo;s room again.</div></div></div>
     </div>
 
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginTop: '30px', flexWrap: 'wrap' }}>
@@ -634,7 +634,7 @@ export default function LandingView({
         {wlErr && (<div style={{ fontSize: '12px', color: '#ee8a8a', marginTop: '8px', textAlign: 'left' }}>{wlErr}</div>)}
       </div>
     )}
-    {wlState === "done" && (<div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '12.5px', color: '#34d8a8', marginTop: '20px' }}>&#10003; You&rsquo;re on the list — I&rsquo;ll email when a spot opens.</div>)}
+    {wlState === "done" && (<div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '12.5px', color: '#34d8a8', marginTop: '20px' }}>&#10003; You&rsquo;re on the list — I&rsquo;ll email when there&rsquo;s room again.</div>)}
 
     <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '12px', color: '#52525b', marginTop: '20px' }}>NO CARD · YOUR FIRST RUN IS FREE</div>
   </section>

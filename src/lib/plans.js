@@ -1,10 +1,11 @@
 // src/lib/plans.js
 // Single source of truth for plans, allowances, metering weights, and the global
 // budget guard. Everything money- or allowance-shaped reads from here — the
-// entitlements service, the eval-usage route, My Plan, and (later) the landing
-// pricing + the Polar webhook. Keeping it in one config is what stops the landing
-// numbers and the real entitlement model from drifting apart (the pricing-
-// reconciliation trust-blocker): reconcile here, once, and everything else reads it.
+// entitlements service, the eval-usage route, My Plan, the waitlist invite gate,
+// and (later) the landing pricing + the Polar webhook. Keeping it in one config is
+// what stops the landing numbers and the real entitlement model from drifting apart
+// (the pricing-reconciliation trust-blocker): reconcile here, once, and everything
+// else reads it.
 
 // A "loop" is the unit users think in (Explore -> Deep -> Re-evaluate -> Compare).
 // The meter counts "runs": the three evaluation actions. Compare is always free —
@@ -44,11 +45,38 @@ export const ACTION_COST_USD = {
 // The hard money guarantee. If estimated spend across ALL users in any trailing
 // 7-day window crosses this, new runs are refused until it falls back under. This
 // is what actually protects your bank account in beta — not the per-user allowance.
-// $200/week ceiling. Note the guard is check-then-act: one run already in flight
-// when the check passes can nudge actual spend a run or two ($0.30–0.90) over, so
-// if $200 is a HARD line you cannot cross, set this to ~190 for headroom. Tune to
-// whatever you're willing to eat per week.
-export const GLOBAL_WEEKLY_BUDGET_USD = 200;
+// It meters the ALL-IN est_cost_usd (LLM + retrieval), so Tavily / Exa / Serper are
+// ALREADY counted here — not just Anthropic tokens.
+//
+// $175/week ceiling (trimmed from $200): a deliberate hedge on the two things the
+// per-run number can't see — (a) that $0.05 retrieval figure is rounded to a
+// worst-case single eval and can run hotter, and (b) the FIXED monthly tool
+// subscriptions (Serper / Exa / Tavily plans) aren't in a per-run guard at all. The
+// guard is also check-then-act: a run in flight when the check passes can nudge
+// actual spend a run or two ($0.30–0.90) over, so the trim doubles as overshoot
+// headroom. Tune to whatever you're willing to eat per week.
+export const GLOBAL_WEEKLY_BUDGET_USD = 175;
+
+// ── waitlist invite gate (the "there's room again" mailer) ───────────────────
+// The invite mailer NEVER emails up to the guard. It plans against a LOWER ceiling
+// and leaves a buffer, so a whole invited batch returning at once still can't cross
+// the guard and hand new arrivals a CAPACITY wall on their first run — the "there's
+// room" email would become a lie the moment it was believed. Invites are sized
+// against INVITE_CEILING_USD, never GLOBAL_WEEKLY_BUDGET_USD. The buffer is the
+// hysteresis: it also stops the gate flapping open/shut right at the ceiling.
+export const INVITE_HEADROOM_BUFFER_USD = 25;
+export const INVITE_CEILING_USD = GLOBAL_WEEKLY_BUDGET_USD - INVITE_HEADROOM_BUFFER_USD; // 150
+
+// One invited person is assumed to run one full loop (explore + deep + reeval).
+// Derived from the same cost model so it stays honest if the per-action costs move.
+export const EST_LOOP_COST_USD =
+  ACTION_COST_USD.explore + ACTION_COST_USD.deep + ACTION_COST_USD.reeval; // 2.00
+
+// Hard cap on a SINGLE manual send, regardless of how much headroom exists — keeps
+// the beta "small on purpose" and every batch eyeball-reviewable. To let more in,
+// run the invite again: it re-reads live headroom each time, so repeated small
+// sends drip invites in without ever over-committing the budget in one shot.
+export const INVITE_MAX_BATCH = 20;
 
 // Rolling window — NOT a calendar week. Each run ages out 7 days after it ran, so
 // allowances refill smoothly instead of every user refreshing at once (which would
@@ -87,4 +115,15 @@ export function getPlan(planType) {
 export function runsPerWeek(plan) {
   if (!plan || plan.unlimited) return Infinity;
   return (plan.weeklyLoops || 0) * RUNS_PER_LOOP;
+}
+
+// Batch size the invite gate would send at a given live global spend: fill the
+// headroom up to INVITE_CEILING_USD in whole loops, clamped to the manual cap.
+// Returns 0 when there's no room. Pure function of the constants above — the route
+// reads live spend, this turns it into a count. Never returns a batch that, if it
+// all came back and ran a full loop, could push spend past the guard.
+export function inviteBatchSize(spendUsd) {
+  const headroom = INVITE_CEILING_USD - (Number(spendUsd) || 0);
+  const byBudget = Math.floor(headroom / EST_LOOP_COST_USD);
+  return Math.max(0, Math.min(byBudget, INVITE_MAX_BATCH));
 }

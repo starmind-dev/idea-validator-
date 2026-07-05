@@ -159,3 +159,11 @@ export async function recordRun(userId, action, opts = {}) {
     });
   if (error) throw new Error(error.message);
 }
+
+// ── waitlist invite support ──────────────────────────────────────────────────
+// Exposes the SAME trailing-window global spend the budget guard reads, so the
+// "there's room again" waitlist mailer sizes its batch against real numbers and can
+// never claim room the guard would then refuse. Read-only; no second capacity model.
+export async function getGlobalSpendUsd() {
+  return globalSpendUsd();
+}
