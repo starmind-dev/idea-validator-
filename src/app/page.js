@@ -2322,6 +2322,33 @@ export default function Home() {
     if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Couldn't send your feedback."); }
     return true;
   };
+  // Settings "Delete account" -> KVKK/GDPR erasure. Calls the authenticated
+  // delete route, then tears the session down exactly like handleLogout and drops
+  // to a clean anonymous Overview. Throws on failure so SettingsView surfaces the
+  // error and the account is NOT reported as deleted.
+  const handleDeleteAccount = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("You're signed out — nothing to delete.");
+    const res = await fetch("/api/account/delete", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d.error || "Could not delete your account. Please try again.");
+    }
+    await supabase.auth.signOut();
+    setUser(null);
+    setProfile({ coding: "", ai: "", education: "" });
+    setProfileBg({ role: "", build: "", reach: "" });
+    localStorage.removeItem("iv_profile");
+    localStorage.removeItem("iv_eval_timestamps");
+    sessionStorage.removeItem("iv_nav");
+    setLineageMode(false);
+    setLineageTargetId(null);
+    setCurrentScreen("dashboard");
+    setDashView("overview");
+  };
 
   const railNav = (key) => {
     // Any rail destination means leaving an open sub-view (a lineage tree or a
@@ -2619,6 +2646,7 @@ export default function Home() {
             profile={profile}
             onSaveProfile={saveProfileFields}
             onSignOut={handleLogout}
+            onDeleteAccount={handleDeleteAccount}
           />
         ) : dashView === "help" ? (
           <GetHelpView

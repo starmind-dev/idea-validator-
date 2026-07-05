@@ -4,11 +4,11 @@
 //
 // Two panels, nothing invented:
 //   • Account          — email (read-only) + sign out (both live), and a
-//                        "Delete account & data" row. Delete is DORMANT until its
-//                        backend cascade is wired (KVKK erasure): with no
-//                        onDeleteAccount handler it shows an honest "coming before
-//                        launch" note instead of a button that lies. Wire the
-//                        route later and the typed-confirm flow lights up.
+//                        "Delete account & data" row. Delete lights up once its
+//                        backend cascade is wired (KVKK erasure): with an
+//                        onDeleteAccount handler the typed-confirm flow runs; with
+//                        none it shows an honest "coming before launch" note
+//                        instead of a button that lies.
 //   • Builder context  — the three profile fields that calibrate Deep (coding, AI,
 //                        background). Edited locally, saved through the SAME
 //                        onSaveProfile path (/api/profile) the Deep-input step uses.
@@ -100,6 +100,7 @@ export default function SettingsView({ t, isAnon = false, onSignUp, email, profi
   const [delOpen, setDelOpen] = useState(false);
   const [delText, setDelText] = useState("");
   const [delBusy, setDelBusy] = useState(false);
+  const [delErr, setDelErr] = useState("");
 
   // reseed if the upstream profile changes (e.g. after a save round-trips)
   useEffect(() => {
@@ -120,8 +121,9 @@ export default function SettingsView({ t, isAnon = false, onSignUp, email, profi
 
   const doDelete = async () => {
     if (delText.trim().toLowerCase() !== "delete" || delBusy) return;
-    setDelBusy(true);
+    setDelBusy(true); setDelErr("");
     try { await onDeleteAccount?.(); }
+    catch (e) { setDelErr(e?.message || "Couldn\u2019t delete your account \u2014 please try again."); }
     finally { setDelBusy(false); }
   };
 
@@ -187,7 +189,7 @@ export default function SettingsView({ t, isAnon = false, onSignUp, email, profi
                 </div>
               </div>
               <button
-                onClick={() => { setDelOpen(true); setDelText(""); }}
+                onClick={() => { setDelOpen(true); setDelText(""); setDelErr(""); }}
                 style={{ fontFamily: MONO, fontSize: 12.5, color: C.red, background: "transparent", border: "1px solid rgba(238,138,138,0.35)", borderRadius: 9, padding: "8px 16px", cursor: "pointer", whiteSpace: "nowrap" }}
               >
                 Delete account
@@ -217,8 +219,9 @@ export default function SettingsView({ t, isAnon = false, onSignUp, email, profi
                 >
                   {delBusy ? "Deleting…" : "Delete everything"}
                 </button>
-                <button onClick={() => { setDelOpen(false); setDelText(""); }} style={ghost}>Cancel</button>
+                <button onClick={() => { setDelOpen(false); setDelText(""); setDelErr(""); }} style={ghost}>Cancel</button>
               </div>
+              {delErr && <div style={{ fontSize: 12.5, lineHeight: 1.55, color: C.red, marginTop: 13 }}>{delErr}</div>}
             </div>
           ) : (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
