@@ -12,6 +12,7 @@
 // best-effort. A re-submit (23505) never re-sends, so no one is emailed twice.
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { logEmailEvent } from "../../../lib/email-log";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -65,7 +66,11 @@ function confirmHtml() {
 // Best-effort confirmation send. Never throws, never blocks correctness.
 async function sendWaitlistConfirmation(email) {
   const key = process.env.RESEND_API_KEY;
-  if (!key) return; // sender not configured yet — skip silently
+  if (!key) {
+    // sender not configured yet — record it so the gap is visible, then skip
+    await logEmailEvent({ kind: "confirmation", email, status: "skipped", detail: "RESEND_API_KEY unset" });
+    return;
+  }
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -85,9 +90,14 @@ async function sendWaitlistConfirmation(email) {
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
       console.error("waitlist confirmation email failed:", res.status, detail);
+      await logEmailEvent({ kind: "confirmation", email, status: "failed", detail: `${res.status} ${detail}` });
+      return;
     }
+    const data = await res.json().catch(() => ({}));
+    await logEmailEvent({ kind: "confirmation", email, status: "sent", providerId: data?.id || null });
   } catch (e) {
     console.error("waitlist confirmation email error:", e);
+    await logEmailEvent({ kind: "confirmation", email, status: "failed", detail: e?.message || String(e) });
   }
 }
 

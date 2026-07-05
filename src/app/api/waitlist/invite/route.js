@@ -22,6 +22,7 @@
 // excluded, so no one is emailed twice.
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { logEmailEvent } from "../../../../lib/email-log";
 import { getGlobalSpendUsd } from "../../../../lib/services/entitlements";
 import {
   GLOBAL_WEEKLY_BUDGET_USD,
@@ -82,7 +83,11 @@ function roomHtml() {
 // the caller flips notified=true for that row; false leaves the row for a retry.
 async function sendRoomEmail(email) {
   const key = process.env.RESEND_API_KEY;
-  if (!key) { console.error("invite: RESEND_API_KEY unset — cannot send"); return false; }
+  if (!key) {
+    console.error("invite: RESEND_API_KEY unset — cannot send");
+    await logEmailEvent({ kind: "invite", email, status: "skipped", detail: "RESEND_API_KEY unset" });
+    return false;
+  }
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -102,11 +107,15 @@ async function sendRoomEmail(email) {
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
       console.error("invite email failed:", email, res.status, detail);
+      await logEmailEvent({ kind: "invite", email, status: "failed", detail: `${res.status} ${detail}` });
       return false;
     }
+    const data = await res.json().catch(() => ({}));
+    await logEmailEvent({ kind: "invite", email, status: "sent", providerId: data?.id || null });
     return true;
   } catch (e) {
     console.error("invite email error:", email, e);
+    await logEmailEvent({ kind: "invite", email, status: "failed", detail: e?.message || String(e) });
     return false;
   }
 }
