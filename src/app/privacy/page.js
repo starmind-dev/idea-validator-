@@ -12,6 +12,7 @@ export const metadata = {
 };
 
 const EFFECTIVE_DATE = '2 July 2026'; // update to your actual publish date
+const LAST_UPDATED = '6 July 2026'; // bump on every material edit (see Section 13)
 const CONTACT_EMAIL = 'privacy@idealoopcore.com';
 const CONTROLLER = 'Emre Yıldız, operating IdeaLoop Core';
 
@@ -44,7 +45,7 @@ export default function PrivacyPolicy() {
         <div className="topnav"><a href="/">← IdeaLoop Core</a></div>
 
         <h1>Privacy Policy</h1>
-        <p className="sub">Effective {EFFECTIVE_DATE} · Last updated {EFFECTIVE_DATE}</p>
+        <p className="sub">Effective {EFFECTIVE_DATE} · Last updated {LAST_UPDATED}</p>
 
         <h2>1. Who we are</h2>
         <p>IdeaLoop Core (&ldquo;IdeaLoop Core&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) operates the website and application at idealoopcore.com (the &ldquo;Service&rdquo;), an AI-assisted tool that helps founders examine and reflect on startup ideas.</p>
@@ -91,6 +92,8 @@ export default function PrivacyPolicy() {
             <tr><td>Vercel</td><td>Application hosting and delivery</td><td>United States</td></tr>
             <tr><td>Anthropic</td><td>AI model processing of submitted content</td><td>United States</td></tr>
             <tr><td>Google</td><td>Sign-in (OAuth), if you choose it</td><td>United States / global</td></tr>
+            <tr><td>Resend</td><td>Transactional email delivery (account and waitlist messages)</td><td>United States</td></tr>
+            <tr><td>ImprovMX</td><td>Inbound email forwarding</td><td>European Union (France) / global</td></tr>
             <tr><td>Search / retrieval providers (e.g. Tavily, Exa, Serper, GitHub)</td><td>Returning external evidence for evaluations</td><td>United States / global</td></tr>
             <tr><td>Polar (from a later date)</td><td>Merchant of Record for payments</td><td>United States / EU</td></tr>
           </tbody>
