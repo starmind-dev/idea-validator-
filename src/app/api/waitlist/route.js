@@ -10,6 +10,12 @@
 // (e.g. before the sending domain is verified) or the send fails, the waitlist row
 // still saves and the request still returns ok. The row is load-bearing; the mail is
 // best-effort. A re-submit (23505) never re-sends, so no one is emailed twice.
+//
+// ABUSE: this endpoint mails a real person on every new address, so it is an open
+// mailer. The primary rate-limit lives at the edge (Vercel Firewall rule on this
+// path, keyed by IP) — that holds across serverless instances, which in-route
+// counters do not. The honeypot below is the code-level second layer: it catches
+// dumb bots that fill every field, without a captcha and without touching real users.
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { logEmailEvent } from "../../../lib/email-log";
@@ -105,6 +111,13 @@ export async function POST(request) {
   try {
     let body = {};
     try { body = await request.json(); } catch (e) {}
+
+    // Honeypot. The form renders a visually-hidden field named "company" that real
+    // users never see and never fill. A bot that fills every field trips this. On a
+    // hit we return ok so the bot believes it succeeded and moves on — but we insert
+    // NOTHING and send NOTHING. Undefined/empty (every real submit) falls straight through.
+    const honeypot = (body.company || "").toString().trim();
+    if (honeypot) return NextResponse.json({ ok: true });
 
     const email = (body.email || "").toString().trim().toLowerCase();
     if (!email || email.length > 320 || !EMAIL_RE.test(email)) {

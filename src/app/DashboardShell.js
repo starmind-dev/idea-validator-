@@ -5,9 +5,9 @@ import CapacityWall from "./CapacityWall";
 //
 // A layout wrapper, NOT a screen: it draws the persistent left rail (brand,
 // primary nav, an EVALUATE group for the two entry modes, and a footer group)
-// plus a thin top bar carrying the account email + Log out, then renders the
-// active screen as {children}. Today it hosts the Overview; it is built to host
-// the Hub and other screens next without change.
+// plus a thin top bar carrying the account cluster, then renders the active
+// screen as {children}. Today it hosts the Overview; it is built to host the
+// Hub and other screens next without change.
 //
 // This is additive chrome — it does not replace or touch the existing top-header
 // step-flow app. Wire it in page.js behind a new screen state, e.g.
@@ -117,6 +117,53 @@ function RailItem({ t, item, active, onNavigate }) {
   );
 }
 
+// ── account cluster ──────────────────────────────────────────────────────────
+// Avatar initial + email + hairline + ghost Log out, grouped into one bordered
+// control that reads as an account chip instead of two loose text nodes. Falls
+// back to a quiet "Log in" when signed out; renders nothing while auth loads.
+function AccountBar({ t, userEmail, authLoading, onLogin, onLogout }) {
+  const [hover, setHover] = useState(false);
+  const [loHover, setLoHover] = useState(false);
+  if (authLoading) return null;
+  if (!userEmail) {
+    return (
+      <button
+        onClick={onLogin}
+        style={{ fontSize: 13, color: t.link, background: "none", border: "none", cursor: "pointer", padding: "6px 4px", fontWeight: 500 }}
+      >
+        Log in
+      </button>
+    );
+  }
+  const initial = (userEmail.trim()[0] || "?").toUpperCase();
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 9,
+        padding: "5px 7px 5px 8px",
+        border: `1px solid ${hover ? (t.borderStrong || "rgba(255,255,255,0.15)") : t.border}`,
+        borderRadius: 10, transition: "border-color 0.15s",
+      }}
+    >
+      <span style={{ width: 26, height: 26, borderRadius: "50%", display: "grid", placeItems: "center", fontSize: 12, fontWeight: 600, color: "#c9c2ee", background: "rgba(138,130,194,0.18)", border: "1px solid rgba(138,130,194,0.4)" }}>
+        {initial}
+      </span>
+      <span style={{ fontSize: 13, color: t.sec }}>{userEmail}</span>
+      <span style={{ width: 1, height: 15, background: t.border }} />
+      <button
+        onClick={onLogout}
+        onMouseEnter={() => setLoHover(true)}
+        onMouseLeave={() => setLoHover(false)}
+        style={{ fontSize: 13, color: loHover ? t.sec : t.mut, background: loHover ? "rgba(255,255,255,0.05)" : "none", border: "none", cursor: "pointer", padding: "3px 8px", borderRadius: 7, transition: "color 0.14s, background 0.14s" }}
+      >
+        Log out
+      </button>
+    </div>
+  );
+}
+
 export default function DashboardShell({ t, active = "overview", onNavigate, userEmail, authLoading = false, onLogin, onLogout, capacityWall = false, onCapacityClose, children }) {
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: t.bg, color: t.text }}>
@@ -171,26 +218,7 @@ export default function DashboardShell({ t, active = "overview", onNavigate, use
             borderBottom: `1px solid ${t.border}`,
           }}
         >
-          {!authLoading && (userEmail ? (
-            <>
-              <span style={{ fontSize: 13, color: t.sec }}>{userEmail}</span>
-              <button
-                onClick={onLogout}
-                style={{ fontSize: 13, color: t.mut, background: "none", border: "none", cursor: "pointer", padding: "6px 4px" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = t.sec)}
-                onMouseLeave={(e) => (e.currentTarget.style.color = t.mut)}
-              >
-                Log out
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={onLogin}
-              style={{ fontSize: 13, color: t.link, background: "none", border: "none", cursor: "pointer", padding: "6px 4px", fontWeight: 500 }}
-            >
-              Log in
-            </button>
-          ))}
+          <AccountBar t={t} userEmail={userEmail} authLoading={authLoading} onLogin={onLogin} onLogout={onLogout} />
         </header>
 
         <div style={{ flex: 1, padding: "40px 32px 64px" }}>

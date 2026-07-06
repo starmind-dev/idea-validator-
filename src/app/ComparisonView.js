@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { getMainBottleneckColor, MainBottleneckIcon, getScoreColor } from "./components";
 import { DeepMetricCard, DeepTcCard, KeyRisks, ExecutionReality, CompetitorGrid } from "./DeepResultParts";
+import { ModeTitle } from "./ModeTitle";
+import { BackLink } from "./BackLink";
+import { MetaPills, Caption } from "./MetaPills";
 
 /*
   Deep × Deep Compare — full rewrite.
@@ -414,19 +417,14 @@ function CompareClosure({ closure, nameA, nameB, scoreA, scoreB, sections, loadi
 
       {/* what separated them */}
       {axes.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: COLS, columnGap: GAP, padding: "22px 0 0" }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: t.mut }}>What actually separated them</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 9 }}>
-            {axes.map((a, i) => (
-              <span key={i} style={{ fontSize: 13, color: t.sec, background: t.surfAlt || t.surface, border: `1px solid ${t.border}`, borderRadius: 100, padding: "5px 13px" }}>{a}</span>
-            ))}
-          </div>
+        <div style={{ padding: "22px 0 0" }}>
+          <MetaPills t={t} label="What separated them" items={axes} />
         </div>
       )}
 
-      <p style={{ fontSize: 13, color: t.mut, textAlign: "center", lineHeight: 1.6, margin: "30px auto 0", maxWidth: 580 }}>
+      <Caption t={t} style={{ marginTop: 30 }}>
         This weighs the two on the evidence above. The call is yours — pick the wall you'd rather spend the next year clearing.
-      </p>
+      </Caption>
     </div>
   );
 }
@@ -624,11 +622,12 @@ export default function ComparisonView({ ideaA, ideaB, onBack, authToken, t }) {
         .cmpTab::-webkit-scrollbar { height: 0; }
       `}</style>
 
-      <button onClick={onBack} style={{ fontSize: 12, color: t.mut, background: "none", border: "none", cursor: "pointer", padding: "16px 0 8px" }}>← Back to My Ideas</button>
+      <div style={{ padding: "10px 0 18px" }}>
+        <BackLink t={t} onClick={onBack} flush>Back to My Ideas</BackLink>
+      </div>
 
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: ACCENT.closure, marginBottom: 14 }}>
-        <span style={{ width: 6, height: 6, borderRadius: "50%", background: ACCENT.closure, boxShadow: `0 0 8px ${ACCENT.closure}` }} />
-        Compare · Deep × Deep
+      <div style={{ marginBottom: 14 }}>
+        <ModeTitle mode="compare" />
       </div>
 
       {/* idea strip */}

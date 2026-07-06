@@ -43,6 +43,7 @@
 // ============================================================================
 
 import React, { useState, useEffect, useRef } from "react";
+import { FootLink, PrimaryAction } from "./FooterActions";
 import {
   Card,
   PageContainer,
@@ -391,32 +392,8 @@ function HandoffBlock({ sections, status, t }) {
 // on one restrained spring beat, plus a soft purple shadow. Inline styles can't do
 // :hover, so hover is tracked with onMouseEnter/Leave and swapped on the same
 // theme tokens (t.ctaBg / t.ctaText).
-function FootLink({ onClick, t, children }) {
-  const [hover, setHover] = useState(false);
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        fontSize: 13,
-        color: hover ? t.ctaText : t.sec,
-        background: hover ? t.ctaBg : "none",
-        border: `1px solid ${hover ? t.ctaBg : t.border}`,
-        borderRadius: 10,
-        padding: "9px 18px",
-        cursor: "pointer",
-        transform: hover ? "scale(1.03) translateY(-1px)" : "none",
-        boxShadow: hover ? "0 5px 14px rgba(124,58,237,0.42)" : "none",
-        transition:
-          "transform .34s cubic-bezier(.34,1.25,.64,1), box-shadow .3s ease, " +
-          "background-color .25s, color .25s, border-color .25s",
-      }}
-    >
-      {children}
-    </button>
-  );
-}
+// FootLink + PrimaryAction now come from the shared ./FooterActions primitive —
+// one footer language across the whole flow.
 
 // Terminal action row — the brief is the end of the flow, so it must never be a
 // dead end. The brief has NO independent save: it persists WITH the idea through
@@ -435,11 +412,6 @@ function BriefFooterActions({
   t, status, viewingFromSaved, isReEvalResult, saveStatus,
   onSaveIdea, onNewIdea, goToMyIdeas, setCurrentScreen, onRegenerate,
 }) {
-  const primaryBtn = {
-    fontSize: 14, fontWeight: 600, color: t.ctaText, background: t.ctaBg,
-    border: "none", borderRadius: 12, padding: "13px 26px", cursor: "pointer",
-  };
-
   // Save affordance only on the fresh, normal-save path with a complete brief.
   const canSaveHere =
     !viewingFromSaved && !isReEvalResult && status === "complete";
@@ -449,9 +421,7 @@ function BriefFooterActions({
     <div style={{ borderTop: `1px solid ${t.divider}`, paddingTop: 22, marginBottom: 22 }}>
       {canSaveHere && !alreadySaved && (
         <div style={{ marginBottom: 14 }}>
-          <button onClick={() => onSaveIdea && onSaveIdea()} style={{ ...primaryBtn, width: "100%" }}>
-            Save this idea →
-          </button>
+          <PrimaryAction t={t} full onClick={() => onSaveIdea && onSaveIdea()}>Save this idea →</PrimaryAction>
           <p style={{ fontSize: 12, color: t.mut, textAlign: "center", margin: "8px 0 0", lineHeight: 1.5 }}>
             Saving keeps this idea and its brief together. You can read it without saving.
           </p>

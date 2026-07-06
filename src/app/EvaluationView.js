@@ -15,6 +15,8 @@ import {
 import { ProvenanceStrip, PressureRead, DeepMetricCard, DeepTcCard, ExecutionReality, KeyRisks, CompetitorGrid } from "./DeepResultParts";
 import { ChangeWalkthrough, ChangeMarker } from "./ChangeWalkthrough";
 import { DirectionCard, DirectionRow } from "./DirectionCard";
+import { BackLink } from "./BackLink";
+import { FooterBar, FootLink } from "./FooterActions";
 
 const WATCH_OPTS = [
   ["off", "Off"],
@@ -74,6 +76,36 @@ function WatchDial({ t, value = "off", onSet }) {
         {WATCH_OPTS.map((o) => (
           <option key={o[0]} value={o[0]} style={{ color: "#111", background: "#fff" }}>{o[1]}</option>
         ))}
+      </select>
+    </div>
+  );
+}
+
+// EVIDENCE WATCH — card form. Same shell as DirectionCard, but a <div> (not a
+// button) so its cadence <select> is legal. Lives in the "From here" row on the
+// saved deep result, equal to the Evolve / Execution Brief cards beside it.
+function WatchCard({ t, value = "off", onSet }) {
+  const [cad, setCad] = useState(value || "off");
+  const [saving, setSaving] = useState(false);
+  const c = { ac: "#fbbf24", on: "#fde9bf", line: "rgba(245,158,11,0.34)", bg: "rgba(245,158,11,0.08)" };
+  const change = async (e) => {
+    const next = e.target.value;
+    setCad(next);
+    if (!onSet) return;
+    setSaving(true);
+    try { await onSet(next); } finally { setSaving(false); }
+  };
+  return (
+    <div style={{ borderRadius: 13, padding: "14px 16px 12px", minHeight: 104, display: "flex", flexDirection: "column", border: `1px solid ${c.line}`, background: `linear-gradient(180deg, ${c.bg}, transparent 90%)` }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 9 }}>
+        <span style={{ width: 30, height: 30, flex: "0 0 30px", borderRadius: 8, display: "grid", placeItems: "center", color: c.ac, background: c.bg, border: `1px solid ${c.line}` }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" /></svg>
+        </span>
+        <h4 style={{ fontSize: 15.5, fontWeight: 600, margin: 0, color: c.on }}>Watch</h4>
+      </div>
+      <p style={{ fontSize: 12.5, lineHeight: 1.5, color: "#8b94a1", margin: "0 0 auto" }}>Periodically re-check the evidence landscape behind this read.</p>
+      <select value={cad} onChange={change} disabled={saving} style={{ marginTop: 11, alignSelf: "flex-start", fontSize: 12.5, fontWeight: 600, padding: "6px 11px", borderRadius: 8, cursor: saving ? "wait" : "pointer", color: c.ac, background: "rgba(245,158,11,0.06)", border: `1px solid ${c.line}` }}>
+        {WATCH_OPTS.map((o) => (<option key={o[0]} value={o[0]} style={{ color: "#111", background: "#fff" }}>{o[1]}</option>))}
       </select>
     </div>
   );
@@ -185,7 +217,7 @@ export default function EvaluationView({
         <ChangeWalkthrough anchor={openWT} onClose={() => setOpenWT(null)} />
         <PageContainer wide>
           <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", padding: "4px 0 0" }}>
-            <button onClick={() => {
+            <BackLink t={t} onClick={() => {
               if (readOnly) { onBackToCurrent && onBackToCurrent(); return; }
               if (viewingFromSaved) {
                 setViewingFromSaved(false);
@@ -193,9 +225,9 @@ export default function EvaluationView({
               } else {
                 setCurrentScreen("input");
               }
-            }} style={{ fontSize: 12, color: t.mut, background: "none", border: "none", cursor: "pointer" }}>
-              {readOnly ? "← Back to current read" : (viewingFromSaved ? "← Back to My Ideas" : "← Back to idea")}
-            </button>
+            }}>
+              {readOnly ? "Back to current read" : (viewingFromSaved ? "Back to My Ideas" : "Back to idea")}
+            </BackLink>
           </div>
         </PageContainer>
 
@@ -604,14 +636,18 @@ export default function EvaluationView({
   // SCREEN: FAILURE RISKS + EXECUTION REALITY (results2)
   // ==========================================
   if (screen === "results2") {
+    // The Execution Brief is offered as a card inside the closure grids (saved
+    // result + re-eval decision). Same gate the standalone button used to carry.
+    const briefAvailable =
+      !isGated &&
+      analysis.estimates.main_bottleneck !== "Specification" &&
+      !analysis.evaluation.synthesis_degraded;
     return (
       <>
         <ChangeWalkthrough anchor={openWT} onClose={() => setOpenWT(null)} />
         <PageContainer wide>
           <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", padding: "4px 0 0" }}>
-            <button onClick={() => setCurrentScreen("results1")} style={{ fontSize: 12, color: t.mut, background: "none", border: "none", cursor: "pointer" }}>
-              ← Back to Deep Analysis
-            </button>
+            <BackLink t={t} onClick={() => setCurrentScreen("results1")}>Back to Deep Analysis</BackLink>
           </div>
         </PageContainer>
 
@@ -757,9 +793,7 @@ export default function EvaluationView({
                 users (the brief is a paid surface, not part of the blurred
                 free preview). Label keys on whether a brief is already attached;
                 openExecutionBrief decides display-vs-generate. */}
-            {!isGated &&
-              analysis.estimates.main_bottleneck !== "Specification" &&
-              !analysis.evaluation.synthesis_degraded && (
+            {briefAvailable && !viewingFromSaved && !isReEvalResult && (
                 <button
                   onClick={() => openExecutionBrief && openExecutionBrief()}
                   style={{
@@ -1067,25 +1101,19 @@ export default function EvaluationView({
                           )
                         ) : (
                           <DirectionRow cols={2}>
+                            {briefAvailable && (
+                              <DirectionCard
+                                skin="cta" glyph="brief" title="Execution Brief"
+                                desc="Turn this read into a first-move handoff — where our read stops"
+                                cue={hasExecutionBrief ? "View brief" : "Generate"}
+                                onClick={() => openExecutionBrief && openExecutionBrief()} />
+                            )}
+
                             <DirectionCard
                               skin="deep" glyph="save" title="Save as branch"
                               desc="Keep this as a new direction linked to the parent idea"
                               cue="Keep" busy={saveStatus === "saving"}
                               onClick={() => { setSaveStandalone(false); handleSaveIdea(); }} />
-
-                            <DirectionCard
-                              skin="green" glyph="main" title="Set as main version"
-                              desc="Save as branch and promote it as your current best direction"
-                              cue="Promote" disabled={saveStatus === "saving"}
-                              onClick={() => {
-                                // Open branch form with set-as-main flag
-                                setSaveStandalone(false);
-                                setBranchSetAsMain(true);
-                                setBranchReason("");
-                                setBranchDimensions([]);
-                                setIdeaName("Branch");
-                                setSaveStatus("naming");
-                              }} />
 
                             <DirectionCard
                               skin="amber" glyph="standalone" title="Save as a standalone deep card"
@@ -1245,109 +1273,32 @@ export default function EvaluationView({
 
             {viewingFromSaved ? (
               <>
-                <WatchDial key={currentIdeaId} t={t} value={watchCadence} onSet={onSetWatch} />
-                {/* Branch ideas: Evolve entry — result-screen markers replace the old delta screen */}
-                {isBranchIdea ? (
-                  <>
-                    {(
-                      <>
-                        <button
-                          onClick={startReEvaluation}
-                          disabled={evalsRemaining <= 0}
-                          style={{
-                            width: "100%",
-                            padding: "14px 0",
-                            borderRadius: 12,
-                            fontSize: 14,
-                            fontWeight: 600,
-                            border: "none",
-                            cursor: evalsRemaining <= 0 ? "not-allowed" : "pointer",
-                            background: evalsRemaining <= 0 ? t.surfAlt : "rgba(108,99,255,0.12)",
-                            color: evalsRemaining <= 0 ? t.mut : "#a78bfa",
-                            marginBottom: 10,
-                          }}
-                        >
-                          {evalsRemaining <= 0 ? "No evaluations remaining" : "Evolve this idea"}
-                        </button>
-                      </>
-                    )}
-                    <button
-                      onClick={onBackToMyIdeasCleanup}
-                      style={{
-                        width: "100%",
-                        padding: "14px 0",
-                        borderRadius: 12,
-                        fontSize: 14,
-                        fontWeight: 600,
-                        border: `1px solid ${t.border}`,
-                        background: "transparent",
-                        color: t.sec,
-                        cursor: "pointer",
-                      }}
-                    >
-                      ← Back to My Ideas
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    {(
-                      <>
-                        <button
-                          onClick={startReEvaluation}
-                          disabled={evalsRemaining <= 0}
-                          style={{
-                            width: "100%",
-                            padding: "14px 0",
-                            borderRadius: 12,
-                            fontSize: 14,
-                            fontWeight: 600,
-                            border: "none",
-                            cursor: evalsRemaining <= 0 ? "not-allowed" : "pointer",
-                            background: evalsRemaining <= 0 ? t.surfAlt : "rgba(108,99,255,0.12)",
-                            color: evalsRemaining <= 0 ? t.mut : "#a78bfa",
-                            marginBottom: 10,
-                          }}
-                        >
-                          {evalsRemaining <= 0 ? "No evaluations remaining" : "Evolve this idea"}
-                        </button>
-                      </>
-                    )}
-                    <button
-                      onClick={onBackToMyIdeasCleanup}
-                      style={{
-                        width: "100%",
-                        padding: "14px 0",
-                        borderRadius: 12,
-                        fontSize: 14,
-                        fontWeight: 600,
-                        border: `1px solid ${t.border}`,
-                        background: "transparent",
-                        color: t.sec,
-                        cursor: "pointer",
-                      }}
-                    >
-                      ← Back to My Ideas
-                    </button>
-                  </>
-                )}
+                <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 14 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#a78bfa", flexShrink: 0 }} />
+                  <p style={{ fontSize: 15, fontWeight: 600, color: t.text, margin: 0 }}>From here</p>
+                </div>
+                <DirectionRow cols={briefAvailable ? 3 : 2}>
+                  {briefAvailable && (
+                    <DirectionCard
+                      skin="cta" glyph="brief" title="Execution Brief"
+                      desc="Turn this read into a first-move handoff — where our read stops and yours begins."
+                      cue={hasExecutionBrief ? "View brief" : "Generate"}
+                      onClick={() => openExecutionBrief && openExecutionBrief()} />
+                  )}
+                  <DirectionCard
+                    skin="deep" glyph="refresh" title="Evolve"
+                    desc="Reshape the idea, keep the lineage, measure the delta."
+                    cue={evalsRemaining <= 0 ? "No evals left" : "Evolve"}
+                    disabled={evalsRemaining <= 0}
+                    onClick={startReEvaluation} />
+                  <WatchCard key={currentIdeaId} t={t} value={watchCadence} onSet={onSetWatch} />
+                </DirectionRow>
+                <BackLink t={t} flush onClick={onBackToMyIdeasCleanup} style={{ marginTop: 16 }}>Back to My Ideas</BackLink>
               </>
             ) : (
-              <button
-                onClick={onResetAndNewIdea}
-                style={{
-                  width: "100%",
-                  padding: "14px 0",
-                  borderRadius: 12,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  border: `1px solid ${t.border}`,
-                  background: "transparent",
-                  color: t.sec,
-                  cursor: "pointer",
-                }}
-              >
-                Analyze Another Idea
-              </button>
+              <FooterBar t={t} topBorder={false}>
+                <FootLink t={t} onClick={onResetAndNewIdea}>Analyze Another Idea</FootLink>
+              </FooterBar>
             )}
           </PageContainer>
         </main>

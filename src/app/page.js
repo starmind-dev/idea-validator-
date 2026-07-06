@@ -18,6 +18,7 @@ import HubView from "./HubView";
 import OverviewView from "./OverviewView";
 import LandingView from "./LandingView";
 import DashboardShell from "./DashboardShell";
+import { BackLink, BackLinkDivider } from "./BackLink";
 import { AuthModal } from "./AuthModal";
 import {
   StepProgress,
@@ -3188,14 +3189,7 @@ export default function Home() {
             <div style={{ width: "100%", maxWidth: 820 }}>
 
               {/* back */}
-              <button
-                onClick={goToMyIdeas}
-                style={{ background: "none", border: "none", padding: 0, fontFamily: "'JetBrains Mono',monospace", fontSize: 13, letterSpacing: "0.02em", color: "#71717a", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#a1a1aa")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#71717a")}
-              >
-                ← My ideas
-              </button>
+              <BackLink t={t} flush onClick={goToMyIdeas}>My ideas</BackLink>
 
               {/* THE CAPTURE CARD */}
               <div style={{ marginTop: 22, background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "26px 30px 24px" }}>
@@ -3661,24 +3655,18 @@ export default function Home() {
         onNavigate={railNav}
       >
         <PageContainer>
-          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12, padding: "4px 0 0" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", padding: "4px 0 0" }}>
             {/* Contextual back: re-eval has two entry paths. From the lineage tree →
                 back to that idea's lineage, plus a shortcut to peek at the analysis
                 without the roundtrip; from a saved deep result → back to the analysis. */}
             {reEvalSource === "lineage" ? (
-              <>
-                <button onClick={() => { setReEvalMode(false); setCurrentScreen("dashboard"); setLineageTargetId(currentIdeaId); setLineageMode(true); }} style={{ fontSize: 12, color: t.mut, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
-                  ← Go back to the lineage
-                </button>
-                <span style={{ width: 1, height: 11, background: "rgba(255,255,255,0.14)" }} />
-                <button onClick={() => { setReEvalMode(false); setCurrentScreen("results2"); }} style={{ fontSize: 12, color: t.mut, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
-                  View the analysis
-                </button>
-              </>
+              <span style={{ display: "inline-flex", alignItems: "center" }}>
+                <BackLink t={t} onClick={() => { setReEvalMode(false); setCurrentScreen("dashboard"); setLineageTargetId(currentIdeaId); setLineageMode(true); }}>Go back to the lineage</BackLink>
+                <BackLinkDivider t={t} />
+                <BackLink t={t} noChevron onClick={() => { setReEvalMode(false); setCurrentScreen("results2"); }}>View the analysis</BackLink>
+              </span>
             ) : (
-              <button onClick={() => { setReEvalMode(false); setCurrentScreen("results2"); }} style={{ fontSize: 12, color: t.mut, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
-                ← Go back to the analysis
-              </button>
+              <BackLink t={t} onClick={() => { setReEvalMode(false); setCurrentScreen("results2"); }}>Go back to the analysis</BackLink>
             )}
           </div>
         </PageContainer>

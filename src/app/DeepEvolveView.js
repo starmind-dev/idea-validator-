@@ -24,6 +24,7 @@
 //   onReEvaluate(payload)    payload = { ideaText, ideaHtml, changedParts[], branchLabel, freeNote }
 
 import React from "react";
+import { ModeTitle } from "./ModeTitle";
 
 /* ── metric + part model (mockup defaults; override via the `metrics` prop) ── */
 const METRIC_DEFAULT = {
@@ -271,7 +272,7 @@ export default function DeepEvolveView({
       <div className="dev-content">
 
         <div className="dev-toprow">
-          <span className="dev-mono dev-kicker">◆ RE-EVALUATION · DEEP</span>
+          <ModeTitle mode="evolve" label="Evolve · Deep" />
           <span className="dev-mono dev-profile">{profileLabel} · Edit ✎</span>
         </div>
         <h1 className="dev-serif">Re-evaluate.</h1>

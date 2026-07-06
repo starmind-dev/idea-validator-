@@ -26,6 +26,7 @@
 
 import { useState, useEffect, useCallback, useRef, useLayoutEffect } from "react";
 import { supabase } from "../lib/supabase";
+import { BackLink } from "./BackLink";
 
 /* ----------------------------- identity tokens ---------------------------- */
 const MC = { md: "#3fc09a", mo: "#6f8ff5", or: "#b57ce0", tc: "#d9a85e" };
@@ -921,7 +922,7 @@ export default function HubView({ t, onOpenIdea, onOpenLineage, onBack, compareS
         <div style={{ position: "absolute", top: -30, left: 20, width: 580, height: 340, background: "radial-gradient(58% 60% at 28% 30%,rgba(96,150,255,0.08),transparent 72%)", pointerEvents: "none" }} />
         <div style={{ position: "relative", maxWidth: 1160, margin: "0 auto" }}>
           {onBack && view === "hub" && (
-            <button onClick={onBack} style={{ fontSize: 13, color: "#9AA3B6", background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "7px 16px", cursor: "pointer", marginBottom: 18 }}>← Back</button>
+            <BackLink t={t} flush onClick={onBack} style={{ marginBottom: 18 }}>Back</BackLink>
           )}
           {error && (
             <div style={{ fontSize: 13, color: "#f87171", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 8, padding: "10px 14px", marginBottom: 18 }}>{error}</div>

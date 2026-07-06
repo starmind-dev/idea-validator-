@@ -2,6 +2,8 @@
 
 import { DirectionCard } from "./DirectionCard";
 import { ModeTitle } from "./ModeTitle";
+import { BackLink } from "./BackLink";
+import { Caption } from "./MetaPills";
 
 // ============================================================================
 // ExploreView — the Explore (LL2) results screen.
@@ -1072,9 +1074,9 @@ export default function ExploreView({
         <PageContainer wide>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0 22px" }}>
             <ModeTitle mode="explore" />
-            <button onClick={() => { if (readOnly) { onBackToCurrent && onBackToCurrent(); return; } if (viewingFromSaved) { setViewingFromSaved && setViewingFromSaved(false); goToMyIdeas && goToMyIdeas(); } else { setCurrentScreen && setCurrentScreen("input"); } }} style={{ fontSize: 12, color: readOnly ? EX.bright : t.mut, background: "none", border: "none", cursor: "pointer" }}>
-              {readOnly ? "← Back to current read" : (viewingFromSaved ? "← Back to My Ideas" : "← Back to idea")}
-            </button>
+            <BackLink t={t} color={readOnly ? EX.bright : undefined} onClick={() => { if (readOnly) { onBackToCurrent && onBackToCurrent(); return; } if (viewingFromSaved) { setViewingFromSaved && setViewingFromSaved(false); goToMyIdeas && goToMyIdeas(); } else { setCurrentScreen && setCurrentScreen("input"); } }}>
+              {readOnly ? "Back to current read" : (viewingFromSaved ? "Back to My Ideas" : "Back to idea")}
+            </BackLink>
           </div>
           <SeedSurface idea={idea} t={xt} />
           {readOnly && (
@@ -1107,8 +1109,8 @@ export default function ExploreView({
             goToMyIdeas={goToMyIdeas}
           />
           )}
-          <div style={{ marginTop: 30, paddingTop: 18, borderTop: `1px solid ${t.border}`, fontSize: 11, color: "#474b54", textAlign: "center", fontFamily: "monospace", letterSpacing: "0.04em" }}>
-            EXPLORE — WIDENS A ROUGH IDEA · NO SCORE, NO RANK, NO VERDICT
+          <div style={{ marginTop: 30, paddingTop: 18, borderTop: `1px solid ${t.border}` }}>
+            <Caption t={t} mono style={{ margin: 0, color: "#474b54" }}>EXPLORE — WIDENS A ROUGH IDEA · NO SCORE, NO RANK, NO VERDICT</Caption>
           </div>
         </PageContainer>
       </main>

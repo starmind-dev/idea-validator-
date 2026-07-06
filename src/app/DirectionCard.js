@@ -5,10 +5,11 @@
 //
 // One card shell, swapped per mode via `skin`. Greyscale-identical everywhere;
 // the accent color carries the mode (explore = Dawn blue, deep/re-eval = violet,
-// save = pewter, amber = standalone, green = set-as-main). Mode glyphs are the
-// app's REAL marks (compass = explore, concentric target = deep, refresh =
-// re-eval) pulled from LineageView's Glyph component, so a direction that points
-// to Explore wears the same compass shown on every hub card.
+// cta = bright violet for the handoff, save = pewter, amber = standalone,
+// green = set-as-main). Mode glyphs are the app's REAL marks (compass = explore,
+// concentric target = deep, refresh = re-eval, doc-handoff = brief) pulled from
+// LineageView's Glyph component, so a direction that points to Explore wears the
+// same compass shown on every hub card.
 //
 // Usage:
 //   <DirectionCard skin="deep" glyph="save" title="Save as branch"
@@ -22,6 +23,7 @@ import { useState } from "react";
 const SKIN = {
   explore: { ac: "#7aa2ff", on: "#d2e0ff", line: "rgba(122,162,255,0.5)",  bg: "rgba(122,162,255,0.12)", bghi: "rgba(122,162,255,0.18)", glow: "rgba(122,162,255,0.30)" },
   deep:    { ac: "#9a8fd8", on: "#cbc3ee", line: "rgba(138,130,194,0.55)", bg: "rgba(138,130,194,0.14)", bghi: "rgba(138,130,194,0.21)", glow: "rgba(138,130,194,0.34)" },
+  cta:     { ac: "#a78bfa", on: "#d7cffb", line: "rgba(124,92,255,0.5)",   bg: "rgba(124,92,255,0.14)", bghi: "rgba(124,92,255,0.20)", glow: "rgba(124,92,255,0.34)" },
   save:    { ac: "#aab4c3", on: "#e9eef5", line: "rgba(255,255,255,0.16)",  bg: "rgba(255,255,255,0.05)", bghi: "rgba(255,255,255,0.075)", glow: "rgba(0,0,0,0.34)" },
   amber:   { ac: "#fbbf24", on: "#fde9bf", line: "rgba(245,158,11,0.34)",   bg: "rgba(245,158,11,0.08)", bghi: "rgba(245,158,11,0.12)", glow: "rgba(245,158,11,0.22)" },
   green:   { ac: "#34d399", on: "#bff3df", line: "rgba(16,185,129,0.34)",   bg: "rgba(16,185,129,0.08)", bghi: "rgba(16,185,129,0.12)", glow: "rgba(16,185,129,0.22)" },
@@ -29,7 +31,7 @@ const SKIN = {
 
 // ── Glyphs ───────────────────────────────────────────────────────────────────
 // explore / deep / refresh are the REAL app marks (LineageView Glyph + RefreshIcon).
-// save / standalone / main / discard / check are the semantic action marks.
+// brief / save / standalone / main / discard / check are the semantic action marks.
 function Glyph({ name, size = 16 }) {
   const base = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", style: { display: "block" } };
   switch (name) {
@@ -39,6 +41,8 @@ function Glyph({ name, size = 16 }) {
       return (<svg {...base} strokeWidth="2"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.6" fill="currentColor" /></svg>);
     case "refresh":
       return (<svg {...base} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /></svg>);
+    case "brief":
+      return (<svg {...base} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="8.5" height="16" rx="1.6" /><path d="M11.5 12h8M16 8.5l3.5 3.5-3.5 3.5" /></svg>);
     case "save":
       return (<svg {...base} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="1.9" /><circle cx="6" cy="19" r="1.9" /><circle cx="18" cy="19" r="1.9" /><path d="M12 6.9v4.6M6 17.1v-3a1.5 1.5 0 0 1 1.5-1.5h9A1.5 1.5 0 0 1 18 14.1v3" /></svg>);
     case "standalone":
