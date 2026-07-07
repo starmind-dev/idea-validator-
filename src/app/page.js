@@ -2861,7 +2861,7 @@ export default function Home() {
                   style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none", padding: 0, cursor: "pointer", color: t.link || t.sec, fontSize: 13 }}
                 >
                   {profileMoreOpen ? "Use a single line instead" : "Add more detail for a sharper read"}
-                  <span style={{ display: "inline-block", transform: profileMoreOpen ? "rotate(180deg)" : "none", transition: "transform 0.18s", fontSize: 11 }}>▾</span>
+                  <span style={{ display: "inline-flex", transform: profileMoreOpen ? "rotate(180deg)" : "none", transition: "transform 0.18s" }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}><path d="M6 9l6 6 6-6" /></svg></span>
                 </button>
                 {profileMoreOpen && (
                   <p style={{ fontSize: 12.5, color: t.mut, lineHeight: 1.55, margin: "14px 0 0" }}>
@@ -3029,7 +3029,7 @@ export default function Home() {
         {/* Profile summary — deep-flow only; relocated into content (the rail owns nav now). */}
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
           <button onClick={() => setCurrentScreen("profile")} style={{ fontSize: 12, color: t.mut, background: "none", border: "none", cursor: "pointer" }}>
-            {profile.coding} · {profile.ai} AI · Edit ✎
+            {profile.coding} · {profile.ai} AI · Edit <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "-1px", marginLeft: 3 }}><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3z" /><path d="M13.5 6.5l3 3" /></svg>
           </button>
         </div>
 

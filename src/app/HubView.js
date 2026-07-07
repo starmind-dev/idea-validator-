@@ -203,7 +203,7 @@ function HoverPopover({ hover, preview }) {
           {Number.isFinite(item.score) && (
             <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 7, color: "#cfc8bc", border: "1px solid rgba(177,168,156,0.5)", background: "rgba(177,168,156,0.13)" }}>{item.score.toFixed(1)}</span>
           )}
-          {item.has_brief && <span title="Execution brief" style={{ color: "#a78bfa", fontSize: 13 }}>◆</span>}
+          {item.has_brief && <span title="Execution brief" style={{ color: "#a78bfa", display: "inline-flex" }}><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ display: "block" }}><path d="M12 2l10 10-10 10L2 12z" /></svg></span>}
         </span>
       ) : (
         <span style={{ marginLeft: "auto", fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, color: "#5B6478", letterSpacing: ".03em" }}>fan order · not ranked</span>
@@ -239,7 +239,7 @@ function HoverPopover({ hover, preview }) {
         {pv.loading ? (
           <div style={{ height: 34, borderRadius: 6, background: "rgba(255,255,255,0.05)", margin: "0 0 13px" }} />
         ) : (
-          <div style={{ fontFamily: "'Instrument Serif',serif", fontSize: 14, lineHeight: 1.45, color: "#C3CAD8", fontStyle: "italic", margin: "0 0 12px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{pv.read || ""}</div>
+          <div style={{ fontFamily: "'Newsreader',serif", fontSize: 14, lineHeight: 1.45, color: "#C3CAD8", fontStyle: "italic", margin: "0 0 12px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{pv.read || ""}</div>
         )}
         <ExploreFan read={item.title} angles={pv.angles || []} loading={!!pv.loading} />
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: 10, color: "#5B6478", fontFamily: "'JetBrains Mono',monospace" }}>
@@ -492,7 +492,7 @@ function FolderRail({ folders, activeFolder, counts, onPick, addingFolder, folde
    MAIN
    ========================================================================= */
 const SerifH1 = ({ children, count }) => (
-  <h1 style={{ fontFamily: "'Instrument Serif',serif", fontWeight: 400, fontSize: 33, lineHeight: 1, color: "#F1F4FA", display: "flex", alignItems: "center", gap: 11, margin: 0 }}>
+  <h1 style={{ fontFamily: "'Newsreader',serif", fontWeight: 400, fontSize: 33, lineHeight: 1, color: "#F1F4FA", display: "flex", alignItems: "center", gap: 11, margin: 0 }}>
     {children}
     {count != null && <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: "#8A92A6", letterSpacing: "0.04em", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "2px 9px" }}>{count}</span>}
   </h1>
@@ -730,7 +730,7 @@ export default function HubView({ t, onOpenIdea, onOpenLineage, onBack, compareS
   const Landing = () => (
     <div style={{ animation: "hub-fadeUp .45s ease" }}>
       <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11.5, letterSpacing: "0.24em", color: "#7E869A", textTransform: "uppercase", marginBottom: 14 }}>Idea Operating System</div>
-      <h1 style={{ fontFamily: "'Instrument Serif',serif", fontWeight: 400, fontSize: 40, lineHeight: 1, letterSpacing: "-0.01em", color: "#F1F4FA", marginBottom: 14 }}>My Ideas Hub</h1>
+      <h1 style={{ fontFamily: "'Newsreader',serif", fontWeight: 400, fontSize: 40, lineHeight: 1, letterSpacing: "-0.01em", color: "#F1F4FA", marginBottom: 14 }}>My Ideas Hub</h1>
       <p style={{ fontSize: 14, color: "#8A92A6", maxWidth: 560, lineHeight: 1.5 }}>Two shelves, two states of mind. Rough sparks stay raw on one side; explored and deep-analyzed ideas live on the other.</p>
       <div style={{ marginTop: 32, display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 16 }}>
         <div onClick={() => goView("rough")} style={{ position: "relative", display: "flex", flexDirection: "column", padding: "21px 20px 18px", borderRadius: 18, background: "linear-gradient(180deg,#151924,#0F121B)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer", minHeight: 168, transition: "transform .2s,border-color .2s,box-shadow .2s" }}
@@ -739,10 +739,10 @@ export default function HubView({ t, onOpenIdea, onOpenLineage, onBack, compareS
             <div style={{ width: 44, height: 44, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.03)", border: "1px dashed rgba(255,255,255,0.2)", color: "#AEB6C8" }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M12 3v18M3 12h18M6 6l12 12M18 6L6 18" /></svg>
             </div>
-            <div style={{ fontFamily: "'Instrument Serif',serif", fontSize: 34, lineHeight: 1, color: "rgba(241,244,250,0.16)" }}>{data.rough.length}</div>
+            <div style={{ fontFamily: "'Newsreader',serif", fontSize: 34, lineHeight: 1, color: "rgba(241,244,250,0.16)" }}>{data.rough.length}</div>
           </div>
           <div style={{ flex: 1 }} />
-          <div style={{ fontFamily: "'Instrument Serif',serif", fontSize: 23, lineHeight: 1.05, color: "#F1F4FA", marginBottom: 7 }}>Rough ideas</div>
+          <div style={{ fontFamily: "'Newsreader',serif", fontSize: 23, lineHeight: 1.05, color: "#F1F4FA", marginBottom: 7 }}>Rough ideas</div>
           <div style={{ fontSize: 12.5, lineHeight: 1.5, color: "#828A9E", maxWidth: 300 }}>Raw sparks straight from your head — not yet explored or evaluated.</div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, color: "#AEB6C8", fontSize: 12.5, fontWeight: 500 }}>Open shelf <IArrowR /></div>
         </div>
@@ -754,10 +754,10 @@ export default function HubView({ t, onOpenIdea, onOpenLineage, onBack, compareS
               <div style={{ width: 44, height: 44, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(96,150,255,0.10)", border: "1px solid rgba(96,150,255,0.24)", color: "#7FB0FF" }}><IExplore s={20} /></div>
               <div style={{ width: 44, height: 44, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(150,135,250,0.10)", border: "1px solid rgba(150,135,250,0.24)", color: "#AEA0FF" }}><IDeep s={20} /></div>
             </div>
-            <div style={{ fontFamily: "'Instrument Serif',serif", fontSize: 34, lineHeight: 1, color: "rgba(241,244,250,0.16)" }}>{data.ideas.length}</div>
+            <div style={{ fontFamily: "'Newsreader',serif", fontSize: 34, lineHeight: 1, color: "rgba(241,244,250,0.16)" }}>{data.ideas.length}</div>
           </div>
           <div style={{ flex: 1 }} />
-          <div style={{ fontFamily: "'Instrument Serif',serif", fontSize: 23, lineHeight: 1.05, color: "#F1F4FA", marginBottom: 7 }}>Evaluated ideas</div>
+          <div style={{ fontFamily: "'Newsreader',serif", fontSize: 23, lineHeight: 1.05, color: "#F1F4FA", marginBottom: 7 }}>Evaluated ideas</div>
           <div style={{ fontSize: 12.5, lineHeight: 1.5, color: "#828A9E", maxWidth: 310 }}>Explored &amp; deep-analyzed — refined enough to act on.</div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 14 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#7FB0FF", fontSize: 12.5, fontWeight: 500 }}>Open shelf <IArrowR /></div>
@@ -896,7 +896,7 @@ export default function HubView({ t, onOpenIdea, onOpenLineage, onBack, compareS
           <div style={{ position: "relative", maxWidth: 1160, margin: "0 auto" }}>
             <div style={{ animation: "hub-fadeUp .45s ease", maxWidth: 540, margin: "44px auto 0", textAlign: "center" }}>
               <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11.5, letterSpacing: "0.24em", color: "#7E869A", textTransform: "uppercase", marginBottom: 18 }}>My Ideas</div>
-              <div style={{ fontFamily: "'Instrument Serif',serif", fontSize: 40, lineHeight: 1.08, color: "#F1F4FA", marginBottom: 16 }}>Your ideas live here.</div>
+              <div style={{ fontFamily: "'Newsreader',serif", fontSize: 40, lineHeight: 1.08, color: "#F1F4FA", marginBottom: 16 }}>Your ideas live here.</div>
               <p style={{ fontSize: 14.5, lineHeight: 1.65, color: "#8A92A6", maxWidth: 448, margin: "0 auto 28px" }}>
                 Sign in to save an evaluation, revisit it later, branch it into new directions, and watch how it evolves. Your first run is free — no account needed to try it.
               </p>

@@ -89,7 +89,7 @@ export function ProvenanceStrip({ provenance, t }) {
               color: exploreColor, background: "none", border: "none", padding: 0, cursor: "pointer",
             }}
           >
-            ↗ from the Explore pass
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 4 }}><path d="M7 17L17 7M8 7h9v9" /></svg>from the Explore pass
           </button>
         )}
       </div>

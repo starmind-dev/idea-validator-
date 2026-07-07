@@ -4,13 +4,33 @@ import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 
 // ============================================
-// THEME SYSTEM (V4S24b)
+// THEME SYSTEM (V4S24b) — role tokens (premium substrate pass)
 // ============================================
+// Mode-agnostic tokens shared by both themes: the type stacks, the radius
+// scale, the CTA glow, the lighter on-accent violet, and the four per-mode
+// accent hues (the ONE place deep/explore/evolve/closure violets are defined).
+const FONT_SANS  = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif";
+const FONT_MONO  = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+const FONT_SERIF = "'Newsreader', Georgia, 'Times New Roman', serif";
+const RADIUS = { sm: 6, md: 8, lg: 12, xl: 16, full: 999 };
+const SHARED = {
+  fontSans: FONT_SANS, fontMono: FONT_MONO, fontSerif: FONT_SERIF,
+  radius: RADIUS,
+  ctaOn: "#a78bfa",                      // lighter violet: text-on-accent, hover, highlighted card
+  glow: "0 6px 18px rgba(124,92,255,0.42)",
+  acExplore: "#7aa2ff",                  // Explore — Dawn blue
+  acDeep:    "#9a8fd8",                  // Deep — violet
+  acEvolve:  "#b3a7f0",                  // Evolve / re-eval — brighter violet
+  acClosure: "#8b8fe0",                  // Compare / closure — periwinkle
+};
+
 export const T = {
   light: {
+    ...SHARED,
     mode: "light",
     bg: "#f4f2ef", surface: "#faf9f7", surfAlt: "#eceae5",
-    border: "rgba(80,75,65,0.1)", text: "#171919", sec: "#4d5258", mut: "#8c9196",
+    border: "rgba(80,75,65,0.1)", borderStrong: "rgba(80,75,65,0.2)",
+    text: "#171919", sec: "#4d5258", mut: "#8c9196", faint: "#a8adb2",
     shadow: "0 2px 8px rgba(50,55,60,0.06), 0 1px 2px rgba(50,55,60,0.03)",
     headerBg: "#f4f2ef", headerBorder: "rgba(80,75,65,0.12)",
     scoreRing: "#4d5258", scoreGlow: false,
@@ -41,11 +61,15 @@ export const T = {
     streamShadow: "0 24px 64px rgba(50,55,60,0.1), 0 0 0 1px rgba(80,75,65,0.06)",
   },
   dark: {
+    ...SHARED,
     mode: "dark",
-    bg: "#0a0d13", surface: "#0e1117", surfAlt: "rgba(30,30,30,0.8)",
-    border: "rgba(55,55,55,0.4)", text: "#f0f0f0", sec: "#a0a0a0", mut: "#666666",
+    // Unified substrate (premium pass): one navy black, a navy surface set,
+    // white-alpha borders, three cool muted-text steps that harmonize with navy.
+    bg: "#0a0d13", surface: "#10141d", surfAlt: "#171c28",
+    border: "rgba(255,255,255,0.08)", borderStrong: "rgba(255,255,255,0.14)",
+    text: "#eceff5", sec: "#9aa3b4", mut: "#6b7280", faint: "#4a5160",
     shadow: "0 2px 8px rgba(0,0,0,0.4)",
-    headerBg: "rgba(10,13,19,0.97)", headerBorder: "rgba(40,46,58,0.4)",
+    headerBg: "rgba(10,13,19,0.97)", headerBorder: "rgba(255,255,255,0.08)",
     scoreRing: "#eab308", scoreGlow: true,
     barBg: "rgba(35,35,35,0.9)",
     stepDone: "#34d399", stepCurrent: "#ffffff", stepCurrentText: "#0a0a0a",
@@ -57,20 +81,20 @@ export const T = {
     phaseNum: { bg: "rgba(59,130,246,0.12)", color: "#60a5fa", border: "rgba(59,130,246,0.2)" },
     riskNum: "#f87171",
     toolDesc: "rgba(96,165,250,0.8)",
-    ctaBg: "#8b5cf6", ctaText: "#fff",
-    lockBg: "linear-gradient(135deg, #8b5cf6, #6d28d9)",
-    zoneLine: "rgba(55,55,55,0.3)", zoneText: "#555555",
+    ctaBg: "#7c5cff", ctaText: "#fff",
+    lockBg: "linear-gradient(135deg, #7c5cff, #6d28d9)",
+    zoneLine: "rgba(255,255,255,0.06)", zoneText: "#555555",
     insightBorder: "#60a5fa",
     srcBadge: { google: "#60a5fa", github: "#a78bfa", llm: "#808080" },
     typeBadge: { direct: "#f87171", adjacent: "#fbbf24", substitute: "#60a5fa" },
-    hubCard: "rgba(23,23,23,0.8)", hubCardBorder: "rgba(38,38,38,0.8)",
-    inputBg: "rgba(23,23,23,0.8)", inputBorder: "rgba(64,64,64,0.6)", inputText: "#f5f5f5",
-    link: "#60a5fa",
+    hubCard: "#10141d", hubCardBorder: "rgba(255,255,255,0.08)",
+    inputBg: "#171c28", inputBorder: "rgba(255,255,255,0.12)", inputText: "#eceff5",
+    link: "#7aa2ff",
     accentBar: false,
-    modalBg: "#171717", modalBorder: "rgba(38,38,38,0.8)",
-    divider: "#262626",
-    streamOverlay: "rgba(0,0,0,0.75)", streamBg: "#0d0d0d",
-    streamBorder: "#262626", streamDivider: "#1a1a1a",
+    modalBg: "#10141d", modalBorder: "rgba(255,255,255,0.1)",
+    divider: "rgba(255,255,255,0.06)",
+    streamOverlay: "rgba(0,0,0,0.75)", streamBg: "#0a0d13",
+    streamBorder: "rgba(255,255,255,0.08)", streamDivider: "rgba(255,255,255,0.05)",
     streamShadow: "0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03)",
   },
 };

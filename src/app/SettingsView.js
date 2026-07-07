@@ -131,7 +131,7 @@ export default function SettingsView({ t, isAnon = false, onSignUp, email, profi
   if (isAnon) {
     return (
       <div style={{ width: "100%" }}>
-        <div style={{ maxWidth: 760 }}>
+        <div style={{ maxWidth: 760, margin: "0 auto" }}>
           {Header}
           <Panel>
             <div style={{ ...eyebrow(C.mut2, 10, ".2em"), marginBottom: 14 }}>ACCOUNT</div>
@@ -158,7 +158,7 @@ export default function SettingsView({ t, isAnon = false, onSignUp, email, profi
 
   return (
     <div style={{ width: "100%" }}>
-      <div style={{ maxWidth: 760 }}>
+      <div style={{ maxWidth: 760, margin: "0 auto" }}>
         {Header}
 
         {/* ACCOUNT */}

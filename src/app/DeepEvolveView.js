@@ -273,7 +273,7 @@ export default function DeepEvolveView({
 
         <div className="dev-toprow">
           <ModeTitle mode="evolve" label="Evolve · Deep" />
-          <span className="dev-mono dev-profile">{profileLabel} · Edit ✎</span>
+          <span className="dev-mono dev-profile">{profileLabel} · Edit <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "-1px", marginLeft: 3 }}><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3z" /><path d="M13.5 6.5l3 3" /></svg></span>
         </div>
         <h1 className="dev-serif">Re-evaluate.</h1>
         <p className="dev-sub">Reshape the idea, keep the lineage, measure the delta. Editing forks a new version — your current one stays intact.</p>

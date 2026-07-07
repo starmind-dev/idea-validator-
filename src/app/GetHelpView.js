@@ -123,7 +123,7 @@ export default function GetHelpView({ t, onSubmit }) {
 
   return (
     <div style={{ width: "100%" }}>
-      <div style={{ maxWidth: 760 }}>
+      <div style={{ maxWidth: 760, margin: "0 auto" }}>
         {/* header */}
         <div style={{ ...eyebrow(C.faint, 12, ".2em"), display: "inline-flex", alignItems: "center", gap: 9 }}>
           <span style={{ color: C.tealDeep, fontSize: 15 }}>&infin;</span> GET HELP

@@ -81,33 +81,79 @@ function WatchDial({ t, value = "off", onSet }) {
   );
 }
 
-// EVIDENCE WATCH — card form. Same shell as DirectionCard, but a <div> (not a
-// button) so its cadence <select> is legal. Lives in the "From here" row on the
-// saved deep result, equal to the Evolve / Execution Brief cards beside it.
-function WatchCard({ t, value = "off", onSet }) {
-  const [cad, setCad] = useState(value || "off");
+// FromHerePanel — the "From here" section on a saved deep result, rendered as
+// ONE unified segmented panel (B1): three lanes (Execution Brief · Evolve · Watch)
+// share a single surface, each capped by its accent bar and split by a hairline.
+// Replaces the old three-floating-cards row. All wiring is unchanged; the Watch
+// lane still owns the cadence <select> (why this is a panel of segments, not
+// DirectionCards — a <select> can't live inside DirectionCard's <button>).
+function FromHerePanel({ t, briefAvailable, hasExecutionBrief, openExecutionBrief, evalsRemaining, startReEvaluation, watchCadence, onSetWatch }) {
+  const [cad, setCad] = useState(watchCadence || "off");
   const [saving, setSaving] = useState(false);
-  const c = { ac: "#fbbf24", on: "#fde9bf", line: "rgba(245,158,11,0.34)", bg: "rgba(245,158,11,0.08)" };
-  const change = async (e) => {
+  const changeWatch = async (e) => {
     const next = e.target.value;
     setCad(next);
-    if (!onSet) return;
+    if (!onSetWatch) return;
     setSaving(true);
-    try { await onSet(next); } finally { setSaving(false); }
+    try { await onSetWatch(next); } finally { setSaving(false); }
   };
+  const evolveDisabled = evalsRemaining <= 0;
+  const VIO = "#a78bfa", BLUE = "#7aa2ff", AMBER = "#fbbf24";
+  const cols = briefAvailable ? 3 : 2;
+
   return (
-    <div style={{ borderRadius: 13, padding: "14px 16px 12px", minHeight: 104, display: "flex", flexDirection: "column", border: `1px solid ${c.line}`, background: `linear-gradient(180deg, ${c.bg}, transparent 90%)` }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 9 }}>
-        <span style={{ width: 30, height: 30, flex: "0 0 30px", borderRadius: 8, display: "grid", placeItems: "center", color: c.ac, background: c.bg, border: `1px solid ${c.line}` }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" /></svg>
-        </span>
-        <h4 style={{ fontSize: 15.5, fontWeight: 600, margin: 0, color: c.on }}>Watch</h4>
+    <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 18, overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "15px 20px 14px", borderBottom: `1px solid ${t.border}` }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: VIO, flexShrink: 0 }} />
+        <p style={{ fontSize: 15, fontWeight: 600, color: t.text, margin: 0 }}>From here</p>
       </div>
-      <p style={{ fontSize: 12.5, lineHeight: 1.5, color: "#8b94a1", margin: "0 0 auto" }}>Periodically re-check the evidence landscape behind this read.</p>
-      <select value={cad} onChange={change} disabled={saving} style={{ marginTop: 11, alignSelf: "flex-start", fontSize: 12.5, fontWeight: 600, padding: "6px 11px", borderRadius: 8, cursor: saving ? "wait" : "pointer", color: c.ac, background: "rgba(245,158,11,0.06)", border: `1px solid ${c.line}` }}>
-        {WATCH_OPTS.map((o) => (<option key={o[0]} value={o[0]} style={{ color: "#111", background: "#fff" }}>{o[1]}</option>))}
-      </select>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+        {briefAvailable && (
+          <FhSeg t={t} accent={VIO} first title="Execution Brief"
+            desc="Turn this read into a first-move handoff — where our read stops and yours begins."
+            icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M11.5 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v3" /><path d="M14 18h7M18 15l3 3-3 3" /></svg>}
+            action={<FhLink accent={VIO} label={hasExecutionBrief ? "View brief" : "Generate"} onClick={() => openExecutionBrief && openExecutionBrief()} />} />
+        )}
+        <FhSeg t={t} accent={BLUE} first={!briefAvailable} title="Evolve"
+          desc="Reshape the idea, keep the lineage, measure the delta."
+          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /></svg>}
+          action={<FhLink accent={BLUE} label={evolveDisabled ? "No evals left" : "Evolve"} onClick={startReEvaluation} disabled={evolveDisabled} />} />
+        <FhSeg t={t} accent={AMBER} title="Watch"
+          desc="Periodically re-check the evidence landscape behind this read."
+          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" /></svg>}
+          action={
+            <select value={cad} onChange={changeWatch} disabled={saving}
+              style={{ alignSelf: "flex-start", fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, fontWeight: 600, padding: "6px 11px", borderRadius: 8, cursor: saving ? "wait" : "pointer", color: AMBER, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.34)" }}>
+              {WATCH_OPTS.map((o) => (<option key={o[0]} value={o[0]} style={{ color: "#111", background: "#fff" }}>{o[1]}</option>))}
+            </select>
+          } />
+      </div>
     </div>
+  );
+}
+
+// one lane of the From-here panel: accent bar on top, icon + title, desc, action.
+function FhSeg({ t, accent, first, icon, title, desc, action }) {
+  return (
+    <div style={{ position: "relative", padding: "18px 17px", display: "flex", flexDirection: "column", gap: 10, minHeight: 158, borderLeft: first ? "none" : `1px solid ${t.border}` }}>
+      <div style={{ position: "absolute", top: 0, left: 17, right: 17, height: 2, borderRadius: 2, background: accent }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+        <span style={{ width: 34, height: 34, flex: "0 0 34px", borderRadius: 9, display: "grid", placeItems: "center", color: accent, background: `${accent}1f`, border: `1px solid ${accent}40` }}>{icon}</span>
+        <h4 style={{ fontSize: 15.5, fontWeight: 600, margin: 0, color: t.text }}>{title}</h4>
+      </div>
+      <p style={{ fontSize: 12.5, lineHeight: 1.5, color: t.sec, margin: "0 0 auto" }}>{desc}</p>
+      {action}
+    </div>
+  );
+}
+
+function FhLink({ accent, label, onClick, disabled }) {
+  return (
+    <button onClick={disabled ? undefined : onClick} disabled={disabled}
+      style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, letterSpacing: "0.08em", textTransform: "uppercase", color: disabled ? "#6b7280" : accent, background: "none", border: "none", padding: 0, cursor: disabled ? "default" : "pointer" }}>
+      {label}
+      {!disabled && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>}
+    </button>
   );
 }
 
@@ -265,7 +311,7 @@ export default function EvaluationView({
                   </span>
                   <button onClick={() => setHistOpen((v) => !v)} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "transparent", border: `1px solid ${t.border}`, color: t.sec, fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 9, cursor: "pointer", whiteSpace: "nowrap" }}>
                     Previous reads ({deepReads.length})
-                    <span style={{ display: "inline-block", fontSize: 10, transition: "transform .2s", transform: histOpen ? "rotate(180deg)" : "none" }}>▾</span>
+                    <span style={{ display: "inline-flex", transition: "transform .2s", transform: histOpen ? "rotate(180deg)" : "none" }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}><path d="M6 9l6 6 6-6" /></svg></span>
                   </button>
                 </div>
                 {histOpen && (
@@ -928,7 +974,7 @@ export default function EvaluationView({
                               }}
                             />
                             <p style={{ fontSize: 11.5, color: t.mut, margin: "0 0 14px", lineHeight: 1.55, display: "flex", gap: 7, alignItems: "flex-start" }}>
-                              <span style={{ color: "#fbbf24" }}>⌗</span>
+                              <span style={{ color: "#fbbf24", display: "inline-flex", marginTop: 1 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ display: "block" }}><rect x="4" y="4" width="16" height="16" rx="3" /></svg></span>
                               <span>Saved as its own deep card in Evaluated, separate from this lineage — it won’t appear in the tree.</span>
                             </p>
                             <div style={{ display: "flex", gap: 8 }}>
@@ -1273,26 +1319,17 @@ export default function EvaluationView({
 
             {viewingFromSaved ? (
               <>
-                <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 14 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#a78bfa", flexShrink: 0 }} />
-                  <p style={{ fontSize: 15, fontWeight: 600, color: t.text, margin: 0 }}>From here</p>
-                </div>
-                <DirectionRow cols={briefAvailable ? 3 : 2}>
-                  {briefAvailable && (
-                    <DirectionCard
-                      skin="cta" glyph="brief" title="Execution Brief"
-                      desc="Turn this read into a first-move handoff — where our read stops and yours begins."
-                      cue={hasExecutionBrief ? "View brief" : "Generate"}
-                      onClick={() => openExecutionBrief && openExecutionBrief()} />
-                  )}
-                  <DirectionCard
-                    skin="deep" glyph="refresh" title="Evolve"
-                    desc="Reshape the idea, keep the lineage, measure the delta."
-                    cue={evalsRemaining <= 0 ? "No evals left" : "Evolve"}
-                    disabled={evalsRemaining <= 0}
-                    onClick={startReEvaluation} />
-                  <WatchCard key={currentIdeaId} t={t} value={watchCadence} onSet={onSetWatch} />
-                </DirectionRow>
+                <FromHerePanel
+                  key={currentIdeaId}
+                  t={t}
+                  briefAvailable={briefAvailable}
+                  hasExecutionBrief={hasExecutionBrief}
+                  openExecutionBrief={openExecutionBrief}
+                  evalsRemaining={evalsRemaining}
+                  startReEvaluation={startReEvaluation}
+                  watchCadence={watchCadence}
+                  onSetWatch={onSetWatch}
+                />
                 <BackLink t={t} flush onClick={onBackToMyIdeasCleanup} style={{ marginTop: 16 }}>Back to My Ideas</BackLink>
               </>
             ) : (

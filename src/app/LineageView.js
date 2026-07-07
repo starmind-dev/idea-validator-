@@ -184,6 +184,7 @@ export default function LineageView({
   const [detail, setDetail] = useState({}); // id -> { loading, verdict, reflection }
 
   const vpRef = useRef(null);
+  const [expanded, setExpanded] = useState(false);
   const worldRef = useRef(null);
   const view = useRef({ k: 0.7, panX: 0, panY: 0 });
   const drag = useRef({ on: false, moved: false, x: 0, y: 0 });
@@ -288,6 +289,21 @@ export default function LineageView({
     }
     return () => { clearTimeout(t1); clearTimeout(t2); if (ro) ro.disconnect(); };
   }, [fit]);
+
+  // full view — refit the graph when the canvas grows into / shrinks out of
+  // fullscreen (the one-shot ResizeObserver above has already stopped by now),
+  // and let Esc leave full view.
+  useEffect(() => {
+    const r = requestAnimationFrame(() => fit());
+    const t = setTimeout(fit, 260);
+    return () => { cancelAnimationFrame(r); clearTimeout(t); };
+  }, [expanded, fit]);
+  useEffect(() => {
+    if (!expanded) return;
+    const onKey = (e) => { if (e.key === "Escape") setExpanded(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [expanded]);
 
   useEffect(() => {
     const vp = vpRef.current;
@@ -573,9 +589,10 @@ export default function LineageView({
         onMouseDown={startPan}
         onClick={onCanvasClick}
         style={{
-          position: "relative", height: "clamp(520px, calc(100vh - 240px), 780px)", overflow: "hidden",
-          border: "1px solid rgba(125,145,185,0.12)", borderRadius: 16, cursor: "grab", userSelect: "none",
-          backgroundColor: "#080b14",
+          overflow: "hidden", cursor: "grab", userSelect: "none", backgroundColor: "#080b14",
+          ...(expanded
+            ? { position: "fixed", inset: 0, height: "100vh", width: "100vw", borderRadius: 0, border: "none", zIndex: 200 }
+            : { position: "relative", height: "clamp(520px, calc(100vh - 240px), 1600px)", border: "1px solid rgba(125,145,185,0.12)", borderRadius: 16 }),
         }}
       >
         {/* fixed bloom (does not pan) — blue X2 left, violet D2 right */}
@@ -735,6 +752,15 @@ export default function LineageView({
           <CtrlBtn onClick={(e) => { e.stopPropagation(); zoomBtn(1.2); }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></CtrlBtn>
           <div style={{ width: 1, height: 18, background: "rgba(125,145,185,0.16)", margin: "0 2px" }} />
           <CtrlBtn title="Fit to view" onClick={(e) => { e.stopPropagation(); fit(); }}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" /></svg></CtrlBtn>
+        </div>
+
+        {/* full view toggle — bottom-right, mirrors the zoom cluster */}
+        <div style={{ position: "absolute", right: 24, bottom: 24, zIndex: 30, padding: 5, borderRadius: 11, background: "rgba(10,14,24,0.82)", border: "1px solid rgba(125,145,185,0.14)", backdropFilter: "blur(10px)", boxShadow: "0 10px 30px -12px rgba(0,0,0,0.8)" }}>
+          <CtrlBtn title={expanded ? "Exit full view  (Esc)" : "Full view"} onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}>
+            {expanded
+              ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" /><line x1="14" y1="10" x2="21" y2="3" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
+              : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" /></svg>}
+          </CtrlBtn>
         </div>
 
         {toast && (
