@@ -912,10 +912,12 @@ export default function Home() {
   };
 
   const getStepNumber = () => {
-    // Deep arc (V6): Idea(1) · Deep Analysis(2) · Evidence & Reality(3) ·
-    // Handoff(4) · Evolve(5). results1 is the Deep Analysis screen, results2 is
-    // Evidence & Reality, brief is the Handoff. Profile/input fold into Idea.
-    const map = { profile: 1, input: 1, myideas: 1, reeval: 5, results1: 2, results2: 3, brief: 4 };
+    // Deep arc (V7): Idea(1) · Deep Analysis(2) · Handoff(3) · Evolve(4).
+    // "Evidence & Reality" was retired when results2 merged into the single
+    // Deep page — its content is now movements III and IV. results2 still maps
+    // (to 2) because a restored nav can briefly hold it before the redirect
+    // in EvaluationView fires; it must not flash a different step number.
+    const map = { profile: 1, input: 1, myideas: 1, reeval: 4, results1: 2, results2: 2, brief: 3 };
     return map[currentScreen] || 1;
   };
 
@@ -2153,7 +2155,10 @@ export default function Home() {
       const firstLine = (idea || "").split(/[.!?\n]/)[0].trim();
       setIdeaName(firstLine.length <= 60 ? firstLine : firstLine.substring(0, 57) + "...");
     }
-    setCurrentScreen("results2");
+    // V7: the naming form moved to the foot of the merged Deep page.
+    // Do NOT add a scroll here — EvaluationView owns a rAF-deferred scroll
+    // keyed on saveStatus === "naming"; the frame delay is load-bearing.
+    setCurrentScreen("results1");
   };
 
   // Delete a saved idea
@@ -3663,10 +3668,10 @@ export default function Home() {
               <span style={{ display: "inline-flex", alignItems: "center" }}>
                 <BackLink t={t} onClick={() => { setReEvalMode(false); setCurrentScreen("dashboard"); setLineageTargetId(currentIdeaId); setLineageMode(true); }}>Go back to the lineage</BackLink>
                 <BackLinkDivider t={t} />
-                <BackLink t={t} noChevron onClick={() => { setReEvalMode(false); setCurrentScreen("results2"); }}>View the analysis</BackLink>
+                <BackLink t={t} noChevron onClick={() => { setReEvalMode(false); setCurrentScreen("results1"); }}>View the analysis</BackLink>
               </span>
             ) : (
-              <BackLink t={t} onClick={() => { setReEvalMode(false); setCurrentScreen("results2"); }}>Go back to the analysis</BackLink>
+              <BackLink t={t} onClick={() => { setReEvalMode(false); setCurrentScreen("results1"); }}>Go back to the analysis</BackLink>
             )}
           </div>
         </PageContainer>
@@ -3892,6 +3897,7 @@ export default function Home() {
         onKeepOldRead={keepOldRead}
         readDecisionBusy={readDecisionBusy}
         watchCadence={(myIdeas.find((i) => i.id === currentIdeaId) || {}).watch_cadence || "off"}
+        profileContext={(myIdeas.find((i) => i.id === currentIdeaId) || {}).profile_context_json}
         onSetWatch={onSetWatch}
         profile={profile}
         user={user}

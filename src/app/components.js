@@ -489,19 +489,20 @@ export function StepProgress({ currentStep, savedMode, branchMode, t }) {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Deep arc (V6 redesign). Profile is folded into the Idea step (edited inline
-  // in DeepInputView), so it's no longer its own node. Step 5 always shows: on a
-  // first run it sits in the future/dimmed state as an onboarding affordance
-  // ("this is where it goes once you save it"); on a saved view it's live
-  // (Evolve), and on a branch view it's Delta.
+  // Deep arc (V7 redesign). Profile is folded into the Idea step (edited inline
+  // in DeepInputView), so it's no longer its own node. "Evidence & Reality"
+  // was retired when results2 merged into the single Deep page — its content
+  // is now movements III and IV of the analysis. The last step always shows:
+  // on a first run it sits in the future/dimmed state as an onboarding
+  // affordance ("this is where it goes once you save it"); on a saved view
+  // it's live (Evolve), and on a branch view it's Delta.
   const steps = [
     { number: 1, label: "Idea", short: "Idea" },
     { number: 2, label: "Deep Analysis", short: "Analysis" },
-    { number: 3, label: "Evidence & Reality", short: "Evidence" },
-    { number: 4, label: "Handoff", short: "Handoff" },
+    { number: 3, label: "Handoff", short: "Handoff" },
     ...(branchMode
-      ? [{ number: 5, label: "Delta", short: "Delta" }]
-      : [{ number: 5, label: "Evolve", short: "Evolve" }]),
+      ? [{ number: 4, label: "Delta", short: "Delta" }]
+      : [{ number: 4, label: "Evolve", short: "Evolve" }]),
   ];
 
   const circleSize = isMobile ? 28 : 40;

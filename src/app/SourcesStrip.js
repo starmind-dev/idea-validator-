@@ -1,6 +1,15 @@
 // SourcesStrip.js — LL1 Part 2: the per-metric evidence bibliography.
 //
-// Renders a collapsed-by-default "Based on N sources" strip at the foot of a
+// Evidence-presentation pass (2026-07-08, display-only): the collapsed header no
+// longer calls everything a "source." The old "Based on N sources" summed all five
+// trust classes, counting the founder's own input and the landscape prose as
+// sources — the one genuine overclaim. It now reads "What this rests on" and shows
+// the evidence SHAPE at a glance (verified receipts vs. your own claim, coloured by
+// trust, strongest first) while the receipts stay collapsed (pulled, not pushed).
+// resolveEvidenceSources is UNCHANGED — the shared spine primitive is byte-frozen;
+// Explore inherits the honest header for free.
+//
+// Renders a collapsed-by-default evidence strip at the foot of a
 // metric card, resolving the scorer's committed evidence trail
 // (_internal.predicate_commitments.*.evidence_cited + the binding-constraint
 // evidence_cited fields) into receipt rows with trust markers.
@@ -67,11 +76,107 @@ const humaniseFlag = (s) =>
     ? s.replace(/^is_/, "").replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())
     : "";
 
+// ── SCORER-MACHINERY SCRUB (2026-07 fix) ────────────────────────────────────
+// evidence_cited is an AUDIT field: the scorers routinely append their own
+// bookkeeping to an otherwise-valid evidence sentence. Verified against real
+// payloads, the trailing machinery takes three forms:
+//
+//   "...named as the binding free substitute; friction_survival=named_unresolved
+//    per predicate commitment"
+//   "...default first stop; md_binding_friction_named=retention_or_habit from
+//    Stage 2a; ILC's end-state goal is ..."
+//   "...zero friction — the strongest_negative explicitly names this as the
+//    binding adoption friction"
+//
+// None of that is evidence; it is the scorer talking to its own validator, and
+// it was reaching the user because the row picker below kept the LONGEST body
+// per source — and the longest candidate is reliably the one carrying the most
+// bookkeeping. So: scrub the machinery clause-wise, and prefer the CLEANEST
+// candidate over the longest one.
+//
+// Deliberately conservative: it drops whole clauses that contain internal field
+// names, stage references or enum assignments, and leaves ordinary prose alone.
+// A string that scrubs to nothing is kept as a last-resort candidate (with bare
+// assignments removed) so a source never silently loses its only receipt.
+const MACHINERY_TOKENS = /(strongest_positive|strongest_negative|admissible_facts|unresolved_uncertainty|anchor_status|predicate commitments?|per predicate|Stage\s?1\b|Stage\s?2[abc]?\b|sub_position(_sum)?|domain_flags?|sparse_input_triggered|evidence_strength|friction_survival|_named\b|_evidenced\b|\bFP-\d|\bRule\s\d|\bSP-[ABC]\b|per the packet|in packet|from packet)/i;
+
+// snake_case = snake_case  — an enum assignment, never user-facing prose.
+const ENUM_ASSIGN = /\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\s*=\s*[a-z][a-z0-9_]*/i;
+
+// ── ENUM LEAK FIX (2026-07-19, carried since V51) ──────────────────────────
+// The token list + assignment rule missed three decoration shapes verified in
+// production evidence strings, all of which reached users:
+//
+//   bare inline      "adjacent_paid_substitute behavior evidenced"
+//   parenthetical    "...planned compliance posture (regulatory_certification)"
+//   leading label    "regulatory_certification: StateRAMP authorization ..."
+//
+// No token-list expansion (a list is always incomplete) — one general rule:
+// a multi-word snake_case token is scorer vocabulary, never prose. Matched
+// AFTER tag substitution, so the only theoretical false positive is a
+// snake_cased Stage-1 competitor name; none exists in production.
+const BARE_SNAKE = /\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b/;
+const BARE_SNAKE_G = /\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b/gi;
+
+// Decorations are stripped BEFORE the clause verdict: a parenthetical goes
+// only when it contains nothing but snake tokens and separators; a leading
+// label only when the entire label is one snake token followed by a colon.
+// Ordinary parenthetical prose ("(agencies conduct procurements
+// continuously)") is untouched.
+const PAREN_ENUMS = /\(\s*[a-z][a-z0-9]*(?:_[a-z0-9]+)+(?:\s*[,/+&]\s*[a-z][a-z0-9]*(?:_[a-z0-9]+)+)*\s*\)/gi;
+const LEAD_LABEL = /^[a-z][a-z0-9]*(?:_[a-z0-9]+)+\s*:\s*/i;
+
+const stripEnumDecorations = (c) => c.replace(PAREN_ENUMS, "").replace(LEAD_LABEL, "");
+
+const isMachineryClause = (c) =>
+  MACHINERY_TOKENS.test(c) || ENUM_ASSIGN.test(c) || BARE_SNAKE.test(c);
+
+// Split on the seams the scorers actually use to append bookkeeping: semicolons
+// and em/en-dash asides. Keep only the clauses that read as evidence.
+export function scrubMachinery(body) {
+  const clauses = body.split(/\s*;\s*|\s+[—–]\s+/).filter(Boolean);
+  let touched = false;
+  const kept = [];
+  for (const c of clauses) {
+    // Strip decorative enum mentions first — they ride inside otherwise-valid
+    // evidence prose, and dropping the whole clause for a parenthetical would
+    // throw away the receipt with the leak.
+    const undecorated = stripEnumDecorations(c);
+    if (undecorated !== c) touched = true;
+    if (isMachineryClause(undecorated)) {
+      touched = true; // the clause itself is bookkeeping — drop it
+      continue;
+    }
+    kept.push(undecorated);
+  }
+  if (!touched) return { text: body, quality: 0 };                         // clean
+  if (kept.length > 0) {
+    return { text: tidySeams(kept.join(" — ")), quality: 1 };              // scrubbed
+  }
+  // Nothing survived: strip assignments AND bare enum tokens so the row is
+  // still readable without leaking vocabulary.
+  return {
+    text: tidySeams(
+      body.replace(new RegExp(ENUM_ASSIGN, "gi"), "").replace(BARE_SNAKE_G, "")
+    ),
+    quality: 2,
+  };
+}
+
+function tidySeams(s) {
+  return s
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([.,;:)])/g, "$1")
+    .trim()
+    .replace(/^[\s\-–—:;,.+]+/, "")
+    .replace(/[\s\-–—:;,+]+$/, "");
+}
+
 // Strip tags from a fact string for display: competitor tags become the bare
 // name (keeps "[competitor: Vanta] + [competitor: Drata] sustain $99-300"
 // readable as "Vanta + Drata sustain $99-300"); all other tags vanish. Then
 // tidy the whitespace/punctuation seams the removal leaves behind.
-function stripTags(s) {
+export function stripTags(s) {
   return s
     .replace(TAG_RE, (full, kind, val) => (kind === "competitor" ? val : ""))
     .replace(/\s{2,}/g, " ")
@@ -119,17 +224,27 @@ export function resolveEvidenceSources(internal, competitors) {
   });
 
   const rows = new Map();
+  // CLEANEST WINS, then longest. The old rule was longest-wins, which reliably
+  // selected the candidate carrying the most scorer bookkeeping (see the
+  // machinery scrub above). Quality: 0 = no machinery, 1 = scrubbed, 2 = only
+  // machinery survived.
   const upsert = (key, row) => {
     const prev = rows.get(key);
-    if (!prev || (row.text || "").length > (prev.text || "").length) {
-      rows.set(key, row);
-    }
+    if (!prev) { rows.set(key, row); return; }
+    const better =
+      row.quality !== prev.quality
+        ? row.quality < prev.quality
+        : (row.text || "").length > (prev.text || "").length;
+    if (better) rows.set(key, row);
   };
 
   for (const s of strings) {
     const matches = Array.from(s.matchAll(TAG_RE));
     if (matches.length === 0) continue; // tagless = scorer reasoning, not a source
-    const body = stripTags(s);
+    const scrubbed = scrubMachinery(stripTags(s));
+    const body = scrubbed.text;
+    const quality = scrubbed.quality;
+    if (!body) continue; // nothing readable survived — this candidate is not a receipt
 
     for (const m of matches) {
       if (m[1] === "competitor") {
@@ -148,6 +263,7 @@ export function resolveEvidenceSources(internal, competitors) {
             cls: retrieved ? "external" : "ai",
             name,
             text: body,
+            quality,
             url: (comp && comp.url) || null,
           });
         }
@@ -157,13 +273,14 @@ export function resolveEvidenceSources(internal, competitors) {
           cls: "domain",
           name: humaniseFlag(flag),
           text: body,
+          quality,
           url: null,
         });
       } else if (m[3] === "narrative_field") {
-        upsert("landscape", { cls: "landscape", name: null, text: body, url: null });
+        upsert("landscape", { cls: "landscape", name: null, text: body, quality, url: null });
       } else {
         // idea_description + user_claim: the founder is one source.
-        upsert("input", { cls: "input", name: null, text: body, url: null });
+        upsert("input", { cls: "input", name: null, text: body, quality, url: null });
       }
     }
   }
@@ -176,20 +293,12 @@ export function resolveEvidenceSources(internal, competitors) {
 
 // ── presentation ────────────────────────────────────────────────────────────
 
-const SUMMARY_LABELS = {
-  external: "external",
-  ai: "AI-identified",
-  domain: "domain signal",
-  input: "your input",
-  landscape: "landscape read",
-};
-
 const ROW_FALLBACK_TEXT = {
   input: "Stated in your idea description.",
   landscape: "From the landscape analysis.",
 };
 
-export default function SourcesStrip({ internal, competitors, t }) {
+export default function SourcesStrip({ internal, competitors, t, compact = false }) {
   const [open, setOpen] = useState(false); // collapsed by default — pulled, not pushed
   const rows = useMemo(
     () => resolveEvidenceSources(internal, competitors),
@@ -210,10 +319,16 @@ export default function SourcesStrip({ internal, competitors, t }) {
   rows.forEach((r) => {
     counts[r.cls] = (counts[r.cls] || 0) + 1;
   });
-  const summary = ["external", "ai", "domain", "input", "landscape"]
-    .filter((c) => counts[c])
-    .map((c) => `${counts[c]} ${SUMMARY_LABELS[c]}`)
-    .join(" · ");
+
+  // Ordered, present-only classes for the collapsed glance. Resolver order is
+  // strongest-first (external → ai → domain → input → landscape), so the verified
+  // receipts read first and your own claim reads last — the honest hierarchy,
+  // visible before anything is expanded.
+  const present = ["external", "ai", "domain", "input", "landscape"].filter((c) => counts[c]);
+
+  // Honest summary for assistive tech: names each class for what it is and never
+  // rolls "your input" / "landscape read" into a "sources" count.
+  const glanceSummary = present.map((c) => `${counts[c]} ${chips[c].label}`).join(", ");
 
   const toggle = () => setOpen((o) => !o);
 
@@ -223,7 +338,7 @@ export default function SourcesStrip({ internal, competitors, t }) {
         role="button"
         tabIndex={0}
         aria-expanded={open}
-        aria-label={`Sources: based on ${rows.length} source${rows.length === 1 ? "" : "s"}`}
+        aria-label={`What this read rests on: ${glanceSummary}. Activate to ${open ? "hide" : "show"} the receipts.`}
         onClick={toggle}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -234,19 +349,35 @@ export default function SourcesStrip({ internal, competitors, t }) {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 10,
+          gap: 12,
           flexWrap: "wrap",
           borderTop: `1px solid ${t.divider}`,
-          marginTop: 22,
-          paddingTop: 14,
+          marginTop: compact ? 14 : 22,
+          paddingTop: compact ? 12 : 14,
           cursor: "pointer",
           userSelect: "none",
         }}
       >
-        <span style={{ fontSize: 12, fontWeight: 600, color: t.text }}>
-          Based on {rows.length} source{rows.length === 1 ? "" : "s"}
+        {/* Honest umbrella — the read rests on these; it does not call your own
+            claim a "source." The old "Based on N sources" summed all five classes,
+            counting the founder's input and the landscape prose as sources. */}
+        <span style={{ fontSize: 11, color: t.mut, letterSpacing: "0.3px", flexShrink: 0 }}>
+          What this rests on
         </span>
-        <span style={{ fontSize: 11, color: t.mut }}>{summary}</span>
+
+        {/* The evidence SHAPE, legible at a glance — verified receipts vs. your own
+            claim, coloured by trust, strongest first. The receipts themselves stay
+            collapsed below (pulled, not pushed): prominence, not a conclusion. */}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 14, flexWrap: "wrap", minWidth: 0 }}>
+          {present.map((c) => (
+            <span key={c} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, whiteSpace: "nowrap" }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: chips[c].color, flexShrink: 0 }} />
+              <span style={{ fontWeight: 700, color: t.text, fontFamily: "monospace" }}>{counts[c]}</span>
+              <span style={{ color: t.mut }}>{chips[c].label}</span>
+            </span>
+          ))}
+        </span>
+
         <svg
           width="14"
           height="14"

@@ -41,7 +41,11 @@ export const METRIC_COLORS = {
   market_demand:        { dark: "#3fc09a", light: "#1d9b78" },
   monetization:         { dark: "#6f8ff5", light: "#3b63d6" },
   originality:          { dark: "#b57ce0", light: "#8b4fc0" },
-  technical_complexity: { dark: "#d9a85e", light: "#b07d2e" },
+  // TC is deliberately OUTSIDE the MD/MO/OR family (it is not in the composite), so it
+  // gets its own tone — a cool slate-teal. It must NOT be gold: DM_AMBER (#d9a86c) is
+  // reserved for "a named absence" in the metric gap panels, and the old TC gold
+  // (#d9a85e) was one hex digit away from it — the same colour meaning two things.
+  technical_complexity: { dark: "#7fb0c4", light: "#3d7d94" },
 };
 export const OVERALL_RING   = { dark: "#b1a89c", light: "#8a8174" };
 export const PROVENANCE_BLUE = { dark: "#6b9cf0", light: "#3b6fd0" };
@@ -420,6 +424,62 @@ const OR_EXPOSURE_LABELS = {
   job_substitution_pressure: "Substitutable by an existing tool",
   none_or_minimal: "No structural exposure named",
 };
+// OR defensibility ladder: archetype -> rung (1..6). Verified against
+// prompt-stage-or.js ARCHETYPE 1..6 headers and the emitted originality_archetype
+// enums. OR climbs the SAME kind of ladder MD/MO do — it just gets CAPPED rather
+// than merely un-advanced (see isCapped below).
+const OR_ARCHETYPES = {
+  no_defensibility_component:     { rung: 1, label: "No defensibility component" },
+  articulated_defensibility:      { rung: 2, label: "Articulated defensibility" },
+  emerging_defensibility:         { rung: 3, label: "Emerging defensibility" },
+  established_defensibility:      { rung: 4, label: "Established defensibility" },
+  sustained_defensibility:        { rung: 5, label: "Sustained defensibility" },
+  self_reinforcing_defensibility: { rung: 6, label: "Self-reinforcing at scale" },
+};
+
+// The closed list OR admits on. Display labels only — the engine owns the enums.
+// Rendered as the ladder's ADMISSION CRITERIA (a definition of what this metric
+// measures), never as a checklist of what the idea lacks. See the anti-scold rule
+// in DmAdmission: we state the count; we never draw a ✗.
+const OR_COMPONENTS = [
+  "proprietary data",
+  "regulatory certification",
+  "two-sided liquidity",
+  "workflow integration depth",
+  "aggregated workflow signals",
+  "distribution access privilege",
+];
+
+// The absence tone. Amber marks a NAMED ABSENCE — the gap panel and the cap
+// bracket, nowhere else. Used once per card: if it is everywhere it means nothing.
+// Distinct from every metric-identity colour so "missing" never reads as "bad score".
+const DM_AMBER = "#d9a86c";
+
+// CAP-1: OR commits zero closed-list components -> rungs 2-6 are structurally
+// unreachable. This is categorically different from "at rung 2, rung 3 needs more
+// evidence": it is not a rung requirement, it is an admission requirement. Safe
+// default — if components_committed is absent we do NOT assert a cap we can't prove.
+function dmIsCapped(metricKey, metric) {
+  if (metricKey !== "originality") return false;
+  const cc = metric && metric._internal && metric._internal.components_committed;
+  return Array.isArray(cc) && cc.length === 0;
+}
+
+// Meaningful-teaser rule: a collapsed gate always shows a COMPLETE first sentence —
+// never a truncated label, never a bare "Show more". The teaser is the paragraph's
+// own opening, so expanding repeats nothing.
+const dmFirstSentence = (s) => {
+  if (typeof s !== "string") return "";
+  const m = s.match(/^[\s\S]*?[.!?](?=\s|$)/);
+  return (m ? m[0] : s).trim();
+};
+
+// Structured-abstract role tags (hanging mono labels): skim the tags alone and the
+// argument's shape arrives before a word of content is read.
+// The gate labels are the ENGINE'S OWN QUESTIONS (DM_QUESTIONS below) — not invented
+// tags. "Cleared" / "The barrier" flattened three distinct questions into one generic
+// pair and stopped explaining the prose beneath them. The question IS the frame.
+
 const humanize = (s) => (typeof s === "string" && s.length ? s.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()) : null);
 
 const DM_QUESTIONS = {
@@ -501,6 +561,60 @@ function MoBars({ rung, c, t }) {
   );
 }
 
+// ---- OR bars: the same 6-rung ladder as MO, but able to render a CAP ----------
+// climbing  -> rungs above are dashed outlines in the metric colour = attainable.
+// capped    -> rungs above are HATCHED and sealed under a dashed amber bracket =
+//              present on the ladder, but structurally unreachable until a
+//              closed-list component is named. The difference must be pre-verbal:
+//              one reads "not yet", the other reads "not from here".
+function OrBars({ rung, capped, c, t }) {
+  const heights = [16, 24, 32, 40, 46, 52];
+  const xs = [6, 44, 82, 120, 158, 196];
+  const cur = Math.max(1, Math.min(6, rung)) - 1;
+  const baseLine = t.mode === "light" ? "rgba(80,75,65,0.25)" : "rgba(255,255,255,0.1)";
+  const sealedFrom = xs[cur + 1];
+  return (
+    <svg width="100%" viewBox="0 0 240 88" fill="none" style={{ maxWidth: 188, display: "block" }}>
+      <defs>
+        <pattern id="dmHatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="5" stroke={DM_AMBER} strokeWidth="1" opacity="0.30" />
+        </pattern>
+      </defs>
+      <line x1="2" y1="58" x2="238" y2="58" stroke={baseLine} strokeWidth="1" />
+      {heights.map((h, i) => {
+        const y = 58 - h;
+        if (i < cur) return <rect key={i} x={xs[i]} y={y} width="30" height={h} rx="3" fill={`${c}6E`} />;
+        if (i === cur) {
+          return (
+            <g key={i}>
+              <rect x={xs[i]} y={y} width="30" height={h} rx="3" fill={c} style={{ filter: `drop-shadow(0 0 6px ${c}80)` }} />
+              <circle cx={xs[i] + 15} cy={y - 6} r="3" fill={c} />
+            </g>
+          );
+        }
+        // above the current rung
+        if (capped) {
+          return (
+            <rect key={i} x={xs[i]} y={y} width="30" height={h} rx="3" fill="url(#dmHatch)"
+                  stroke={`${DM_AMBER}55`} strokeWidth="1" strokeDasharray="2 3" />
+          );
+        }
+        return <rect key={i} x={xs[i]} y={y} width="30" height={h} rx="3" fill="none" stroke={`${c}48`} strokeWidth="1.4" strokeDasharray="3 3" />;
+      })}
+      {capped && (
+        <g>
+          {/* the lid: a dashed bracket sealing every rung above the cap */}
+          <path d={`M${sealedFrom - 4} 9 L${sealedFrom - 4} 4 L232 4 L232 9`} fill="none"
+                stroke={DM_AMBER} strokeWidth="1.3" strokeDasharray="3 3" opacity="0.85" strokeLinecap="round" />
+          <text x={(sealedFrom + 228) / 2} y="86" textAnchor="middle" fill={DM_AMBER} fontSize="8.5" opacity="0.9">sealed</text>
+        </g>
+      )}
+      <text x="6" y="72" fill={t.mut} fontSize="9">no component</text>
+      <text x="234" y="72" textAnchor="end" fill={t.mut} fontSize="9">self-reinforcing</text>
+    </svg>
+  );
+}
+
 // ---- OR shield: exposure mark (static shape; the phrase carries the meaning) --
 function OrShield({ c }) {
   return (
@@ -529,11 +643,49 @@ function DmRailFeature({ metricKey, metric, c, t }) {
     return { lab: `Capture case · rung ${a.rung} / 6`, hl: a.label, viz: <MoBars rung={a.rung} c={c} t={t} /> };
   }
   if (metricKey === "originality") {
+    const a = OR_ARCHETYPES[_i.originality_archetype];
     const sub = _i.binding_constraint && _i.binding_constraint.primary_subtype;
-    if (!dmHas(sub)) return null;
-    return { lab: "Primary exposure", hl: OR_EXPOSURE_LABELS[sub] || humanize(sub), viz: <OrShield c={c} /> };
+    const exposure = dmHas(sub) ? (OR_EXPOSURE_LABELS[sub] || humanize(sub)) : null;
+    // Preferred: the ladder (same language as MD/MO) with the exposure as a sub-line.
+    if (a) {
+      const capped = dmIsCapped(metricKey, metric);
+      return {
+        lab: capped ? `Defensibility · capped at rung ${a.rung} / 6` : `Defensibility · rung ${a.rung} / 6`,
+        hl: a.label,
+        viz: <OrBars rung={a.rung} capped={capped} c={c} t={t} />,
+        sub: exposure ? { lab: "Primary exposure", val: exposure } : null,
+      };
+    }
+    // Degrade: unknown/absent archetype -> the pre-existing exposure+shield rail.
+    if (!exposure) return null;
+    return { lab: "Primary exposure", hl: exposure, viz: <OrShield c={c} /> };
   }
   return null;
+}
+
+// ---- the admission counter (OR, capped only) ---------------------------------
+// The hardest sub-problem: name the six components WITHOUT it reading as a scolding
+// checklist of things the idea lacks.
+//
+// THE ANTI-SCOLD RULE (load-bearing): we frame the six as the ladder's ADMISSION
+// CRITERIA — a definition of what this metric measures — and state the count as a
+// neutral fact ("named here 0 / 6"). A count is information. A red ✗ list is
+// judgment. We never draw the ✗, never strike a component through, never colour one
+// red. The component names sit in neutral tone; amber touches only the count.
+function DmAdmission({ committedCount, t }) {
+  return (
+    <div style={{ marginTop: 11, paddingTop: 11, borderTop: `1px dashed ${DM_AMBER}33` }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 6 }}>
+        <span style={{ fontSize: 13, color: t.sec }}>This ladder admits on six defensibility components</span>
+        <span style={{ fontSize: 11.5, fontFamily: "monospace", color: DM_AMBER, whiteSpace: "nowrap" }}>
+          named here <b style={{ fontWeight: 700 }}>{committedCount} / 6</b>
+        </span>
+      </div>
+      <div style={{ fontSize: 12.5, lineHeight: 1.8, color: t.mut }}>
+        {OR_COMPONENTS.join(" · ")}
+      </div>
+    </div>
+  );
 }
 
 // Shared progressive-disclosure toggle (item 6). Keeps the wall down: punchy parts
@@ -548,24 +700,278 @@ function MoreToggle({ open, onClick, closed, opened, color, t, mt = 10 }) {
   );
 }
 
+// ============================================================================
+// GAP-WEIGHTED CARD (design 2A)
+// The evidence chain is the card's spine, at the TOP of the body:
+//   ladder (rung / total, climbing or capped)
+//     -> CLEARED   gate  (teaser -> claim / qualification fold)
+//     -> BARRIER   gate  (teaser -> claim / qualification fold)
+//     -> THE GAP   panel (always open, amber, "not in the evidence")
+//     -> receipts  drawer
+// Every word comes from a field already on the payload. No prompt change, no new
+// generation, engine byte-unchanged. DISPLAY ONLY.
+// ============================================================================
+
+// Contrast split — nearly every prose beat here is secretly "[claim] — but
+// [qualification]". Claim renders bright; the qualification is set dimmer behind a
+// quiet rule (the court-opinion move: holding, then reasoning).
+//
+// This is the SINGLE SOURCE OF TRUTH for a gate: teaser = claim, and a gate is
+// collapsible exactly when a qualification exists. Three tiers, in order:
+//   1. an explicit contrast marker ("— but", ", however", …)
+//   2. a sentence boundary (multi-sentence beats)
+//   3. a CLAUSE boundary (— : ;) — so a beat that is ONE long sentence still folds
+//      instead of dumping a full paragraph with no way to close it.
+// Every tier yields a complete, load-bearing lead. We never truncate mid-thought.
+function dmSplitClaim(text) {
+  if (typeof text !== "string" || !text.trim()) return { claim: "", qual: null };
+  const s = text.trim();
+
+  // 1. explicit contrast
+  const m = s.match(/^([\s\S]{30,}?)\s*(?:[—–]\s*|,\s*)(but|however|though|yet|although|while)\s+([\s\S]+)$/i);
+  if (m) return { claim: m[1].trim().replace(/[,\s]+$/, ""), qual: "— " + m[2].toLowerCase() + " " + m[3].trim() };
+
+  // 2. sentence boundary
+  const s1 = dmFirstSentence(s);
+  const rest = s.slice(s1.length).trim();
+  if (rest) return { claim: s1, qual: rest };
+
+  // 3. clause boundary — the single-sentence case
+  const cm = s.match(/^([\s\S]{35,}?)\s*(?:[—–]\s+|:\s+|;\s+)([\s\S]{25,})$/);
+  if (cm) return { claim: cm[1].trim().replace(/[,\s]+$/, ""), qual: "— " + cm[2].trim() };
+
+  return { claim: s, qual: null };
+}
+
+// `direction` is contractually two-part: current position, then what evidence would
+// move it. We lead with the REQUIREMENT (the actionable half) and set the position
+// read beneath it. Sentence 1 = position, the rest = requirement.
+function dmSplitGap(text) {
+  if (typeof text !== "string" || !text.trim()) return null;
+  const s1 = dmFirstSentence(text);
+  const rest = text.slice(s1.length).trim();
+  return rest ? { requirement: rest, position: s1 } : { requirement: text.trim(), position: null };
+}
+
+// Entity chips — provenance IN the sentence. A competitor that Stage 1 actually
+// retrieved renders green and links out; the source strip stops doing all the work,
+// and a clause with no chip is visibly a clause with no receipt.
+const DM_RETRIEVED = new Set(["github", "tavily", "exa", "google"]);
+const dmEscapeRe = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+function dmBuildEntities(competitors) {
+  const list = (Array.isArray(competitors) ? competitors : [])
+    .filter((c) => c && typeof c.name === "string" && c.name.trim().length > 2)
+    .map((c) => ({ name: c.name.trim(), url: c.url || null, verified: DM_RETRIEVED.has(c.source) }))
+    .sort((a, b) => b.name.length - a.name.length); // longest first: "Reflect Diary" before "Reflect"
+  return list;
+}
+
+// Renders text, wrapping the first occurrence of each known entity in a chip.
+// Never mangles a sentence: a name that doesn't match cleanly just stays plain text.
+function DmProse({ text, entities, t }) {
+  if (typeof text !== "string" || !text) return null;
+  if (!entities || !entities.length) return <>{text}</>;
+  const used = new Set();
+  const pattern = new RegExp("\\b(" + entities.map((e) => dmEscapeRe(e.name)).join("|") + ")\\b", "g");
+  const out = [];
+  let last = 0, m, k = 0;
+  while ((m = pattern.exec(text)) !== null) {
+    const key = m[1].toLowerCase();
+    if (used.has(key)) continue;
+    used.add(key);
+    const ent = entities.find((e) => e.name.toLowerCase() === key);
+    if (m.index > last) out.push(text.slice(last, m.index));
+    const verified = !!(ent && ent.verified);
+    const href = ent && ent.url;
+    const tone = verified ? "#34d399" : t.sec;
+    // The NAME ITSELF is the receipt. Clicking the competitor opens its source —
+    // no "Visit →" bolted on beside it. A verified name is green + underlined and
+    // links out; an unverified one is plain emphasis and does not pretend to link.
+    if (href) {
+      out.push(
+        <a key={`e${k++}`} href={href} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+           style={{ color: tone, fontWeight: 600, textDecoration: "none", borderBottom: `1px solid ${verified ? "rgba(52,211,153,0.45)" : t.divider}`, cursor: "pointer" }}>
+          {m[1]}
+        </a>
+      );
+    } else {
+      out.push(<span key={`e${k++}`} style={{ color: tone, fontWeight: 600 }}>{m[1]}</span>);
+    }
+    last = m.index + m[1].length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return <>{out}</>;
+}
+
+// ---- the ladder: the evidence chain's header, at the top of the body ----------
+function DmLadder({ rung, total, label, capped, nextLabel, c, t }) {
+  const segs = [];
+  for (let i = 1; i <= total; i++) {
+    const done = i < rung;
+    const here = i === rung;
+    const isNext = !capped && i === rung + 1;
+    const sealed = capped && i > rung;
+    segs.push(
+      <div key={i} style={{
+        flex: 1,
+        height: here || isNext ? 11 : 8,
+        borderRadius: 2,
+        background: done ? `${c}66` : here ? c : sealed ? (t.mode === "light" ? "rgba(80,75,65,0.07)" : "rgba(255,255,255,0.035)") : t.barBg,
+        border: isNext ? `1.5px dashed ${DM_AMBER}77` : sealed ? `1px dashed ${t.mode === "light" ? "rgba(80,75,65,0.16)" : "rgba(255,255,255,0.12)"}` : "none",
+        boxSizing: "border-box",
+      }} />
+    );
+  }
+  return (
+    <>
+      <div style={{ position: "relative", marginBottom: 8 }}>
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>{segs}</div>
+        {capped && rung < total && (
+          <div style={{ position: "absolute", left: `calc(${(rung / total) * 100}% + 2px)`, right: 0, top: -4, bottom: -4, border: `1px dashed ${DM_AMBER}77`, borderRadius: 3, pointerEvents: "none" }} />
+        )}
+      </div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 13, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 12.5, fontWeight: 600, color: t.sec }}>rung {rung} / {total} · {label}</span>
+        {capped ? (
+          <span style={{ fontFamily: "monospace", fontSize: 10.5, color: DM_AMBER, display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0" /></svg>
+            capped · rungs {rung + 1}–{total} unreachable
+          </span>
+        ) : (
+          <>
+            <span style={{ fontFamily: "monospace", fontSize: 10.5, color: c }}>climbing</span>
+            {rung < total && nextLabel && (
+              <span style={{ marginLeft: "auto", fontFamily: "monospace", fontSize: 10.5, color: DM_AMBER }}>next: rung {rung + 1} ↗</span>
+            )}
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
+// ---- one gate: meaningful teaser -> claim / qualification fold ----------------
+function DmGate({ kind, tag, badge, body, entities, c, t }) {
+  const [open, setOpen] = React.useState(false);
+  // teaser IS the claim, and the gate folds exactly when a qualification exists.
+  // Same rule for every metric — no gate is collapsible on one card and frozen open
+  // on another just because its prose happened to have two sentences.
+  const { claim, qual } = dmSplitClaim(body);
+  const hasMore = !!qual;
+  // Every gate carries the METRIC'S OWN colour — green on Market Demand, blue on
+  // Monetization, violet on Originality. The second question used to render at t.mut
+  // (grey), which read as "less important" when it is simply the next question; and
+  // the first was hardcoded green even on a blue card. Identity colour, not status.
+  const tone = c;
+  const chipBg = `${c}1F`;
+
+  return (
+    <div style={{ borderTop: `1px solid ${t.divider}` }}>
+      <div
+        role="button" tabIndex={0} aria-expanded={open}
+        onClick={() => hasMore && setOpen((o) => !o)}
+        onKeyDown={(e) => { if (hasMore && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setOpen((o) => !o); } }}
+        style={{ display: "flex", gap: 11, alignItems: "flex-start", padding: "11px 0", cursor: hasMore ? "pointer" : "default", userSelect: "none" }}
+      >
+        <span style={{ flexShrink: 0, width: 16, height: 16, borderRadius: 5, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1, background: chipBg, color: tone, fontFamily: "monospace", fontSize: 9, fontWeight: 700 }}>
+          {badge != null ? badge : kind === "cleared" ? (
+            <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+          ) : (
+            <svg viewBox="0 0 24 24" width="8" height="8" fill="currentColor"><circle cx="12" cy="12" r="7" /></svg>
+          )}
+        </span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: tone, display: "block", marginBottom: 6, letterSpacing: "-0.005em" }}>{tag}</span>
+          {!open && (
+            <span style={{ fontSize: 13.5, lineHeight: 1.6, color: t.text }}>
+              <DmProse text={claim} entities={entities} t={t} />
+            </span>
+          )}
+          {open && (
+            <>
+              <p style={{ fontSize: 13.5, lineHeight: 1.65, color: t.text, margin: "0 0 0", maxWidth: "62ch" }}>
+                <DmProse text={claim} entities={entities} t={t} />
+              </p>
+              {qual && (
+                <p style={{ fontSize: 13.5, lineHeight: 1.68, color: t.sec, margin: "7px 0 4px", paddingLeft: 13, borderLeft: `2px solid ${t.divider}`, maxWidth: "62ch" }}>
+                  <DmProse text={qual} entities={entities} t={t} />
+                </p>
+              )}
+            </>
+          )}
+        </span>
+        {hasMore && (
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke={t.mut} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+               style={{ flexShrink: 0, marginTop: 5, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} aria-hidden="true">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function DeepMetricCard({ metricKey, metric, name, weightLabel, notes = [], competitors = null, t, wt, onWt }) {
   const c = metricColor(metricKey, t);
   const coarse = metric.score;
   const shown = metricKey === "monetization" && typeof metric.display_score === "number" ? metric.display_score : coarse;
   const set = DM_QUESTIONS[metricKey];
   const canSplit = set && set.every(({ field }) => dmHas(metric[field]));
-  const [expanded, setExpanded] = React.useState(false);
-  const feature = DmRailFeature({ metricKey, metric, c, t });
+  const _i = metric._internal || {};
+
+  const capped = dmIsCapped(metricKey, metric);
+  const committed = _i.components_committed || [];
+  const entities = React.useMemo(() => dmBuildEntities(competitors), [competitors]);
+
+  // ---- the ladder position, per metric -----------------------------------------
+  let ladder = null;
+  if (metricKey === "market_demand") {
+    const tier = MD_ARCHETYPES[_i.demand_archetype];
+    if (tier) ladder = { rung: tier, total: 7, label: MD_TIER_LABELS[tier], nextLabel: MD_TIER_LABELS[tier + 1] || null };
+  } else if (metricKey === "monetization") {
+    const a = MO_ARCHETYPES[_i.monetization_archetype];
+    if (a) {
+      const nx = Object.values(MO_ARCHETYPES).find((x) => x.rung === a.rung + 1);
+      ladder = { rung: a.rung, total: 6, label: a.label, nextLabel: nx ? nx.label : null };
+    }
+  } else if (metricKey === "originality") {
+    const a = OR_ARCHETYPES[_i.originality_archetype];
+    if (a) {
+      const nx = Object.values(OR_ARCHETYPES).find((x) => x.rung === a.rung + 1);
+      ladder = { rung: a.rung, total: 6, label: a.label, nextLabel: nx ? nx.label : null };
+    }
+  }
+
+  // OR's primary exposure — a second axis, not a rung. Gets its own quiet pill.
+  const expSub = _i.binding_constraint && _i.binding_constraint.primary_subtype;
+  const exposure = metricKey === "originality" && dmHas(expSub) ? (OR_EXPOSURE_LABELS[expSub] || humanize(expSub)) : null;
+
+  // THE GAP — `direction`, rendered whole (requirement first, position beneath).
+  // Removed from the question list below: said ONCE, where it matters.
+  const gap = dmSplitGap(metric.direction);
+  // The agreed title. ILC judges the EVIDENCE SHAPE — so the question is what would
+  // change the READ, not what would raise the score. The rung/admission context rides
+  // alongside as a quiet mono note, never replacing the question.
+  const gapTitle = "What would change this read";
+  const gapNote = capped
+    ? "admission requires"
+    : ladder && ladder.rung < ladder.total
+      ? `rung ${ladder.rung + 1} requires`
+      : null;
+
+  const gates = canSplit ? set.slice(0, -1) : [];
+  const isOr = metricKey === "originality";
 
   const railTint = t.mode === "light" ? `${c}0A` : `${c}09`;
-  const icoBg = `${c}1F`;
-  const icoBorder = `${c}33`;
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "228px 1fr", border: `1px solid ${t.border}`, borderRadius: 16, overflow: "hidden", marginBottom: 14, background: t.mode === "light" ? t.surface : "rgba(255,255,255,0.022)" }}>
-      {/* rail */}
+    <div style={{ display: "grid", gridTemplateColumns: "202px 1fr", border: `1px solid ${t.border}`, borderRadius: 16, overflow: "hidden", marginBottom: 14, background: t.mode === "light" ? t.surface : "rgba(255,255,255,0.022)" }}>
+      {/* rail — identity only; the ladder now lives in the body.
+          Width is sized to the LONGEST metric name ("Monetization Potential") so no
+          dead column is left beside the shorter ones. */}
       <div style={{ padding: "24px 22px", borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", gap: 11, background: railTint }}>
-        <div style={{ width: 40, height: 40, borderRadius: 11, display: "grid", placeItems: "center", background: icoBg, border: `1px solid ${icoBorder}`, color: c }}>
+        <div style={{ width: 40, height: 40, borderRadius: 11, display: "grid", placeItems: "center", background: `${c}1F`, border: `1px solid ${c}33`, color: c }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><DmIcon metricKey={metricKey} /></svg>
         </div>
         <div style={{ fontSize: 14.5, fontWeight: 600, color: t.text, display: "flex", alignItems: "center", gap: 8 }}>{name}<ChangeMarker bundle={wt && wt[metricKey]} onOpen={onWt} title={(name || "This metric") + " changed"} /></div>
@@ -573,51 +979,71 @@ export function DeepMetricCard({ metricKey, metric, name, weightLabel, notes = [
           {shown.toFixed(1)}<span style={{ fontSize: 13, fontWeight: 600, color: t.mut }}>/10</span>
         </div>
         <div style={{ fontSize: 11, color: t.mut, marginTop: -4 }}>{weightLabel}</div>
-        {feature && (
-          <div style={{ marginTop: "auto", paddingTop: 12 }}>
-            <div style={{ fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase", color: c, opacity: 0.62 }}>{feature.lab}</div>
-            <div style={{ fontSize: 12.5, fontWeight: 600, margin: "3px 0 9px", color: t.sec }}>{feature.hl}</div>
-            <div>{feature.viz}</div>
-          </div>
-        )}
       </div>
 
-      {/* body */}
-      <div style={{ padding: "24px 28px" }}>
+      {/* body — the evidence chain */}
+      <div style={{ padding: "20px 26px 18px", minWidth: 0 }}>
+        {ladder && (
+          <DmLadder rung={ladder.rung} total={ladder.total} label={ladder.label} capped={capped} nextLabel={ladder.nextLabel} c={c} t={t} />
+        )}
+
+        {exposure && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, padding: "7px 11px", background: `${c}0F`, border: `1px solid ${c}33`, borderRadius: 8, flexWrap: "wrap" }}>
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+            <span style={{ fontSize: 10.5, letterSpacing: "0.06em", textTransform: "uppercase", color: c, fontWeight: 600 }}>Primary exposure</span>
+            <span style={{ fontSize: 13, color: t.text, fontWeight: 600 }}>{exposure}</span>
+          </div>
+        )}
+
         {canSplit ? (
           <>
-            {set.slice(0, -1).map(({ q, field }, idx) => {
-              // First non-box Q stays visible (orientation); the rest collapse.
-              if (idx > 0 && !expanded) return null;
-              return (
-                <div key={field} style={{ marginBottom: 18 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke={`${c}B0`} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-                    <b style={{ fontSize: 13.5, fontWeight: 600, color: t.text }}>{q}</b>
+            {isOr && <div style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: t.mut, fontWeight: 600, margin: "0 0 4px" }}>Two movements</div>}
+            {gates.map(({ q, field }, idx) => (
+              <DmGate
+                key={field}
+                kind={idx === 0 ? (isOr ? "op1" : "cleared") : "barrier"}
+                badge={isOr ? String(idx + 1) : null}
+                tag={q}
+                body={metric[field]}
+                entities={entities}
+                c={c}
+                t={t}
+              />
+            ))}
+
+            {/* THE GAP — always open, amber, sized up */}
+            {gap && (
+              <div style={{ borderTop: `1px solid ${t.divider}`, background: `${DM_AMBER}0D`, border: `1px solid ${DM_AMBER}33`, borderRadius: 9, marginTop: 10, padding: "13px 14px" }}>
+                <div style={{ display: "flex", gap: 11, alignItems: "flex-start" }}>
+                  <span style={{ flexShrink: 0, width: 18, height: 18, borderRadius: 5, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1, background: `${DM_AMBER}1F`, color: DM_AMBER, border: `1px dashed ${DM_AMBER}77` }}>
+                    <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+                      <span style={{ fontSize: 11.5, letterSpacing: "0.09em", textTransform: "uppercase", fontWeight: 700, color: DM_AMBER }}>{gapTitle}</span>
+                      {gapNote && <span style={{ fontFamily: "monospace", fontSize: 10.5, color: `${DM_AMBER}B0` }}>· {gapNote}</span>}
+                    </div>
+                    <p style={{ fontSize: 14, lineHeight: 1.62, color: t.text, margin: "0 0 9px", maxWidth: "62ch" }}>
+                      <DmProse text={gap.requirement} entities={entities} t={t} />
+                      <span style={{ display: "inline-block", fontSize: 9.5, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: DM_AMBER, border: `1px dashed ${DM_AMBER}77`, borderRadius: 5, padding: "1px 6px", marginLeft: 5, whiteSpace: "nowrap" }}>
+                        not in the evidence
+                      </span>
+                    </p>
+                    {gap.position && (
+                      <p style={{ fontSize: 13.5, lineHeight: 1.68, color: t.sec, margin: 0, maxWidth: "62ch" }}>
+                        <DmProse text={gap.position} entities={entities} t={t} />
+                      </p>
+                    )}
+                    {/* CAPPED (OR) — the admission requirement lives INSIDE the gap,
+                        because for a capped ladder the six components ARE what the gap
+                        is. Framed as the ladder's admission criteria and stated as a
+                        neutral count. No ✗, no strikethrough, no red: a count is
+                        information, a ✗ list is judgment. */}
+                    {capped && <DmAdmission committedCount={(committed || []).length} t={t} />}
                   </div>
-                  <p style={{ fontSize: 13.5, lineHeight: 1.62, color: t.sec, margin: 0 }}>{metric[field]}</p>
                 </div>
-              );
-            })}
-            {set.length > 2 && (
-              <MoreToggle open={expanded} onClick={() => setExpanded(!expanded)} closed="Show the full read" opened="Show less" color={`${c}D0`} t={t} mt={2} />
+              </div>
             )}
-            {/* the last question — glowing accent box, always visible */}
-            {(() => {
-              const last = set[set.length - 1];
-              return (
-                <div style={{ position: "relative", marginTop: 14, padding: "15px 18px 15px 22px", borderRadius: 13, overflow: "hidden", background: `linear-gradient(90deg, ${c}1F, ${c}0A)`, border: `1px solid ${c}38` }}>
-                  <div style={{ position: "absolute", left: 0, top: 11, bottom: 11, width: 3, borderRadius: "0 3px 3px 0", background: c, boxShadow: `0 0 12px 1px ${c}52` }} />
-                  <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 8 }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: 7, background: `${c}38`, color: c, flexShrink: 0 }}>
-                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
-                    </span>
-                    <span style={{ fontSize: 13.5, fontWeight: 600, color: c }}>{last.q}</span>
-                  </div>
-                  <p style={{ fontSize: 14, lineHeight: 1.62, color: t.mode === "light" ? t.sec : "#e6e8f0", margin: 0 }}>{metric[last.field]}</p>
-                </div>
-              );
-            })()}
           </>
         ) : (
           <p style={{ fontSize: 13.5, lineHeight: 1.65, color: t.sec, margin: 0 }}>{metric.explanation}</p>
@@ -627,7 +1053,7 @@ export function DeepMetricCard({ metricKey, metric, name, weightLabel, notes = [
           <p key={i} style={{ fontSize: 12, color: t.mut, marginTop: 8, lineHeight: 1.4, fontStyle: "italic" }}>{note}</p>
         ))}
 
-        <SourcesStrip internal={metric._internal} competitors={competitors} t={t} />
+        <SourcesStrip internal={metric._internal} competitors={competitors} t={t} compact />
       </div>
     </div>
   );
@@ -741,65 +1167,159 @@ export function ExecutionReality({ estimates, mbColorFn, MbIcon, t, wt, onWt }) 
 }
 
 // =================================================================== TC CARD
-// The 4th metric card (dashed "execution context" variant): wrench rail, no
-// score, the easier→harder slider showing the idea's raw build difficulty (base)
-// and the profile-adjusted position, then 3 Q→A (how hard / how your profile
-// changes it / simpler first version). Number stays hidden — the word carries it.
+// TC is NOT a sibling of MD/MO/OR and does not use their evidence-ladder shell.
+//
+// It is the only RELATIONAL metric: it measures the distance between an idea and a
+// PERSON. It is the only stage that sees the founder profile, and the only one
+// forbidden from seeing competitors, market signals or domain flags — it runs in
+// physical isolation so market noise cannot contaminate it. The other cards say
+// "here is the world." This one says "here is you, against this."
+//
+// And it has an arithmetic identity the others don't:
+//
+//        score = base_score + adjustment_value
+//
+//   base_score       — how hard this idea is FOR ANYONE (profile-blind by hard rule)
+//   adjustment_value — what YOUR background takes off it. Closed 4-rung ladder:
+//                      { 0, -0.5, -1.0, -1.5 }. Always zero or negative — a
+//                      background can only ever make a build easier, never harder.
+//
+// THE SUBTRACTION IS THE INSIGHT. The old card showed only the endpoint and threw
+// the story away. Here the equation IS the card: the idea, minus you, equals your
+// build. Both halves carry their own one-sentence reason, because the engine reasons
+// them independently.
+//
+// TC is excluded from the overall composite by design. It is a weather report, not a
+// verdict: a hard build is not a bad idea. It must never grade the FOUNDER.
+// DISPLAY-ONLY — reads fields already on the payload; touches no score.
 const TC_WORD_CAP = ["Very easy", "Easy", "Moderate", "Hard", "Very hard"];
+
+// The closed adjustment ladder, in the engine's own terms. Rendered as a legend so
+// the number is never a bare verdict on the person — it always says what it MEANS.
+// ANTI-SCOLD (load-bearing): a 0 is not a read on the founder. It is a read on the
+// OVERLAP between their layers and this build's layers. Never "you lack X".
+const TC_RUNGS = [
+  { v: 0,    label: "no overlap",       means: "your background doesn't shorten this particular build. It is not a read on you — only on the overlap between your layers and these." },
+  { v: -0.5, label: "domain help",      means: "you understand the space, but bring no directly applicable build experience for these layers." },
+  { v: -1.0, label: "adjacent layer",   means: "you have worked near the specific technical layer this build depends on." },
+  { v: -1.5, label: "built this before", means: "you have direct hands-on experience with the core build problem — you have built or operated something materially similar." },
+];
+const tcRung = (v) => TC_RUNGS.find((r) => Math.abs(r.v - (typeof v === "number" ? v : 0)) < 0.01) || TC_RUNGS[0];
+
+// One term of the equation. The endpoint is never shown alone — the movement is the point.
+function TcTerm({ value, cap, sub, big, c, t }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div style={{
+        fontFamily: "monospace", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1,
+        fontSize: big ? 40 : 36,
+        color: big ? c : t.sec,
+      }}>
+        {value}
+      </div>
+      <div style={{ marginTop: 9 }}>
+        <div style={{ fontSize: 12, fontWeight: big ? 700 : 600, color: big ? t.text : t.sec }}>{cap}</div>
+        <div style={{ fontSize: 11.5, color: t.mut, marginTop: 1 }}>{sub}</div>
+      </div>
+    </div>
+  );
+}
 
 export function DeepTcCard({ tc, t, wt, onWt }) {
   if (!tc) return null;
   const c = metricColor("technical_complexity", t);
   const bucket = (s) => (typeof s !== "number" || isNaN(s) ? 4 : s < 2 ? 0 : s < 4 ? 1 : s < 6 ? 2 : s < 8 ? 3 : 4);
   const word = TC_WORD_CAP[bucket(tc.score)];
-  const base = typeof tc.base_score === "number" ? tc.base_score : tc.score;
-  const net = typeof tc.score === "number" ? tc.score : base;
-  const baseW = Math.max(0, Math.min(10, base)) / 10 * 232;
-  const netW = Math.max(0, Math.min(10, net)) / 10 * 232;
-  const track = t.mode === "light" ? "rgba(80,75,65,0.12)" : "rgba(255,255,255,0.08)";
 
-  const qa = [
-    { q: "How hard is this idea to build?", v: tc.base_score_explanation },
-    { q: "How does your profile change that?", v: tc.adjustment_explanation },
-    { q: "Is there a simpler first version?", v: tc.incremental_note },
-  ].filter((x) => dmHas(x.v));
+  const base = typeof tc.base_score === "number" ? tc.base_score : tc.score;
+  const net  = typeof tc.score === "number" ? tc.score : base;
+  // adjustment is stored NEGATIVE (or 0). We render its magnitude beside a minus
+  // sign, so `-0` can never surface as the float artifact "−0.0".
+  const adjRaw = typeof tc.adjustment_value === "number" ? tc.adjustment_value : (base - net);
+  const adjMag = Math.abs(adjRaw) < 0.01 ? 0 : Math.abs(adjRaw);
+  const rung = tcRung(adjRaw);
+  const hasEquation = typeof base === "number" && typeof net === "number";
+  const simpler = dmHas(tc.incremental_note) ? tc.incremental_note : null;
+
+  const fmt = (n) => (typeof n === "number" ? n.toFixed(1) : "—");
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "228px 1fr", border: `1px dashed ${t.border}`, borderRadius: 16, overflow: "hidden", marginBottom: 14, background: "transparent" }}>
-      <div style={{ padding: "24px 22px", borderRight: `1px dashed ${t.border}`, display: "flex", flexDirection: "column", gap: 11, background: t.mode === "light" ? "rgba(80,75,65,0.012)" : "rgba(255,255,255,0.012)" }}>
-        <div style={{ width: 40, height: 40, borderRadius: 11, display: "grid", placeItems: "center", background: t.surfAlt, border: `1px solid ${t.border}`, color: pick(OVERALL_RING, t) }}>
+    <div style={{ border: `1px dashed ${t.border}`, borderRadius: 16, overflow: "hidden", marginBottom: 14, background: t.mode === "light" ? "rgba(80,75,65,0.012)" : "rgba(255,255,255,0.012)", padding: "22px 26px 20px" }}>
+
+      {/* header — the only card in the product that addresses the PERSON */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 13, flexWrap: "wrap", marginBottom: 20 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 11, display: "grid", placeItems: "center", background: `${c}1A`, border: `1px solid ${c}33`, color: c, flexShrink: 0 }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.1 2.1-2.5-.5-.5-2.5z" /></svg>
         </div>
-        <div style={{ fontSize: 14.5, fontWeight: 600, color: t.text, display: "flex", alignItems: "center", gap: 8 }}>Technical Complexity<ChangeMarker bundle={wt && wt.technical_complexity} onOpen={onWt} title="Technical Complexity re-read" /></div>
-        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: t.sec, background: t.surfAlt, border: `1px solid ${t.border}`, borderRadius: 7, padding: "3px 9px", alignSelf: "flex-start" }}>Execution context</div>
-        <div style={{ fontSize: 11, color: t.mut, marginTop: -4 }}>not in overall score</div>
-        <div style={{ marginTop: "auto", paddingTop: 12 }}>
-          <div style={{ fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase", color: c, opacity: 0.62 }}>Build difficulty</div>
-          <div style={{ fontSize: 12.5, fontWeight: 600, margin: "3px 0 9px", color: t.sec }}>{word}</div>
-          <svg width="100%" viewBox="0 0 240 50" fill="none" style={{ maxWidth: 188, display: "block" }}>
-            <rect x="4" y="20" width="232" height="8" rx="4" fill={track} />
-            <rect x="4" y="20" width={baseW.toFixed(1)} height="8" rx="4" fill={`${c}66`} />
-            <rect x="4" y="20" width={netW.toFixed(1)} height="8" rx="4" fill={c} style={{ filter: `drop-shadow(0 0 6px ${c}88)` }} />
-            <circle cx={(4 + baseW).toFixed(1)} cy="24" r="5" fill={t.bg || "#0a0b0f"} stroke={c} strokeWidth="2" />
-            <circle cx={(4 + netW).toFixed(1)} cy="24" r="4.5" fill={c} />
-            <text x="4" y="44" fill={t.mut} fontSize="9">easier</text>
-            <text x="236" y="44" textAnchor="end" fill={t.mut} fontSize="9">harder</text>
-          </svg>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15.5, fontWeight: 600, color: t.text, display: "flex", alignItems: "center", gap: 8 }}>
+            Technical Complexity
+            <ChangeMarker bundle={wt && wt.technical_complexity} onOpen={onWt} title="Technical Complexity re-read" />
+          </div>
+          <div style={{ fontSize: 12, color: t.mut, marginTop: 2 }}>execution context · not in the overall score</div>
+        </div>
+        <span style={{ fontFamily: "monospace", fontSize: 11, color: c, border: `1px solid ${c}44`, borderRadius: 7, padding: "4px 10px", whiteSpace: "nowrap" }}>
+          for you, right now
+        </span>
+      </div>
+
+      {/* THE EQUATION — the idea, minus you, equals your build */}
+      {hasEquation && (
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 18, flexWrap: "wrap", marginBottom: 20 }}>
+          <TcTerm value={fmt(base)} cap="the idea" sub="for anyone" c={c} t={t} />
+          <div style={{ fontFamily: "monospace", fontSize: 26, color: t.mut, lineHeight: 1, paddingTop: 8 }}>−</div>
+          <TcTerm value={adjMag === 0 ? "0" : fmt(adjMag)} cap="your background" sub="takes off" c={c} t={t} />
+          <div style={{ fontFamily: "monospace", fontSize: 26, color: t.mut, lineHeight: 1, paddingTop: 8 }}>=</div>
+          <div style={{ paddingLeft: 18, borderLeft: `1px solid ${t.divider}` }}>
+            <TcTerm value={fmt(net)} cap="for you" sub={word ? word.toLowerCase() : ""} big c={c} t={t} />
+          </div>
+        </div>
+      )}
+
+      {/* the two halves — reasoned independently by the engine, shown side by side */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "18px 30px", paddingTop: 18, borderTop: `1px solid ${t.divider}` }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700, color: t.mut, marginBottom: 7 }}>
+            The build · for anyone
+          </div>
+          <p style={{ fontSize: 13.5, lineHeight: 1.65, color: t.sec, margin: 0 }}>{tc.base_score_explanation || tc.explanation}</p>
+        </div>
+
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700, color: c, marginBottom: 7 }}>
+            Your background · {adjMag === 0 ? "0" : `−${fmt(adjMag)}`}
+          </div>
+          <p style={{ fontSize: 13.5, lineHeight: 1.65, color: t.sec, margin: 0 }}>{tc.adjustment_explanation}</p>
+
+          {/* the rung legend — the number always says what it MEANS, so it can never
+              land as a grade on the person. Speaks all four rungs, not just zero. */}
+          <div style={{ marginTop: 11, padding: "10px 12px", background: t.mode === "light" ? "rgba(80,75,65,0.03)" : "rgba(255,255,255,0.025)", border: `1px solid ${t.divider}`, borderRadius: 9 }}>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: t.text }}>
+              {adjMag === 0 ? "0" : `−${fmt(adjMag)}`} means:
+            </span>{" "}
+            <span style={{ fontSize: 12.5, lineHeight: 1.6, color: t.mut }}>{rung.means}</span>
+          </div>
         </div>
       </div>
-      <div style={{ padding: "24px 28px" }}>
-        {qa.length > 0 ? qa.map((x, i) => (
-          <div key={i} style={{ marginBottom: i === qa.length - 1 ? 0 : 18 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke={`${c}B0`} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-              <b style={{ fontSize: 13.5, fontWeight: 600, color: t.text }}>{x.q}</b>
+
+      {/* the simpler door — often the most actionable line in the whole evaluation.
+          Nullable: not every idea has an easier way in. No empty shell. */}
+      {simpler && (
+        <div style={{ marginTop: 18, padding: "14px 16px", background: `${c}0D`, border: `1px solid ${c}33`, borderRadius: 11, display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
+            <path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" />
+          </svg>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12.5, letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 700, color: c, marginBottom: 5 }}>
+              There's a simpler first version
             </div>
-            <p style={{ fontSize: 13.5, lineHeight: 1.62, color: t.sec, margin: 0 }}>{x.v}</p>
+            <p style={{ fontSize: 13.5, lineHeight: 1.65, color: t.sec, margin: 0 }}>{simpler}</p>
           </div>
-        )) : (
-          <p style={{ fontSize: 13.5, lineHeight: 1.65, color: t.sec, margin: 0 }}>{tc.explanation}</p>
-        )}
-        <div style={{ marginTop: 20, paddingTop: 15, borderTop: `1px solid ${t.divider}`, fontSize: 11.5, color: t.mut }}>Measured from the idea and your founder profile · not part of the overall score</div>
+        </div>
+      )}
+
+      <div style={{ marginTop: 16, paddingTop: 13, borderTop: `1px solid ${t.divider}`, fontSize: 11.5, color: t.mut }}>
+        Measured from the idea and your founder profile · not part of the overall score
       </div>
     </div>
   );

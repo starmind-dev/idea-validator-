@@ -1,19 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import {
-  StepProgress,
-  SectionHeader,
   Card,
   PageContainer,
   AuthModal,
-  getMainBottleneckColor,
-  MainBottleneckIcon,
-  PreviewBanner,
 } from "./components";
-import { ProvenanceStrip, PressureRead, DeepMetricCard, DeepTcCard, ExecutionReality, KeyRisks, CompetitorGrid } from "./DeepResultParts";
-import { ChangeWalkthrough, ChangeMarker } from "./ChangeWalkthrough";
+import DeepAnalysis from "./DeepAnalysis";
+import { ChangeWalkthrough } from "./ChangeWalkthrough";
 import { DirectionCard, DirectionRow } from "./DirectionCard";
 import { BackLink } from "./BackLink";
 import { FooterBar, FootLink } from "./FooterActions";
@@ -160,6 +155,10 @@ function FhLink({ accent, label, onClick, disabled }) {
 export default function EvaluationView({
   // Screen
   screen,
+  // Deep page input (V7): the idea's profile_context_json, so the founder
+  // adjustment state resolves honestly (absent vs. present-and-zero).
+  // readHistory is already a prop further down — do not redeclare it.
+  profileContext,
   // Theme
   t,
   // Core data
@@ -236,6 +235,35 @@ export default function EvaluationView({
   const isGated = false;
   const isPreviewUser = false;
   const [openWT, setOpenWT] = useState(null);
+
+  // V7 merge — results2 is retired. Anything still routed there (a restored
+  // sessionStorage nav, an old deep link, the brief's "Save this idea →"
+  // before page.js is updated) lands on the merged Deep page instead of a
+  // blank render. Hook-level because branches cannot own effects.
+  useEffect(() => {
+    if (screen === "results2" && typeof setCurrentScreen === "function") {
+      setCurrentScreen("results1");
+    }
+  }, [screen, setCurrentScreen]);
+
+  // V7 — the naming form used to be the top of its own screen (results2); it is
+  // now at the foot of a very long page. The brief's "Save this idea →" sets
+  // saveStatus="naming" and routes here, so without this the user clicks save
+  // and lands on movement I with no visible sign anything happened.
+  //
+  // rAF is load-bearing, not decoration. page.js owns a scroll-to-top effect
+  // keyed on currentScreen; it is the PARENT, so its effect runs AFTER this
+  // child's and would win. Deferring one frame puts our scroll last.
+  const saveBlockRef = useRef(null);
+  useEffect(() => {
+    if (saveStatus !== "naming" || screen !== "results1") return;
+    const id = requestAnimationFrame(() => {
+      if (saveBlockRef.current) {
+        saveBlockRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [saveStatus, screen]);
   const [histOpen, setHistOpen] = useState(false);
   const fmtHistDate = (iso) => {
     if (!iso) return "";
@@ -254,6 +282,13 @@ export default function EvaluationView({
     ? { state: "branched", onExplore: viewingFromSaved ? goToMyIdeas : undefined }
     : { state: "cold" };
 
+    // The Execution Brief is offered as a card inside the closure grids (saved
+    // result + re-eval decision). Same gate the standalone button used to carry.
+    const briefAvailable =
+      !isGated &&
+      analysis.estimates.main_bottleneck !== "Specification" &&
+      !analysis.evaluation.synthesis_degraded;
+
   // ==========================================
   // SCREEN: ANALYSIS (results1)
   // ==========================================
@@ -261,8 +296,11 @@ export default function EvaluationView({
     return (
       <>
         <ChangeWalkthrough anchor={openWT} onClose={() => setOpenWT(null)} />
-        <PageContainer wide>
-          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", padding: "4px 0 0" }}>
+        {/* Back link. Left-aligned and on the same 1300/40px gutter as the Deep
+            page below it — inside PageContainer (960, centred) it floated to
+            the middle of the viewport above a left-hugging read. */}
+        <div style={{ maxWidth: 1300, margin: 0, padding: "4px 40px 0" }}>
+          <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
             <BackLink t={t} onClick={() => {
               if (readOnly) { onBackToCurrent && onBackToCurrent(); return; }
               if (viewingFromSaved) {
@@ -275,7 +313,7 @@ export default function EvaluationView({
               {readOnly ? "Back to current read" : (viewingFromSaved ? "Back to My Ideas" : "Back to idea")}
             </BackLink>
           </div>
-        </PageContainer>
+        </div>
 
         {showAuthModal && (
           <AuthModal
@@ -285,216 +323,61 @@ export default function EvaluationView({
           />
         )}
 
-        {!readOnly && <StepProgress currentStep={getStepNumber()} savedMode={viewingFromSaved} branchMode={viewingFromSaved && isBranchIdea} t={t} />}
 
         <main style={{ flex: 1, paddingBottom: 64 }}>
+
+            {/* ============================================================
+                V7 — PREAMBLE REMOVED (July 2026)
+                ============================================================
+                Everything that used to sit above the Deep masthead was removed
+                so the page opens on the design's own eyebrow + headline, as in
+                Deep_v5. Removed from here:
+
+                  · PreviewBanner        — dead code (isPreviewUser === false)
+                  · ProvenanceStrip      — DUPLICATE. The design eyebrow already
+                                           says "taken straight to Deep — no
+                                           Explore pass".
+                  · classification pill  — DUPLICATE. The design eyebrow carries
+                                           "DEEP · COMMERCIAL".
+                  · outdatedMeta banner  — LIVE FEATURE, readOnly historical reads
+                  · evidenceSignal       — LIVE FEATURE, evidence-watch re-judge
+                  · scope_warning        — LIVE FEATURE
+                  · "Previous reads"     — LIVE FEATURE, deep re-read navigation
+                  · "explored version"   — LIVE FEATURE, Explore->Deep lineage
+
+                The last five have no home yet. They are preserved verbatim in
+                git history at the commit before this one; they were not
+                rewritten, only lifted. Re-home them deliberately (a strip under
+                the masthead, or the foot beside the save block) rather than
+                pushing them back above the headline.
+                ============================================================ */}
+
+            {/* ============================================================
+                V7 — THE DEEP ANALYSIS PAGE (July 2026)
+                ============================================================
+                The old surface was two screens of titled cards: PressureRead +
+                three DeepMetricCards + DeepTcCard here, then Competition, Key
+                Risks and Execution Reality on results2. Both are replaced by
+                one continuous page of five movements — the read, why it lands
+                there, the field, build reality, the hinge — rendered by
+                DeepAnalysis from a normalized model (deepPayload.js).
+
+                results2 no longer exists as a content screen; its save /
+                naming / handoff tail moved down below this block, and the
+                screen itself now redirects here (see the redirect effect).
+                ============================================================ */}
+          <DeepAnalysis
+            analysis={analysis}
+            readHistory={readHistory}
+            profileContext={profileContext}
+            t={t}
+            wt={wt}
+            onWt={setOpenWT}
+            onScoreGuide={() => setShowScoreGuide(true)}
+          />
+
           <PageContainer wide>
 
-            {/* Free Preview Banner */}
-            {isPreviewUser && <PreviewBanner t={t} evalsRemaining={evalsRemaining} />}
-
-            {/* Provenance — where this idea came from (Explore branch / cold / re-eval) */}
-            <ProvenanceStrip provenance={deepProvenance} t={t} />
-
-            {!readOnly && (() => {
-              // Deep "Previous reads" = evidence re-reads only. An explore read that
-              // GRADUATED to Deep is preserved in read_history too, but it is a
-              // different species (no score, an explore envelope) and gets its own
-              // "View the explored version" affordance — so keep it OUT of this list.
-              const deepReads = (readHistory || []).filter((r) => r.kind !== "explore");
-              if (deepReads.length === 0) return null;
-              return (
-              <div style={{ marginTop: 4, marginBottom: 18 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 12.5, color: t.mut, lineHeight: 1.5 }}>
-                    The current read replaced {deepReads.length === 1 ? "an earlier read" : `${deepReads.length} earlier reads`} as the evidence moved.
-                  </span>
-                  <button onClick={() => setHistOpen((v) => !v)} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "transparent", border: `1px solid ${t.border}`, color: t.sec, fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 9, cursor: "pointer", whiteSpace: "nowrap" }}>
-                    Previous reads ({deepReads.length})
-                    <span style={{ display: "inline-flex", transition: "transform .2s", transform: histOpen ? "rotate(180deg)" : "none" }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}><path d="M6 9l6 6 6-6" /></svg></span>
-                  </button>
-                </div>
-                {histOpen && (
-                  <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-                    {deepReads.map((r) => (
-                      <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, background: t.surfAlt || "rgba(255,255,255,.03)", border: `1px solid ${t.border}`, borderRadius: 12, padding: "13px 15px" }}>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 12.5, color: t.text, fontWeight: 600, marginBottom: 3 }}>
-                            {fmtHistDate(r.original_created_at)}
-                            {r.score != null && <span style={{ color: "#e7bd7a" }}>{` · score ${Number(r.score).toFixed(1)}`}</span>}
-                          </div>
-                          {r.headline && (
-                            <div style={{ fontSize: 13, color: t.sec, lineHeight: 1.45, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}>
-                              {r.headline}
-                            </div>
-                          )}
-                          <div style={{ fontSize: 11, color: t.mut, marginTop: 5 }}>
-                            {`Superseded ${fmtHistDate(r.superseded_at)} · ${r.superseded_reason === "evidence_recheck" ? "evidence recheck" : (r.superseded_reason || "replaced")}`}
-                          </div>
-                        </div>
-                        <button onClick={() => onOpenHistoricalRead && onOpenHistoricalRead(r)} style={{ flexShrink: 0, background: "rgba(138,130,194,.14)", border: "none", color: "#b3acdf", fontSize: 12.5, fontWeight: 600, padding: "9px 14px", borderRadius: 9, cursor: "pointer", whiteSpace: "nowrap" }}>
-                          View this read →
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              );
-            })()}
-
-            {!readOnly && (() => {
-              // The EXPLORE read this idea graduated from is preserved in
-              // read_history (kind 'explore') — a different species from the deep
-              // "Previous reads" above (no score, an explore envelope), so it gets
-              // its own dawn affordance opening a read-only ExploreView.
-              const exploreRead = (readHistory || []).find((r) => r.kind === "explore" && r.explore);
-              if (!exploreRead) return null;
-              const angleCount = ((exploreRead.explore && exploreRead.explore.angles) || []).length;
-              return (
-                <div style={{ marginTop: 4, marginBottom: 18, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap", background: "rgba(122,162,255,.08)", border: "1px solid rgba(122,162,255,.30)", borderRadius: 12, padding: "13px 15px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
-                    <span style={{ flexShrink: 0, display: "inline-flex", color: "#7aa2ff" }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7aa2ff" strokeWidth="1.7"><circle cx="12" cy="20" r="1.3" fill="#7aa2ff" stroke="none" /><path d="M12 19 5 7M12 19 12 5M12 19 19 7" /></svg>
-                    </span>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13, color: t.text, fontWeight: 600 }}>This idea was explored before it went deep.</div>
-                      <div style={{ fontSize: 11.5, color: t.mut, marginTop: 2 }}>
-                        {`Explored ${fmtHistDate(exploreRead.original_created_at)}${angleCount ? ` · ${angleCount} angle${angleCount === 1 ? "" : "s"}` : ""} · kept when it graduated`}
-                      </div>
-                    </div>
-                  </div>
-                  <button onClick={() => onOpenExploredVersion && onOpenExploredVersion(exploreRead)} style={{ flexShrink: 0, background: "rgba(122,162,255,.18)", border: "none", color: "#7aa2ff", fontSize: 12.5, fontWeight: 600, padding: "9px 14px", borderRadius: 9, cursor: "pointer", whiteSpace: "nowrap" }}>
-                    View the explored version →
-                  </button>
-                </div>
-              );
-            })()}
-
-            {readOnly && outdatedMeta && (
-              <div style={{ display: "flex", alignItems: "center", gap: 11, background: "rgba(231,189,122,.06)", border: "1px solid rgba(231,189,122,.35)", borderRadius: 12, padding: "13px 16px", marginBottom: 16 }}>
-                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#e7bd7a", flexShrink: 0 }} />
-                <span style={{ fontSize: 12.5, color: "#e7bd7a", fontWeight: 600 }}>
-                  Outdated read
-                  <span style={{ color: t.sec, fontWeight: 400 }}>{` — superseded ${fmtHistDate(outdatedMeta.superseded_at)}, when newer evidence replaced it.`}</span>
-                </span>
-              </div>
-            )}
-
-            {/* Evidence-watch re-judge — lead with what the world's move did (no marker hunt). */}
-            {evidenceSignal && (
-              <div style={{
-                border: "1px solid rgba(201,154,58,0.35)",
-                background: "rgba(201,154,58,0.07)",
-                borderRadius: 12, padding: "14px 16px", marginBottom: 16,
-              }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.6, color: "#c99a3a", marginBottom: 6 }}>
-                  RE-EVALUATED WITH NEW EVIDENCE
-                </div>
-                {evidenceSignal.message && (
-                  <div style={{ fontSize: 15, fontWeight: 600, color: t.text, lineHeight: 1.4, marginBottom: 6 }}>
-                    {evidenceSignal.message}
-                  </div>
-                )}
-                <div style={{ fontSize: 13, color: t.sec, lineHeight: 1.5 }}>
-                  You changed nothing — the evidence moved, and the read followed. Here's what shifted.
-                </div>
-              </div>
-            )}
-
-            {/* Scope Warning */}
-            {analysis.scope_warning && (
-              <div style={{
-                padding: "12px 16px",
-                marginBottom: 24,
-                borderRadius: 12,
-                background: "rgba(245,158,11,0.08)",
-                border: "1px solid rgba(245,158,11,0.2)",
-                fontSize: 13,
-                color: "#fbbf24",
-                lineHeight: 1.5,
-              }}>
-                ⚠️ This idea includes components outside our primary evaluation scope (hardware, physical services, or non-software elements). Scores evaluate the software and AI components. Challenges specific to physical components may not be fully captured.
-              </div>
-            )}
-
-            {/* Classification */}
-            {analysis.classification && (
-              <div style={{ marginBottom: 24, display: "flex", gap: 8 }}>
-                <span style={{
-                  display: "inline-block",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  padding: "4px 10px",
-                  borderRadius: 9999,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  ...(analysis.classification === "social_impact"
-                    ? { background: "rgba(16,185,129,0.12)", color: "#34d399", border: "1px solid rgba(16,185,129,0.25)" }
-                    : { background: "rgba(59,130,246,0.12)", color: "#60a5fa", border: "1px solid rgba(59,130,246,0.25)" }),
-                }}>
-                  {analysis.classification === "social_impact" ? "Social Impact" : "Commercial"}
-                </span>
-              </div>
-            )}
-
-
-            {/* Final Evaluation */}
-            <section style={{ marginBottom: 48 }}>
-              <SectionHeader icon="📊" title="The Pressure Read" subtitle="What held, what capped it, and what would move it — based on the evidence." t={t} />
-
-              {/*
-                ============================================================
-                V6 — PRESSURE READ (verdict-first, June 2026)
-                ============================================================
-                The verdict leads. PressureRead renders, in one card: the
-                Stage-2c verdict paragraph (honest degrade) + a confidence line
-                (from evidence_strength) + the neutral overall gauge + the
-                identity-coloured MD/MO/OR tiles (with contribution = score ×
-                weight) + the TC build-difficulty word-ladder (execution context).
-                The three per-metric prose cards follow. Competition, Key Risks,
-                and Execution Reality moved to the next screen (Evidence &
-                Reality). See DeepResultParts.js for the new components.
-                ============================================================
-              */}
-
-              <PressureRead analysis={analysis} t={t} onScoreGuide={() => setShowScoreGuide(true)} wt={wt} onWt={setOpenWT} />
-
-              {/* ===== PER-METRIC CARDS — mockup rail+body layout ===== */}
-              <DeepMetricCard
-                metricKey="market_demand"
-                wt={wt}
-                onWt={setOpenWT}
-                metric={analysis.evaluation.market_demand}
-                name="Market Demand"
-                weightLabel="37.5% weight"
-                notes={[analysis.evaluation.market_demand.geographic_note, analysis.evaluation.market_demand.trajectory_note]}
-                competitors={analysis.competition?.competitors}
-                t={t}
-              />
-              <DeepMetricCard
-                metricKey="monetization"
-                wt={wt}
-                onWt={setOpenWT}
-                metric={analysis.evaluation.monetization}
-                name={analysis.evaluation.monetization.label || "Monetization Potential"}
-                weightLabel="31.25% weight"
-                competitors={analysis.competition?.competitors}
-                t={t}
-              />
-              <DeepMetricCard
-                metricKey="originality"
-                wt={wt}
-                onWt={setOpenWT}
-                metric={analysis.evaluation.originality}
-                name="Originality"
-                weightLabel="31.25% weight"
-                competitors={analysis.competition?.competitors}
-                t={t}
-              />
-
-              {/* TC — the 4th card (execution context, not in the overall) */}
-              <DeepTcCard tc={analysis.evaluation.technical_complexity} t={t} wt={wt} onWt={setOpenWT} />
 
               {/* Score Guide Popup */}
               {showScoreGuide && (
@@ -652,185 +535,6 @@ export default function EvaluationView({
               <p style={{ fontSize: 12, color: t.mut, textAlign: "center", margin: "16px 0 24px 0", lineHeight: 1.5 }}>
                 Scores evaluate the idea's potential. Actual outcomes also depend on execution quality, distribution, timing, and market conditions.
               </p>
-            </section>
-
-            {!readOnly && (
-            <button
-              onClick={() => setCurrentScreen("results2")}
-              style={{
-                width: "100%",
-                padding: "14px 0",
-                borderRadius: 12,
-                fontSize: 14,
-                fontWeight: 600,
-                border: "none",
-                background: t.ctaBg,
-                color: t.ctaText,
-                cursor: "pointer",
-              }}
-            >
-              {viewingFromSaved ? "View Evidence & Reality" : "Continue to Evidence & Reality"}
-            </button>
-            )}
-          </PageContainer>
-        </main>
-      </>
-    );
-  }
-
-  // ==========================================
-  // SCREEN: FAILURE RISKS + EXECUTION REALITY (results2)
-  // ==========================================
-  if (screen === "results2") {
-    // The Execution Brief is offered as a card inside the closure grids (saved
-    // result + re-eval decision). Same gate the standalone button used to carry.
-    const briefAvailable =
-      !isGated &&
-      analysis.estimates.main_bottleneck !== "Specification" &&
-      !analysis.evaluation.synthesis_degraded;
-    return (
-      <>
-        <ChangeWalkthrough anchor={openWT} onClose={() => setOpenWT(null)} />
-        <PageContainer wide>
-          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", padding: "4px 0 0" }}>
-            <BackLink t={t} onClick={() => setCurrentScreen("results1")}>Back to Deep Analysis</BackLink>
-          </div>
-        </PageContainer>
-
-        {showAuthModal && (
-          <AuthModal
-            onClose={() => setShowAuthModal(false)}
-            onAuth={(u) => setUser(u)}
-            t={t}
-          />
-        )}
-
-        {!readOnly && <StepProgress currentStep={getStepNumber()} savedMode={viewingFromSaved} branchMode={viewingFromSaved && isBranchIdea} t={t} />}
-
-        <main style={{ flex: 1, paddingBottom: 64 }}>
-          <PageContainer wide>
-
-            {/* Free Preview Banner */}
-            {isPreviewUser && <PreviewBanner t={t} evalsRemaining={evalsRemaining} />}
-
-            {/* Competition Landscape — verdict-first (How your idea compares at the
-                top), then the competitor list. The editorial Overlap/You-win/Exposed
-                copy needs a backend synthesis field; the Overlap/Exposed split here is
-                derived honestly from competitor_type. */}
-            {analysis.competition && analysis.competition.competitors && analysis.competition.competitors.length > 0 && (
-              <section style={{ marginBottom: 48 }}>
-                <SectionHeader icon="🌐" title="Competition Landscape" subtitle="Similar existing products in the market" t={t} />
-
-                {analysis.competition.data_source === "verified" ? (
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 18, padding: "6px 14px", borderRadius: 9999, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
-                    <span style={{ fontSize: 12, color: "#34d399", fontWeight: 600 }}>Verified Sources</span>
-                    <span style={{ fontSize: 11, color: t.sec }}>via GitHub, Tavily, Exa &amp; Google</span>
-                  </div>
-                ) : (
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 18, padding: "6px 14px", borderRadius: 9999, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
-                    <span style={{ fontSize: 12, color: "#fbbf24", fontWeight: 600 }}>AI-Generated</span>
-                    <span style={{ fontSize: 11, color: t.sec }}>use as directional guide</span>
-                  </div>
-                )}
-
-                {(() => {
-                  const comps = analysis.competition.competitors;
-                  const accent = t.mode === "light" ? "#3b6fd0" : "#6b9cf0";
-                  const cp = analysis.evaluation && analysis.evaluation.competitive_position;
-                  const hasCp = cp && typeof cp === "object" && (cp.headline || cp.you_win || cp.overlap || cp.exposed);
-
-                  // Stage 2c tri-split (A13): the judged competitive position.
-                  if (hasCp) {
-                    const cells = [
-                      { key: "overlap", label: "Overlap", color: t.mut, text: cp.overlap },
-                      { key: "you_win", label: "You win", color: "#34d399", text: cp.you_win },
-                      { key: "exposed", label: "Exposed", color: "#fbbf24", text: cp.exposed },
-                    ].filter((c) => c.text);
-                    const cellIcon = (k) => k === "you_win"
-                      ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                      : k === "exposed"
-                      ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
-                      : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="13" height="13" rx="2" /><rect x="8" y="8" width="13" height="13" rx="2" /></svg>;
-                    return (
-                      <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", marginBottom: 8, padding: "24px 28px 22px 30px", background: `linear-gradient(180deg, ${accent}14, ${accent}05)`, border: `1px solid ${accent}33` }}>
-                        <div style={{ position: "absolute", left: 0, top: 22, bottom: 22, width: 3, borderRadius: "0 3px 3px 0", background: accent, opacity: 0.6 }} />
-                        <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 12 }}><span style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase", color: accent }}>How your idea compares</span><ChangeMarker bundle={wt && wt.compare} onOpen={setOpenWT} title="How your idea compares — re-read" /></div>
-                        {cp.headline && <h3 style={{ fontSize: 21, fontWeight: 700, lineHeight: 1.34, letterSpacing: "-0.01em", color: t.text, margin: "0 0 20px", maxWidth: 880 }}>{cp.headline}</h3>}
-                        {cells.length > 0 && (
-                          <div style={{ display: "grid", gridTemplateColumns: `repeat(${cells.length}, 1fr)`, gap: "0 28px", paddingTop: 16, borderTop: `1px solid ${t.border}` }}>
-                            {cells.map((c) => (
-                              <div key={c.key}>
-                                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8, color: c.color }}>
-                                  {cellIcon(c.key)}
-                                  <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em" }}>{c.label}</span>
-                                </div>
-                                <p style={{ fontSize: 13.5, color: t.sec, lineHeight: 1.55, margin: 0 }}>{c.text}</p>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 18, fontSize: 12, color: t.mut }}>
-                          <span>↓</span><span>Drawn from the <strong style={{ color: t.sec, fontWeight: 600 }}>{comps.length} competitor{comps.length === 1 ? "" : "s"}</strong> below</span>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  // Fallback (old saved evals / null competitive_position): descriptive split derived from competitor_type.
-                  const overlap = comps.filter((c) => c.competitor_type === "direct" || c.competitor_type === "adjacent").map((c) => c.name);
-                  const exposed = comps.filter((c) => c.competitor_type === "substitute" || c.competitor_type === "internal_build").map((c) => c.name);
-                  const diff = analysis.competition.differentiation;
-                  if (!diff && overlap.length === 0 && exposed.length === 0) return null;
-                  return (
-                    <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", marginBottom: 8, padding: "24px 28px 24px 30px", background: `linear-gradient(180deg, ${accent}14, ${accent}05)`, border: `1px solid ${accent}33` }}>
-                      <div style={{ position: "absolute", left: 0, top: 22, bottom: 22, width: 3, borderRadius: "0 3px 3px 0", background: accent, opacity: 0.6 }} />
-                      <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 10 }}><span style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase", color: accent }}>How your idea compares</span><ChangeMarker bundle={wt && wt.compare} onOpen={setOpenWT} title="How your idea compares — re-read" /></div>
-                      {diff && <p style={{ fontSize: 15, lineHeight: 1.66, color: t.text, margin: "0 0 18px", maxWidth: 820 }}>{diff}</p>}
-                      {(overlap.length > 0 || exposed.length > 0) && (
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px 28px", paddingTop: 4 }}>
-                          {overlap.length > 0 && (
-                            <div>
-                              <div style={{ fontSize: 11, fontWeight: 600, color: t.mut, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Overlaps with</div>
-                              <p style={{ fontSize: 13, color: t.sec, lineHeight: 1.5, margin: 0 }}>{overlap.join(" \u00b7 ")}</p>
-                            </div>
-                          )}
-                          {exposed.length > 0 && (
-                            <div>
-                              <div style={{ fontSize: 11, fontWeight: 600, color: t.mut, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Exposed to</div>
-                              <p style={{ fontSize: 13, color: t.sec, lineHeight: 1.5, margin: 0 }}>{exposed.join(" \u00b7 ")}</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-
-                <CompetitorGrid competitors={analysis.competition.competitors} t={t} />
-              </section>
-            )}
-
-            {/* Key Risks — 3-slot timeline (Market & category / Trust & adoption / Founder fit) */}
-            {analysis.evaluation.failure_risks && analysis.evaluation.failure_risks.length > 0 && (
-              <section style={{ marginBottom: 48 }}>
-                <SectionHeader icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>} accent="#ef6f6c" title="Key Risks" subtitle="The threats that could constrain this, by where they come from" t={t} />
-                <KeyRisks risks={analysis.evaluation.failure_risks} t={t} wt={wt} onWt={setOpenWT} />
-              </section>
-            )}
-
-
-            {/* Execution Reality — mockup ercard (binding constraint + read-out + 3-beat flow) */}
-            <section style={{ marginBottom: 48 }}>
-              <SectionHeader icon="⏱" title="Execution Reality" subtitle="The one wall to clear first — and what it implies, calibrated to your background" t={t} />
-              <ExecutionReality
-                estimates={analysis.estimates}
-                mbColorFn={getMainBottleneckColor}
-                MbIcon={MainBottleneckIcon}
-                wt={wt}
-                onWt={setOpenWT}
-                t={t}
-              />
-            </section>
 
             {/* Execution Brief CTA (Screen 3 / step-4 handoff).
                 Shown only when the brief is actually available — mirrors the
@@ -868,7 +572,10 @@ export default function EvaluationView({
                 </button>
               )}
 
-            {/* Save / Decision block — shown after user has seen everything */}
+            {/* Save / Decision block — shown after user has seen everything.
+                The wrapper exists purely as a scroll target (see saveBlockRef);
+                it adds no layout of its own. */}
+            <div ref={saveBlockRef}>
             {!viewingFromSaved && (
               isPreviewUser ? (
                 /* FREE PREVIEW — nudge toward credits, not content unlock */
@@ -1316,6 +1023,7 @@ export default function EvaluationView({
               </div>
               )
             )}
+            </div>
 
             {viewingFromSaved ? (
               <>
@@ -1342,6 +1050,21 @@ export default function EvaluationView({
       </>
     );
   }
+
+  // ==========================================
+  // SCREEN: results2 — RETIRED (V7 merge)
+  // ==========================================
+  // results2 was "Evidence & Reality": Competition, Key Risks and Execution
+  // Reality, followed by the save / naming / handoff tail. The three content
+  // sections are now movements III and IV of the single Deep page, and the
+  // tail moved to the foot of results1.
+  //
+  // The screen is NOT deleted — it redirects. Persisted sessionStorage
+  // (iv_fresh_result carries `screen`) and saved deep links both still carry
+  // "results2", so a hard removal would strand anyone mid-flow on a blank
+  // render. The redirect effect above sends them to results1; this branch is
+  // the one-frame fallback before it fires.
+  if (screen === "results2") return null;
 
   return null;
 }
