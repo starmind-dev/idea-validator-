@@ -19,6 +19,7 @@ import { VERDICT_LEAD_SYSTEM_PROMPT } from "../../../lib/services/prompt-verdict
 import { STAGE_TC_SYSTEM_PROMPT } from "../../../lib/services/prompt-stage-tc";
 import { STAGE3_SYSTEM_PROMPT } from "../../../lib/services/prompt-stage3";
 import { calculateOverallScore, computeMoDisplayScore, computeMoOverrideTrace } from "../../../lib/services/scoring";
+import { validateHinge } from "../../../lib/contracts/hinge";
 import { createClient } from "@supabase/supabase-js";
 import { assertCanRun, recordRun } from "../../../lib/services/entitlements";
 
@@ -231,12 +232,28 @@ export async function POST(request) {
               return text;
             }
             const trimmed = text.trim();
-            // Locate the first { and the last } — covers all wrapping cases:
-            //   - bare JSON: first { at 0, last } at end-1
-            //   - fenced JSON: first { after ```json, last } before ```
-            //   - prose preamble + fenced JSON: first { after preamble + ```json
-            //   - prose preamble + bare JSON: first { after preamble
-            //   - JSON + trailing prose: first { at start, last } before trailing
+            const parses = (s) => {
+              try { JSON.parse(s); return true; } catch { return false; }
+            };
+
+            // (1) FENCED BLOCK FIRST, scanning from the LAST fence backward.
+            //     The scorers reason in prose before emitting JSON, and that
+            //     reasoning can legitimately contain curly braces — Stage MO
+            //     writes archetype set notation like
+            //     "(within {segment, specific_role, ...})", which made the
+            //     legacy first-{ ... last-} slice start at prose instead of
+            //     at the JSON and fail the run (2026-07-19). The final fenced
+            //     block is the model's own declaration of where the JSON is;
+            //     trust it when its content actually parses. Last-first
+            //     because drafts may precede the final emission.
+            const fences = [...trimmed.matchAll(/```(?:json)?\s*([\s\S]*?)```/g)];
+            for (let i = fences.length - 1; i >= 0; i--) {
+              const inner = fences[i][1].trim();
+              if (inner.startsWith("{") && parses(inner)) return inner;
+            }
+
+            // (2) Legacy slice — first { to last }. Covers bare JSON, prose
+            //     preamble without braces, and unterminated fences.
             const firstBrace = trimmed.indexOf("{");
             const lastBrace = trimmed.lastIndexOf("}");
             if (firstBrace === -1 || lastBrace === -1 || lastBrace < firstBrace) {
@@ -246,7 +263,25 @@ export async function POST(request) {
               // as parse errors so the existing error handling fires.
               return trimmed;
             }
-            return trimmed.slice(firstBrace, lastBrace + 1);
+            const slice = trimmed.slice(firstBrace, lastBrace + 1);
+            if (parses(slice)) return slice;
+
+            // (3) PROGRESSIVE STARTS — the backstop for prose braces with no
+            //     usable fence: walk forward through each { and return the
+            //     first suffix-to-lastBrace that parses. The true JSON start
+            //     is reached within (prose braces + 1) attempts; the cap only
+            //     bounds the genuinely-broken case, which then falls through
+            //     to the original failure shape so the existing error path
+            //     fires unchanged.
+            let idx = trimmed.indexOf("{", firstBrace + 1);
+            let attempts = 0;
+            while (idx !== -1 && idx <= lastBrace && attempts < 200) {
+              const candidate = trimmed.slice(idx, lastBrace + 1);
+              if (parses(candidate)) return candidate;
+              idx = trimmed.indexOf("{", idx + 1);
+              attempts++;
+            }
+            return slice;
           }
 
           // ============================
@@ -1133,6 +1168,31 @@ ${JSON.stringify({ evaluation: ev })}`;
               est.position_basis,
             ].filter(Boolean).map((s) => String(s).trim()).filter(Boolean).join(" ");
             if (joinedExec) est.explanation = joinedExec;
+
+            // ---- HINGE CONTRACT (shared module — never repair) ----
+            // Validate against the committed directions + evidence level +
+            // the bottleneck Stage 3 itself just selected. Any violation
+            // drops the WHOLE field: the UI renders the committed-nothing
+            // degrade. deepPayload runs the same validator on saved
+            // payloads, so server and client cannot drift.
+            if (est.hinge !== undefined) {
+              const validated = validateHinge(est.hinge, {
+                metricDirections: {
+                  market_demand: ev.market_demand && ev.market_demand.direction,
+                  monetization: ev.monetization && ev.monetization.direction,
+                  originality: ev.originality && ev.originality.direction,
+                },
+                evidenceLevel: ev.evidence_strength && ev.evidence_strength.level,
+                mainBottleneck: est.main_bottleneck,
+              });
+              if (!validated) {
+                console.warn(
+                  "[hinge] dropped — contract violation:",
+                  JSON.stringify(est.hinge).slice(0, 400)
+                );
+                delete est.hinge;
+              }
+            }
           }
 
           // ============================

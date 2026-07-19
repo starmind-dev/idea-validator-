@@ -915,6 +915,103 @@ Risk 3 specific handling: the MB-Risk 3 relational framing above (ALIGNMENT/LAYE
 
 Failure protocol: first apply the compatibility test to each risk. If no material connection exists, re-check MB through Master Selection Step 6. If MB remains best-supported by case data, preserve MB and maintain internal Stage 3 coherence. Do not retrofit MB merely to mirror Key Risks wording.
 
+=== HINGE MAPPING — BLOCK OWNERSHIP ===
+
+After committing the Main Bottleneck and Estimates, commit the hinge mapping:
+which of the three metric gaps share a causal door, and whether the wall you
+selected joins one. The metric scorers own each metric's next-evidence
+requirement (the "direction" field); you own ONLY the causal joins. Display
+shape (single / clustered / distributed) is derived mechanically downstream —
+you commit structure, never presentation.
+
+A DOOR is a single checkable fact whose resolution moves every member assigned
+to it. SHARED CAUSAL DEPENDENCY, NOT SHARED VOCABULARY.
+
+INPUT-AUTHORITY FENCE: Determine metric membership ONLY from the next-evidence
+requirement inside each metric's "direction" field. The idea description,
+competitor names, diagnoses, binding-constraint prose, summary, and failure
+risks may provide context but cannot independently justify a join.
+
+ENTAILMENT (strict): A metric may join a door only when the proposed fact
+either (1) directly satisfies the metric's next-evidence requirement, or
+(2) is explicitly named in that requirement as a necessary prerequisite to
+satisfying it. General helpfulness, strategic relevance, or making the
+requirement easier to pursue is insufficient — "helps" is not "waits on".
+
+THE TRI-ROLE TEST (worked negative): In a Tyler Munis case, "Tyler" may appear
+in all three directions as incumbent baseline (demand), channel owner
+(payment), and certifier (position). Three roles — three different facts could
+resolve them (buyer displacement evidence / channel pricing precedent /
+certification grant). Counting the repeated name and drawing one node is
+FORBIDDEN-INFERENCE. Merge only if ONE fact is the thing each direction's own
+requirement waits on under the strict entailment test. If the demand direction
+would remain open even with certification granted, demand does not belong on
+that door.
+
+PARTITION RULES:
+1. Every metric that committed a direction is assigned to exactly one door.
+   No metric appears twice. No metric is omitted. Nothing else appears in
+   metric_waits.
+2. The wall is NOT a partition member. Set wall_joins_door to a door's id when
+   the Main Bottleneck's resolution waits on that door's fact; null otherwise
+   — the wall then simply remains in Build Reality. Never create a door for
+   the wall alone.
+
+WALL ASSIGNMENT — resolution form, decided per case, never from the enum
+alone: does the selected bottleneck resolve through a fact becoming true, or
+through work / gradient accumulation? Usually work or gradient: Technical
+build, Distribution, Trust/credibility. Often fact-like but case-dependent:
+Compliance, Buyer access, Data acquisition, Capital/runway — a signed channel
+agreement, a granted authorization, a specific license, a committed financing
+event are facts; assembling, selling, fundraising, and reputation-building are
+work. WALL ENTAILMENT: wall membership must be supported by main_bottleneck,
+constraint_diagnosis, and commitment_explanation; shared topic or entity names
+are insufficient.
+
+DOOR PROSE:
+- A door is MERGED when its metric members plus the wall (if it joins this
+  door) total two or more. Merged doors REQUIRE fact and body. fact: one
+  checkable, verifiable state of the world, 20 words — not a score,
+  not a prediction. body: 1-3 sentences naming how EACH member's requirement
+  waits on the fact. When the wall is a member, the body references it in AT
+  MOST one clause and never restates why that bottleneck was selected —
+  main_bottleneck_explanation owns the selection rationale; the hinge body
+  owns only why resolving THIS fact also moves the wall. No duration,
+  difficulty, founder calibration, or workstream content inside the hinge.
+- A SOLO door (one metric, wall elsewhere) carries fact: null and body: null
+  — exactly null. Do not restate or compress the scorer's direction prose;
+  the display uses it verbatim.
+
+LABEL DISCIPLINE: A merged-door label names only the subject of its committed
+fact. A solo-door label names only the subject of that metric's direction.
+Labels must not contain verdicts, strength judgments, certainty claims, causal
+conclusions, or language not supported by the corresponding fact or direction.
+The label is navigational compression, not additional analysis. 2-4 words.
+
+INSUFFICIENT: When evidence_strength is LOW, or main_bottleneck is
+Specification, or the direction strings are too thin or unspecific to judge
+dependency structure (naming no concrete evidence requirement), emit exactly:
+type "insufficient", doors [], wall_joins_door null. This is a full answer,
+not a failure.
+
+ANTI-MANUFACTURE: A mapping of all-solo doors (no convergence anywhere) is a
+respectable, expected answer — likely the modal one. Never merge to make the
+read more dramatic. The reductive-single-pick principle does NOT apply here:
+the hinge is a map, not a selection, and "the gaps stand apart" is a valid
+map.
+
+CAPS — STRUCTURAL. Violating any of these invalidates the entire hinge
+downstream; there is no partial credit. Doors never exceed the number of
+partitioned metrics. Each metric key appears exactly once across all
+metric_waits, and every direction-bearing metric is assigned. label 2-4 words.
+body 1-3 sentences. Merged doors carry both fact and body; solo doors carry
+fact null and body null, exactly.
+
+CAPS — LENGTH. fact 20 words. Count the words before emitting; compress dollar
+amounts, channel names, and qualifiers rather than run long. A fact that needs
+more than 20 words is usually a compound of several conditions — which is
+itself a signal the merge may be wrong: one door, one fact.
+
 === JSON STRUCTURE ===
 
 {
@@ -932,6 +1029,19 @@ Failure protocol: first apply the compatibility test to each risk. If no materia
       "runner_up": null,
       "runner_up_rationale": "",
       "tipping_signal": ""
+    },
+    "hinge": {
+      "type": "mapped | insufficient",
+      "doors": [
+        {
+          "id": "d1",
+          "label": "2-4 words per LABEL DISCIPLINE",
+          "fact": "20 words max, checkable — merged doors only, else null",
+          "metric_waits": ["exact partition over metrics with committed directions"],
+          "body": "1-3 sentences — merged doors only, else null"
+        }
+      ],
+      "wall_joins_door": "a door id, or null"
     }
   }
 }
@@ -946,4 +1056,5 @@ mb_ambiguity shows its false/default shape above. Populate it per the CLOSE-CALL
 - main_bottleneck_explanation must be 1-2 sentences, focused on the classification rationale.
 - The four Execution Reality fields (constraint_diagnosis, commitment_explanation, profile_calibration, position_basis) each must be 1 sentence (2 short max), obey the ownership fences and shared voice bans, vary the scaffold across cases, and never include section-name references. They are joined downstream into one explanation string — but compose each field as its own beat, not as a paragraph split four ways. For sparse (Specification) cases, emit constraint_diagnosis only and set the other three to "".
 - Under evidence_strength === "LOW": main_bottleneck = "Specification", duration = "Cannot estimate until the product is specified", difficulty = "N/A". Do not produce numeric estimates for unspecified products.
+- hinge is committed per the HINGE MAPPING block. Under evidence_strength === "LOW" or main_bottleneck === "Specification", hinge is exactly { type "insufficient", doors [], wall_joins_door null }. Structural violations invalidate the whole hinge downstream — emit the canonical shapes precisely.
 - Write explanation prose that is specific, causally clear, and proportionate to the evidence. Avoid overstated conclusions or judgments stronger than the data supports. Stages 1 and 2 have already identified risks and barriers — your job is to produce the most honest classification of the binding constraint given those realities and the commitment shape it implies. Be realistic about difficulty but constructive about path.`;
