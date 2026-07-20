@@ -212,6 +212,37 @@ const CSS = `
 .ilc-deep .sx .line{flex:1;height:1px;background:var(--divider)}
 .ilc-deep .sx .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;color:var(--faint)}
 
+/* ── Edge navigator (edge-navigator-mockup.html, approved July 20) ──────────
+   Right-edge movement rail. Chrome, not content: colour carries STATE only —
+   never a score, never a metric identity. Inactive rests at --faint like the
+   .sx .tag family; hover lifts to --sec; active is --text plus a longer tick.
+   Type floor 10px (size before colour). No progress %, no checkmarks —
+   position, nothing else (anti-scold).
+   Below 1100px (the page's own breakpoint) the LABELS fold and the ticks
+   remain — the rail is never display:none at any width. */
+.ilc-deep .enav{position:fixed;right:0;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:18px;align-items:flex-end;
+  padding:10px 0;z-index:40}
+.ilc-deep .enav a{display:flex;align-items:center;gap:10px;text-decoration:none;
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  color:var(--faint);transition:color .15s ease}
+.ilc-deep .enav a .lbl{transform:translateY(1px)}
+.ilc-deep .enav a .tick{width:18px;height:1px;background:currentColor;
+  transition:width .18s ease;flex-shrink:0}
+.ilc-deep .enav a:hover{color:var(--sec)}
+.ilc-deep .enav a[aria-current="true"]{color:var(--text)}
+.ilc-deep .enav a[aria-current="true"] .tick{width:34px}
+.ilc-deep .enav a:focus-visible{outline:1px solid var(--border-str);outline-offset:3px;color:var(--sec)}
+@media(max-width:1100px){
+  .ilc-deep .enav{gap:14px}
+  .ilc-deep .enav a .lbl{display:none}
+  .ilc-deep .enav a .tick{width:14px}
+  .ilc-deep .enav a[aria-current="true"] .tick{width:26px}
+}
+@media(max-width:560px){
+  .ilc-deep .enav{gap:12px}
+}
+
 /* I */
 .ilc-deep .nx-head{max-width:1000px;margin-top:8px}
 .ilc-deep .nx-eyebrow{display:flex;gap:9px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:10px;letter-spacing:.09em;color:var(--mut);margin-bottom:20px}
@@ -324,11 +355,11 @@ const CSS = `
 .ilc-deep .grd-head{display:flex;align-items:center;gap:13px;margin-bottom:13px}
 .ilc-deep .grd-ico{flex-shrink:0}
 .ilc-deep .grd-lab{font-family:var(--serif);font-size:19px;font-weight:500;letter-spacing:-.01em;color:var(--text);line-height:1.05}
-.ilc-deep .grd-sub{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--md);margin-top:4px}
-.ilc-deep .grd-body{font-size:11.5px;line-height:1.62;color:var(--mut)}
+.ilc-deep .grd-sub{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--md);margin-top:4px}
+.ilc-deep .grd-body{font-size:15px;line-height:1.75;color:var(--text)}
 @keyframes ringspin{to{transform:rotate(360deg)}}
 .ilc-deep .ring-anim{transform-origin:48px 48px;animation:ringspin 14s linear infinite}
-@media(prefers-reduced-motion:reduce){.ilc-deep .ring-anim{animation:none}}
+@media(prefers-reduced-motion:reduce){.ilc-deep .ring-anim{animation:none}.ilc-deep .tav{animation:none}.ilc-deep .thalo{animation:none;opacity:0}}
 
 /* ---- Ⅱ WHY IT LANDS HERE — ported verbatim from Deep_v5 design ---- */
 .ilc-deep .lands{display:grid;grid-template-columns:312px minmax(0,1fr);gap:52px;align-items:start}
@@ -423,8 +454,33 @@ const CSS = `
 .ilc-deep .tnode circle{transition:stroke .15s}
 .ilc-deep .tnode:hover circle{stroke:rgba(255,255,255,.45);stroke-width:1.5}
 .ilc-deep .tnode.sel circle{stroke:#eceff5;stroke-width:2}
+/* ── actor pulse (terrain-actor-pulse-v2, approved July 20) ─────────────────
+   One shared breath: every actor swells together (1 → 1.12, 2.8s) and a
+   neutral halo blooms off each avatar at the peak. Judgment-free by
+   construction: identical motion on every actor — direct, adjacent, and
+   baseline breathe the same; the field inhales as one organism. Labels sit
+   OUTSIDE the animated group and never move. Hover/selection replaces the
+   breath with a steady 1.16 lift — intent beats ambience.
+   transform-box:fill-box makes each avatar scale around its own centre
+   (SVG transforms otherwise pivot on the canvas origin). */
+.ilc-deep .tav{transform-box:fill-box;transform-origin:center;
+  animation:tpulse 2.8s ease-in-out infinite;will-change:transform}
+.ilc-deep .thalo{transform-box:fill-box;transform-origin:center;
+  animation:thalo 2.8s ease-in-out infinite;pointer-events:none;opacity:0}
+.ilc-deep .tnode:hover .tav,.ilc-deep .tnode.sel .tav{animation:none;transform:scale(1.16)}
+.ilc-deep .tnode:hover .thalo,.ilc-deep .tnode.sel .thalo{animation:none;opacity:0}
+@keyframes tpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@keyframes thalo{0%,100%{transform:scale(1);opacity:0}45%{opacity:.5}50%{transform:scale(1.55);opacity:.32}70%{transform:scale(1.9);opacity:0}}
 .ilc-deep .tinspect{border-top:1px solid var(--divider);margin-top:4px;padding:14px 8px 8px;min-height:62px}
 .ilc-deep .tinspect .empty{font-family:var(--mono);font-size:12px;color:var(--mut)}
+/* the selected actor's avatar, echoed at the head of its dossier line —
+   same favicon the terrain node carries, same circular treatment. Fallback
+   (no url) is the actor's initial in the same chip; no icon is invented. */
+.ilc-deep .tinspect .aav{display:inline-grid;place-items:center;width:26px;height:26px;
+  border-radius:50%;background:var(--surf2);border:1px solid var(--border-str);
+  vertical-align:-7px;margin-right:10px;overflow:hidden;flex-shrink:0}
+.ilc-deep .tinspect .aav img{width:17px;height:17px;border-radius:50%;display:block}
+.ilc-deep .tinspect .aav span{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--sec)}
 .ilc-deep .tinspect .anm{font-size:15px;font-weight:600}
 .ilc-deep .tinspect .aty{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--sec);margin-left:12px}
 .ilc-deep .tinspect .atake{font-size:13px;line-height:1.6;color:var(--sec);margin-top:8px;max-width:82ch}
@@ -1391,6 +1447,10 @@ function Terrain({ field }) {
       const labelFs = list.length > 5 ? Math.max(9.5, fs - 1.5) : fs;
       return (
         <g key={`${name || i}-${i}`} className={"tnode" + (sel === c ? " sel" : "")} onClick={() => setSel(c)}>
+          {/* breathing halo — blooms at the pulse peak; steady-hidden on hover/select */}
+          <circle className="thalo" cx={x} cy={y} r={r} fill="none" stroke="rgba(255,255,255,.35)" vectorEffect="non-scaling-stroke" />
+          {/* the animated avatar group — the label below is OUTSIDE it and never moves */}
+          <g className="tav">
           <circle cx={x} cy={y} r={r} fill={fill} fillOpacity={llm ? 0.9 : 1} filter="url(#tsoft)" />
           {fav ? (
             <>
@@ -1422,6 +1482,7 @@ function Terrain({ field }) {
               {GLYPH[glyphKey]}
             </g>
           )}
+          </g>
           <text
             x={x}
             y={y + labelDy}
@@ -1502,6 +1563,15 @@ function Terrain({ field }) {
       <div className="tinspect">
         {sel ? (
           <>
+            {/* avatar echo — the exact favicon the terrain node shows, via the
+                same resolver; initial-letter fallback when no url is committed */}
+            <span className="aav" aria-hidden="true">
+              {sel.url && faviconOf(sel.url) ? (
+                <img src={faviconOf(sel.url)} alt="" />
+              ) : (
+                <span>{(sel.name || "?").trim().charAt(0).toUpperCase()}</span>
+              )}
+            </span>
             <span className="anm">{sel.name}</span>
             <span className="aty">
               {[
@@ -2312,6 +2382,46 @@ function MvHinge({ hinge, competitors }) {
   );
 }
 
+/* ============================================================ edge navigator =
+   Right-edge movement rail (edge-navigator-mockup.html, approved July 20).
+   Third consumer of useScrollSpy — same observer pattern as II's navrail and
+   IV's beat index. Clicking scrolls; observation highlights. Labels are the
+   sections' own data-movement names, uppercased; nothing here is invented.
+   The rail renders only sections that exist: MvHinge can return null (a
+   payload with no doors AND no gaps — pre-direction saves), and a rail item
+   pointing at an absent section would be a false affordance. `showHinge`
+   mirrors MvHinge's own render condition exactly, so the two cannot drift. */
+const MOVEMENTS = [
+  { id: "mv-1", label: "READ" },
+  { id: "mv-2", label: "FINDINGS" },
+  { id: "mv-3", label: "FIELD" },
+  { id: "mv-4", label: "BUILD" },
+  { id: "mv-5", label: "HINGE" },
+];
+
+function EdgeNav({ showHinge }) {
+  const items = showHinge ? MOVEMENTS : MOVEMENTS.filter((m) => m.id !== "mv-5");
+  const active = useScrollSpy(items.map((m) => m.id));
+  return (
+    <nav className="enav" aria-label="Movements">
+      {items.map((m) => (
+        <a
+          key={m.id}
+          href={`#${m.id}`}
+          aria-current={active === m.id ? "true" : "false"}
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToId(m.id);
+          }}
+        >
+          <span className="lbl">{m.label}</span>
+          <span className="tick" />
+        </a>
+      ))}
+    </nav>
+  );
+}
+
 /* ================================================================== export = */
 export default function DeepAnalysis({
   analysis,
@@ -2332,10 +2442,19 @@ export default function DeepAnalysis({
 
   const jumpToFinding = (key) => scrollToId(`rp-${SHORT[key]}`);
 
+  // Mirrors MvHinge's render condition byte-for-byte: insufficient renders,
+  // doors render, a bare gap schedule renders — only the no-doors-AND-no-gaps
+  // payload returns null, and then the rail must not offer the section.
+  const showHinge =
+    model.hinge.insufficient ||
+    (model.hinge.doors && model.hinge.doors.length > 0) ||
+    model.hinge.gaps.length > 0;
+
   return (
     <div className="ilc-deep">
       <style>{CSS}</style>
 
+      <EdgeNav showHinge={showHinge} />
       <div className="nx">
         <MvRead
           read={model.read}
