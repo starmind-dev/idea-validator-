@@ -19,7 +19,7 @@ import { VERDICT_LEAD_SYSTEM_PROMPT } from "../../../lib/services/prompt-verdict
 import { STAGE_TC_SYSTEM_PROMPT } from "../../../lib/services/prompt-stage-tc";
 import { STAGE3_SYSTEM_PROMPT } from "../../../lib/services/prompt-stage3";
 import { calculateOverallScore, computeMoDisplayScore, computeMoOverrideTrace } from "../../../lib/services/scoring";
-import { validateHinge } from "../../../lib/contracts/hinge";
+import { validateHinge, hingeViolation } from "../../../lib/contracts/hinge";
 import { createClient } from "@supabase/supabase-js";
 import { assertCanRun, recordRun } from "../../../lib/services/entitlements";
 
@@ -1176,7 +1176,14 @@ ${JSON.stringify({ evaluation: ev })}`;
             // degrade. deepPayload runs the same validator on saved
             // payloads, so server and client cannot drift.
             if (est.hinge !== undefined) {
-              const validated = validateHinge(est.hinge, {
+              // One context object feeds BOTH the validator and the violation
+              // reporter — they wrap the same internal logic path (hinge.js
+              // firstViolation), so the logged reason can never disagree with
+              // the rejection. The full payload is logged unsliced: the field
+              // is deleted on the next line, so this log line is the only
+              // record the emission ever existed. (The 400-char slice this
+              // replaces destroyed the evidence for the 2026-07-20 10:03 drop.)
+              const hingeCtx = {
                 metricDirections: {
                   market_demand: ev.market_demand && ev.market_demand.direction,
                   monetization: ev.monetization && ev.monetization.direction,
@@ -1184,11 +1191,14 @@ ${JSON.stringify({ evaluation: ev })}`;
                 },
                 evidenceLevel: ev.evidence_strength && ev.evidence_strength.level,
                 mainBottleneck: est.main_bottleneck,
-              });
+              };
+              const validated = validateHinge(est.hinge, hingeCtx);
               if (!validated) {
                 console.warn(
-                  "[hinge] dropped — contract violation:",
-                  JSON.stringify(est.hinge).slice(0, 400)
+                  "[hinge] dropped —",
+                  hingeViolation(est.hinge, hingeCtx),
+                  "| payload:",
+                  JSON.stringify(est.hinge)
                 );
                 delete est.hinge;
               }

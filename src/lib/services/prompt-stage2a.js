@@ -438,7 +438,17 @@ Derive level from signals already committed (do not perform new evidence search)
 
 - "MEDIUM" — emit in all other cases (the common case). MEDIUM means the input is specified enough to score but at least one packet fell to a weak/no_qualified anchor, or one of {target user, use case, core mechanism} is thin. Default expectation: most evaluable, non-sparse inputs are MEDIUM unless every packet anchored qualified.
 
-reason (string): one sentence naming the specific signal that determined the level — which packets qualified vs fell weak, or which of {target user, use case, mechanism} is thin. Name the concrete signal, not a generic statement. Do NOT state a scoring implication (that is downstream's job). Correct: "All three packets anchored at qualified high-trust sources with target user, use case, and mechanism identified." Incorrect: "Evidence is strong so scores should be high."
+reason (string): one sentence naming the specific signal that determined the level — which evidence dimension qualified vs fell weak, or which of {target user, use case, mechanism} is thin. Name the concrete signal, not a generic statement. Do NOT state a scoring implication (that is downstream's job).
+
+READER-VOCABULARY FENCE (the reason renders VERBATIM on the results page — it is written for the founder, not for the pipeline):
+- Refer to the three dimensions in plain words: "the demand evidence", "the payment evidence", "the positioning evidence" (or equivalent plain descriptions). NEVER "MD", "MO", "OR", and NEVER "packet(s)".
+- Anchor vocabulary IS reader vocabulary and is allowed: "qualified", "weak anchor", "no qualified anchor", "high-trust source", "the founder's own description".
+- NEVER emit internal field names (strongest_positive, strongest_negative, anchor_status, admissible_facts, evidence_strength), stage references (Stage 1, Stage 2a), or any snake_case token of any kind. If a fact came from an evidence-state enum, restate it in plain words ("planned with concrete specifics but not yet operational" — never "planned_with_concrete_specifics").
+- NEVER emit source tags in brackets. "[idea_description]" becomes "the idea description"; "[competitor: Vanta]" becomes "Vanta".
+Correct: "The demand and payment evidence anchor at qualified high-trust sources; the positioning evidence rests on the founder's own description of a planned component without external corroboration, falling to a weak anchor."
+Correct: "All three dimensions anchor at qualified high-trust sources with the target user, use case, and mechanism identifiable."
+Incorrect (scoring implication): "Evidence is strong so scores should be high."
+Incorrect (internal vocabulary — every violation the fence names): "OR packet's strongest_positive anchors on a planned_with_concrete_specifics component candidate from [idea_description]."
 
 thin_dimensions (array, LOW only): when level = "LOW", emit the subset of ["target_user", "use_case", "mechanism"] that cannot be identified from the input. Each entry is one of exactly those three enum strings. When level = "HIGH" or "MEDIUM", omit the field entirely (do not emit an empty array — omit the key). This array is a frontend-rendering signal for the EARLY READ callout; it must list only genuinely unidentifiable dimensions, not dimensions that are merely thin.
 
@@ -555,7 +565,7 @@ These emissions are POST-REASONING. They do not change packet content. Your pack
   },
   "evidence_strength": {
     "level": "MEDIUM",
-    "reason": "One sentence naming the concrete signal that set the level (which packets qualified vs fell weak; which of target_user/use_case/mechanism is thin)"
+    "reason": "One sentence naming the concrete signal that set the level, in plain reader language — which evidence dimension (demand / payment / positioning) qualified vs fell weak, or whether the target user, use case, or mechanism is thin. No internal field names, no snake_case, no source tags, no MD/MO/OR."
   },
   "evidence_packets": {
     "market_demand": {
