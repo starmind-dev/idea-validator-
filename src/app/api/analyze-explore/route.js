@@ -54,16 +54,14 @@ const STAGE2A_MODEL = "claude-haiku-4-5-20251001";
 const RETRY_BACKOFF_MS = 1200;
 
 // ============================================================================
-// LABEL DERIVATION (route-owned, deterministic)
+// LABEL DERIVATION (deterministic)
 // ============================================================================
 // fan_state / readiness / branchability are GRADED here from atoms the synthesis
 // emits — never self-reported by the model (which only ever stamped the top
 // value). Each angle carries disconfirmer_kind + demand_evidenced (the honest
 // content of the kill); the route assigns the labels so the model can't inflate
-// them. Pre-atom payloads fall back to the model's self-reported readiness, so
-// this is safe to ship ahead of the prompt change. The frontend already renders
-// every value below (empty/thin/rich · ready_for_deep/worth_shaping/probably_thin
-// · branchable/partially_branchable/not_branchable) — no frontend change.
+// them. Pre-atom payloads fall back to the model's self-reported readiness.
+// readiness is routing plumbing only — the frontend no longer renders it.
 const DISCONFIRMER_KINDS = new Set([
   "direct_incumbent_holds", "free_substitute_floor", "demand_unproven",
   "structural_barrier", "closeable_gap",
@@ -81,33 +79,339 @@ function deriveReadiness(a) {
   return "worth_shaping";
 }
 
-function deriveFanState(angles) {
-  if (!angles.length) return "empty";
-  const viable = angles.filter((a) => a.readiness === "worth_shaping" || a.readiness === "ready_for_deep");
-  const distinctBasis = new Set(viable.map((a) => a?.basis?.primary)).size;
-  const distinctRests = new Set(viable.map((a) => a?.justification?.bet?.rests_on)).size;
-  // rich = at least three live directions that genuinely diverge; otherwise thin.
-  if (viable.length >= 3 && distinctBasis >= 2 && distinctRests >= 2) return "rich";
-  return "thin";
+// ============================================================================
+// CANONICAL EVIDENCE INDEX
+// ============================================================================
+// One named-item index for the whole derivation layer. Stage 1 competitors are
+// the receipt authority (they own the urls the retrieval actually returned);
+// the sorter's source_items and members add NAME VARIANTS — the sorter may
+// phrase a name differently than Stage 1's canonical form, and a ref written
+// against the sorter's phrasing should still ground and still hydrate. A
+// sorter entry never overwrites a Stage 1 entry; it fills gaps.
+function buildEvidenceIndex(stage1Result, exploreEvidence) {
+  const byKey = new Map();
+  const put = (name, fields, authoritative) => {
+    if (!name || typeof name !== "string") return;
+    const key = name.toLowerCase().trim();
+    if (!key) return;
+    const existing = byKey.get(key);
+    if (existing && !authoritative) {
+      // fill url only if the authority had none (the sorter copied urls from
+      // Stage 1, so this is rare — but a fill is honest, an overwrite is not)
+      if (!existing.url && fields.url) existing.url = fields.url;
+      return;
+    }
+    if (existing && authoritative) return; // first authoritative entry wins
+    byKey.set(key, { name, ...fields });
+  };
+  const norm = (c) => ({
+    url: c.url || null,
+    source: c.source || null,
+    evidence_strength: c.evidence_strength || null,
+    // the Stage 1 relationship type (direct/adjacent/substitute) — carried so
+    // the frontend can color evidence in DEEP'S visual language (typeBadge):
+    // evidence is the one spine both modes share, so it wears one idiom.
+    competitor_type: c.competitor_type || c.type || null,
+    data_source: c.data_source
+      || ((c.url && c.source && c.source !== "llm") ? "verified" : "llm_generated"),
+  });
+
+  for (const c of (stage1Result?.competition?.competitors) || []) {
+    if (c && typeof c.name === "string") put(c.name, norm(c), true);
+  }
+  for (const s of (exploreEvidence?.outward_signals) || []) {
+    const it = s?.source_item;
+    if (it && typeof it.name === "string") put(it.name, norm(it), false);
+  }
+  for (const d of (exploreEvidence?.density_reads) || []) {
+    for (const m of d?.members || []) {
+      if (m && typeof m.name === "string") {
+        put(m.name, norm({ ...m, evidence_strength: m.evidence_strength || m.trust }), false);
+      }
+    }
+  }
+  return byKey;
 }
+
+// One matching rule everywhere: exact key first, then the containment
+// tolerance the old harness labelKnown used — either string containing the
+// other, lowercased.
+function indexFind(index, label) {
+  if (!index || !label || typeof label !== "string") return null;
+  const l = label.toLowerCase().trim();
+  if (!l) return null;
+  const exact = index.get(l);
+  if (exact) return exact;
+  for (const [key, entry] of index) {
+    if (l.includes(key) || key.includes(l)) return entry;
+  }
+  return null;
+}
+
+// ============================================================================
+// GROUNDING + FAN STATE
+// ============================================================================
+// Ref types that name a retrievable item and can therefore be validated by
+// name. Everything else (landscape_fact, barrier, ...) references prose facts
+// and passes as-is — unverifiable by name is not the same as ungrounded.
+const NAME_TYPED_REFS = new Set(["competitor", "substitute"]);
+
+function refGrounded(r, index) {
+  if (!r || typeof r !== "object") return false;
+  if (!NAME_TYPED_REFS.has(r.type)) return true;           // prose-fact ref: accepted as-is
+  return indexFind(index, r.label) !== null;               // name-typed ref: must resolve
+}
+
+// A direction COUNTS toward the fan when it is complete AND grounded: a
+// concrete branch_idea_text, a named bet, a named disconfirmer, and at least
+// one opening evidence_ref that survives validation (resolves against the
+// index, or legitimately references a prose fact). Readiness plays NO part —
+// an incumbent-blocked direction is still a direction. A ref set that is
+// entirely name-typed and entirely unresolvable is the hallucination case;
+// that angle does not count (and the harness flags it item by item).
+function angleGrounded(a, index) {
+  const refs = a?.justification?.opening?.evidence_refs;
+  if (!Array.isArray(refs) || refs.length === 0) return false;
+  if (!a?.branch_idea_text) return false;
+  if (!a?.justification?.bet?.text) return false;
+  if (!a?.justification?.disconfirmer) return false;
+  return refs.some((r) => refGrounded(r, index));
+}
+
+function deriveFanState(angles, index) {
+  // empty = nothing emitted. Grounded-ness never hides emitted angles — an
+  // ungrounded angle still renders (and the harness flags it); it just does
+  // not count toward calling the fan rich.
+  if (!angles.length) return "empty";
+  const grounded = angles.filter((a) => angleGrounded(a, index));
+  // rich = at least three validated-grounded directions. No basis test: the
+  // contract owns semantic distinctness at emission (see header note 1).
+  return grounded.length >= 3 ? "rich" : "thin";
+}
+
+const REASON_ENUM = new Set(["too_vague", "already_specific", "evidence_too_thin", "too_broad", "unclear_buyer"]);
 
 // Mutates explore in place: overwrites each angle.readiness, reconciles
 // read.branchability to the frontend's label set, stashes the model's originals
 // under _*_model for the probe's A/B, and returns the derived fan_state.
-function applyDerivedLabels(explore) {
+// retrievalCondition: the route's code-authoritative read of the retrieval
+// (adequate / thin / fallback_heavy) — it conditions the reason fallback.
+function applyDerivedLabels(explore, index, retrievalCondition) {
   const angles = Array.isArray(explore.angles) ? explore.angles : [];
   for (const a of angles) {
     a._readiness_model = a.readiness ?? null;
     a.readiness = deriveReadiness(a);
   }
-  const fan_state = deriveFanState(angles);
+  const anyUngrounded = angles.some((a) => !angleGrounded(a, index));
+  const fan_state = deriveFanState(angles, index);
   const read = explore.read || (explore.read = {});
   const br = read.branchability || (read.branchability = {});
   br._state_model = br.state ?? null;
   br.state = fan_state === "empty" ? "not_branchable"
     : fan_state === "thin" ? "partially_branchable" : "branchable";
-  br.reason_type = br.state === "branchable" ? null : (br.reason_type || "evidence_too_thin");
+  // reason_type: the MODEL's stated in-enum reason always survives — the route
+  // never overwrites a real read. When the model gave none (or an out-of-enum
+  // value), evidence_too_thin may be derived ONLY where it is true: retrieval
+  // actually ran thin/fallback-heavy, or an angle actually failed grounding.
+  // A thin-but-grounded fan on adequate retrieval keeps a null reason — the
+  // route has nothing honest to manufacture, and the harness notes the null
+  // for the eye instead.
+  if (br.state === "branchable") {
+    br.reason_type = null;
+  } else if (!REASON_ENUM.has(br.reason_type)) {
+    const evidenceActuallyThin = retrievalCondition !== "adequate" || anyUngrounded;
+    br.reason_type = evidenceActuallyThin ? "evidence_too_thin" : null;
+  }
   return fan_state;
+}
+
+// ============================================================================
+// RECEIPT HYDRATION
+// ============================================================================
+// The synthesis's angle refs carry only { type, label, why_relevant } and lane
+// reference_items carry { name, type }; the receipt itself (url + source +
+// trust) lives on the canonical index and was being dropped before the screen.
+// Join it here, at assembly, so the frontend renders receipts instead of
+// fuzzy-matching names client-side. Additive and non-destructive: the
+// model-emitted shape is untouched; the route-authored receipt rides under its
+// own key. An unmatched label simply stays unenriched — nothing is dropped,
+// nothing is invented.
+function hydrateReceipts(explore, index) {
+  if (!index || index.size === 0) return;
+  const receiptOf = (e) => ({
+    name: e.name,
+    url: e.url || null,
+    source: e.source || null,
+    evidence_strength: e.evidence_strength || null,
+    data_source: e.data_source || "llm_generated",
+    competitor_type: e.competitor_type || null,
+  });
+  for (const a of explore?.angles || []) {
+    const refs = a?.justification?.opening?.evidence_refs;
+    if (!Array.isArray(refs)) continue;
+    for (const r of refs) {
+      if (!r || typeof r !== "object") continue;
+      const hit = indexFind(index, r.label);
+      if (hit) r.receipt = receiptOf(hit);
+    }
+  }
+  for (const lane of explore?.terrain?.lanes || []) {
+    const refs = lane?.reference_items;
+    if (!Array.isArray(refs)) continue;
+    for (const r of refs) {
+      if (!r || typeof r !== "object") continue;
+      const hit = indexFind(index, r.name);
+      if (hit) r.receipt = receiptOf(hit);
+    }
+  }
+}
+
+// ============================================================================
+// VALIDATION HARNESS
+// ============================================================================
+// "Open space" leak probe: the synthesis converting evidence-absence into
+// asserted market openness in prose the branch text or reader-facing surfaces
+// carry forward.
+const NEUTRALITY_LEAK = /\b(under-?served|unmet (?:need|demand|want|gap)s?|untapped|under-?explored|uncovered|overlooked|neglected|under-?penetrated|open space|blue ocean|wide open|whitespace|white space|gap in the market|(?:regions?|markets?|areas?|segments?|verticals?|platforms?)\s+(?:that\s+)?(?:no one|nobody|that aren't|not yet|few)\b|nobody (?:serves|is serving)|no one (?:serves|is serving|else))\b/i;
+
+// Verdict-language banned words (scanned across emitted prose, flag-only).
+const BANNED_VERDICT = /\b(promising|best|good idea|bad idea|will work|won't work|clear winner|no-brainer|slam dunk)\b/i;
+
+function buildValidation(explore, index, fan_state) {
+  const warnings = [];
+  const leakCandidates = [];
+
+  const read = explore.read || {};
+  const branchability = read.branchability || {};
+  const angles = Array.isArray(explore.angles) ? explore.angles : [];
+  const terrain = explore.terrain || {};
+  const lanes = Array.isArray(terrain.lanes) ? terrain.lanes : [];
+  const nextMove = explore.next_move || {};
+
+  // GATE: branchability <-> fan_state (strict 1:1) and reason_type coherence.
+  const state = branchability.state;
+  const reasonType = branchability.reason_type ?? null;
+  const expectedState =
+    fan_state === "empty" ? "not_branchable" : fan_state === "thin" ? "partially_branchable" : "branchable";
+  if (state && state !== expectedState) {
+    warnings.push(`branchability.state "${state}" disagrees with fan_state "${fan_state}" (expected "${expectedState}")`);
+  }
+  if (state === "branchable" && reasonType !== null) {
+    warnings.push(`branchable should have null reason_type; got "${reasonType}"`);
+  }
+  // A null reason on a demoted fan is now PERMITTED (the route no longer
+  // manufactures evidence_too_thin on adequate retrieval with grounded angles)
+  // — but it is worth an eyeball, so it flags soft instead of hard.
+  if ((state === "partially_branchable" || state === "not_branchable") && !reasonType) {
+    warnings.push(`${state} with null reason_type — model gave none and the route derived none (retrieval adequate, angles grounded); confirm by eye`);
+  }
+  const REASON_ENUM_V = new Set(["too_vague", "already_specific", "evidence_too_thin", "too_broad", "unclear_buyer"]);
+  if (reasonType !== null && !REASON_ENUM_V.has(reasonType)) {
+    warnings.push(`reason_type "${reasonType}" not in enum`);
+  }
+  // state<->reason_type pairing flag (Issue 10, surfaced not hard-rejected):
+  // the "fix the read" reasons (too_vague/too_broad/unclear_buyer) pairing with
+  // partially_branchable is worth an eyeball — it usually means not_branchable.
+  const FIX_THE_READ = new Set(["too_vague", "too_broad", "unclear_buyer"]);
+  if (state === "partially_branchable" && FIX_THE_READ.has(reasonType)) {
+    warnings.push(`pairing: partially_branchable + "${reasonType}" (a fix-the-read reason) — confirm by eye`);
+  }
+
+  // Angles: evidence_refs non-empty + grounded against the CANONICAL index
+  // (the same index hydration uses — one matching rule everywhere),
+  // disconfirmer present, branch_idea_text present + neutrality probe,
+  // readiness enum.
+  const angleIds = new Set(angles.map((a) => a?.id).filter(Boolean));
+  const READINESS = new Set(["ready_for_deep", "worth_shaping", "probably_thin"]);
+  angles.forEach((a, i) => {
+    const tag = `angle[${i}]${a?.id ? ` (${a.id})` : ""}`;
+    const refs = a?.justification?.opening?.evidence_refs;
+    if (!Array.isArray(refs) || refs.length === 0) {
+      warnings.push(`${tag}: opening.evidence_refs empty (no opening, no angle)`);
+    } else {
+      refs.forEach((r, j) => {
+        if (r?.type === "competitor" || r?.type === "substitute") {
+          if (!indexFind(index, r?.label)) warnings.push(`${tag}: evidence_ref[${j}] label "${r?.label}" not found among named items`);
+        }
+      });
+    }
+    if (!a?.justification?.disconfirmer) warnings.push(`${tag}: missing disconfirmer`);
+    if (!a?.branch_idea_text) {
+      warnings.push(`${tag}: missing branch_idea_text`);
+    } else if (NEUTRALITY_LEAK.test(a.branch_idea_text)) {
+      const m = a.branch_idea_text.match(NEUTRALITY_LEAK);
+      leakCandidates.push(`${tag}: branch_idea_text contains "${m[0]}" — possible open=>wanted leak`);
+    }
+    if (!READINESS.has(a?.readiness)) warnings.push(`${tag}: readiness "${a?.readiness}" not in enum`);
+    if (a?.lane_ref && !lanes.some((l) => l?.id === a.lane_ref)) {
+      warnings.push(`${tag}: lane_ref "${a.lane_ref}" does not resolve to a lane`);
+    }
+    // Banned verdict language anywhere in the angle's visible prose.
+    for (const field of [a?.title, a?.concept, a?.justification?.opening?.text, a?.justification?.bet?.text, a?.justification?.disconfirmer]) {
+      if (typeof field === "string" && BANNED_VERDICT.test(field)) {
+        warnings.push(`${tag}: banned verdict word in prose ("${field.match(BANNED_VERDICT)[0]}")`);
+      }
+    }
+  });
+
+  // Terrain lanes: substitute_tell present; demand_question rules. The question
+  // is REQUIRED wherever demand is not evidenced. On crowded_with_gap it is now
+  // PERMITTED — null is valid only when the evidence explicitly names payment
+  // among the lane's members, a claim the route cannot verify without a
+  // structured payment atom (contract-rev item), so a null there is flagged
+  // for the eye rather than enforced either way.
+  lanes.forEach((l, i) => {
+    const tag = `lane[${i}]${l?.id ? ` (${l.id})` : ""}`;
+    if (!l?.substitute_tell) warnings.push(`${tag}: missing substitute_tell`);
+    const dq = l?.demand_question ?? null;
+    const needsDq = l?.status === "open" || l?.status === "lightly_served" || l?.lane_type === "crowded_free_tools";
+    if (needsDq && !dq) warnings.push(`${tag}: demand_question required for status/lane_type "${l?.status}/${l?.lane_type}" but null`);
+    if (!dq && l?.lane_type === "crowded_with_gap") {
+      warnings.push(`${tag}: crowded_with_gap with null demand_question — confirm by eye: null is valid only if the evidence explicitly names payment (a price, paid tier, subscription) among this lane's members`);
+    }
+  });
+
+  // Next Move: id resolution on targets + actions.
+  const tIds = nextMove?.targets?.angle_ids;
+  if (Array.isArray(tIds)) {
+    tIds.forEach((id) => { if (!angleIds.has(id)) warnings.push(`next_move.targets references unknown angle "${id}"`); });
+  }
+  const actions = Array.isArray(nextMove?.actions) ? nextMove.actions : [];
+  actions.forEach((act, i) => {
+    const ids = Array.isArray(act?.target_angle_ids) ? act.target_angle_ids : [];
+    ids.forEach((id) => { if (!angleIds.has(id)) warnings.push(`next_move.actions[${i}] references unknown angle "${id}"`); });
+    if (act?.type === "compare_selected" && act?.enabled && ids.length < 2) {
+      warnings.push(`next_move.actions[${i}] compare_selected enabled with <2 targets`);
+    }
+  });
+
+  // Forbidden field: the model must NOT emit fan_state.
+  if (Object.prototype.hasOwnProperty.call(explore, "fan_state")) {
+    warnings.push(`model emitted fan_state (route-derived only — must not be emitted)`);
+  }
+
+  // Optimism leak in USER-FACING prose (dominant_uncertainty.text + recommendation).
+  // Distinct severity from the branch_idea_text leak: Deep never ingests these,
+  // so it is a tone flag (warning), not a spine break (leak_candidate). But the
+  // same word reaching into the open-space read makes "honest fork" sound like a
+  // verdict that the space is wanted — caught here so the next prose pass sees it.
+  const duText = nextMove?.dominant_uncertainty?.text;
+  if (typeof duText === "string" && NEUTRALITY_LEAK.test(duText)) {
+    warnings.push(`next_move.dominant_uncertainty.text uses "${duText.match(NEUTRALITY_LEAK)[0]}" — confirm by eye: a two-sided fork ("open because X, or because unwanted?") is fine; asserting the space IS underserved is the leak`);
+  }
+  const rec = nextMove?.recommendation;
+  if (typeof rec === "string" && NEUTRALITY_LEAK.test(rec)) {
+    warnings.push(`next_move.recommendation uses "${rec.match(NEUTRALITY_LEAK)[0]}" — confirm by eye: describing where to test is fine; asserting the target is underserved is the leak`);
+  }
+
+  return {
+    fan_state,
+    angle_count: angles.length,
+    facet_count: 0, // V1.2 base shape has no facet band yet
+    clean: warnings.length === 0 && leakCandidates.length === 0,
+    warnings,
+    leak_candidates: leakCandidates,
+  };
 }
 
 // ============================================================================
@@ -142,10 +446,9 @@ function scrubLeaks(o) {
 // / neglected / regions no one serves yet" — same smuggled demand-verdict, new
 // words. The regex can never catch every paraphrase; the structural prompt rule
 // is the real guard and this stays a pre-filter, not proof.
-const NEUTRALITY_LEAK = /\b(under-?served|unmet (?:need|demand|want|gap)s?|untapped|under-?explored|uncovered|overlooked|neglected|under-?penetrated|open space|blue ocean|wide open|whitespace|white space|gap in the market|(?:regions?|markets?|areas?|segments?|verticals?|platforms?)\s+(?:that\s+)?(?:no one|nobody|that aren't|not yet|few)\b|nobody (?:serves|is serving)|no one (?:serves|is serving|else))\b/i;
 
-// Verdict-language banned words (scanned across emitted prose, flag-only).
-const BANNED_VERDICT = /\b(promising|best|good idea|bad idea|will work|won't work|clear winner|no-brainer|slam dunk)\b/i;
+
+
 
 // ============================
 // EXPLORE EVIDENCE COUNTS (code-authoritative)
@@ -600,21 +903,37 @@ export async function POST(request) {
           // fan_state are set or derived here)
           // ============================
           const angles = Array.isArray(explore.angles) ? explore.angles : [];
+          // The CANONICAL EVIDENCE INDEX: Stage 1 competitors (url authority)
+          // unioned with the sorter's source_items and members (name-variant
+          // coverage). One index, one matching rule, serving grounding,
+          // hydration, and validation alike.
+          const evidenceIndex = buildEvidenceIndex(stage1Result, exploreEvidence);
           // GRADE the honesty labels from the synthesis's atoms (disconfirmer_kind
           // + demand_evidenced), not the model's self-report or the raw angle
-          // count. Mutates angle.readiness + read.branchability in place (stashing
-          // the model's originals as _*_model); returns the derived fan_state.
-          const fan_state = applyDerivedLabels(explore);
+          // count. Grounding is VALIDATED against the index (name-typed refs must
+          // resolve); the evidence_too_thin fallback is conditioned on the
+          // code-authoritative retrieval_condition. Mutates angle.readiness +
+          // read.branchability in place (stashing the model's originals as
+          // _*_model); returns the derived fan_state.
+          const fan_state = applyDerivedLabels(explore, evidenceIndex, evidenceCounts.retrieval_condition);
           scrubLeaks(explore); // strip any leaked internal evidence id before it reaches the reader
-          // demand_question is incoherent on a lane with paying incumbents
-          // (lane_type crowded_with_gap): their payment already proves demand. Null it.
-          for (const lane of explore?.terrain?.lanes || []) {
-            if (lane && lane.lane_type === "crowded_with_gap") lane.demand_question = null;
-          }
+          // (removed) The route used to hard-null demand_question on every
+          // crowded_with_gap lane — "their payment already proves demand." But no
+          // structured payment atom exists anywhere in the pipeline: the
+          // paying-vs-free read is the synthesis model's judgment over prose, and
+          // deleting the question deterministically on that judgment let an
+          // unverified premise suppress the one question the mode exists to keep
+          // open. Crowding evidences activity, not payment. The contract now
+          // nulls the question only where the evidence explicitly names payment;
+          // the harness flags a null on crowded_with_gap for the eye.
+          // Receipts: join url / source / trust from the canonical index onto
+          // the synthesis's refs, so the reader can reach the evidence without
+          // the frontend fuzzy-matching names.
+          hydrateReceipts(explore, evidenceIndex);
 
-          // Validate synthesis refs against the ORIGINAL Stage 1 named items
-          // (not the sorted object) — grounding must trace to real retrieval.
-          const validation = buildValidation(explore, stage1Result, fan_state);
+          // Validate synthesis refs against the SAME canonical index the
+          // grounding and hydration used — one matching rule everywhere.
+          const validation = buildValidation(explore, evidenceIndex, fan_state);
 
           __timing.total_ms = Date.now() - __t0;
 
@@ -669,145 +988,3 @@ export async function POST(request) {
 // Runs the contract's route-side lints and the three watch-gates, returning a
 // { warnings, leak_candidates, fan_state } report rather than rejecting. Each
 // warning is a string the cross-case run can aggregate into violation RATES.
-function buildValidation(explore, evidence, fan_state) {
-  const warnings = [];
-  const leakCandidates = [];
-
-  const read = explore.read || {};
-  const branchability = read.branchability || {};
-  const angles = Array.isArray(explore.angles) ? explore.angles : [];
-  const terrain = explore.terrain || {};
-  const lanes = Array.isArray(terrain.lanes) ? terrain.lanes : [];
-  const nextMove = explore.next_move || {};
-
-  // Collect the named-item labels Stage 1 actually emitted, for ref grounding.
-  const namedLabels = new Set();
-  const competitors = (evidence?.competition?.competitors) || [];
-  for (const c of competitors) {
-    if (c && typeof c.name === "string") namedLabels.add(c.name.toLowerCase());
-  }
-  function labelKnown(label) {
-    if (!label || typeof label !== "string") return false;
-    const l = label.toLowerCase();
-    for (const name of namedLabels) {
-      if (l.includes(name) || name.includes(l)) return true;
-    }
-    return false;
-  }
-
-  // GATE: branchability <-> fan_state (strict 1:1) and reason_type coherence.
-  const state = branchability.state;
-  const reasonType = branchability.reason_type ?? null;
-  const expectedState =
-    fan_state === "empty" ? "not_branchable" : fan_state === "thin" ? "partially_branchable" : "branchable";
-  if (state && state !== expectedState) {
-    warnings.push(`branchability.state "${state}" disagrees with fan_state "${fan_state}" (expected "${expectedState}")`);
-  }
-  if (state === "branchable" && reasonType !== null) {
-    warnings.push(`branchable should have null reason_type; got "${reasonType}"`);
-  }
-  if ((state === "partially_branchable" || state === "not_branchable") && !reasonType) {
-    warnings.push(`${state} requires a reason_type; none set`);
-  }
-  // reason_type enum membership (the harness gap the review caught — was only
-  // checking null-ness, not membership).
-  const REASON_ENUM = new Set(["too_vague", "already_specific", "evidence_too_thin", "too_broad", "unclear_buyer"]);
-  if (reasonType !== null && !REASON_ENUM.has(reasonType)) {
-    warnings.push(`reason_type "${reasonType}" not in enum`);
-  }
-  // state<->reason_type pairing flag (Issue 10, surfaced not hard-rejected):
-  // the "fix the read" reasons (too_vague/too_broad/unclear_buyer) pairing with
-  // partially_branchable is worth an eyeball — it usually means not_branchable.
-  const FIX_THE_READ = new Set(["too_vague", "too_broad", "unclear_buyer"]);
-  if (state === "partially_branchable" && FIX_THE_READ.has(reasonType)) {
-    warnings.push(`pairing: partially_branchable + "${reasonType}" (a fix-the-read reason) — confirm by eye`);
-  }
-
-  // Angles: evidence_refs non-empty + grounded, disconfirmer present,
-  // branch_idea_text present + neutrality probe, readiness enum.
-  const angleIds = new Set(angles.map((a) => a?.id).filter(Boolean));
-  const READINESS = new Set(["ready_for_deep", "worth_shaping", "probably_thin"]);
-  angles.forEach((a, i) => {
-    const tag = `angle[${i}]${a?.id ? ` (${a.id})` : ""}`;
-    const refs = a?.justification?.opening?.evidence_refs;
-    if (!Array.isArray(refs) || refs.length === 0) {
-      warnings.push(`${tag}: opening.evidence_refs empty (no opening, no angle)`);
-    } else {
-      refs.forEach((r, j) => {
-        if (r?.type === "competitor" || r?.type === "substitute") {
-          if (!labelKnown(r?.label)) warnings.push(`${tag}: evidence_ref[${j}] label "${r?.label}" not found among named items`);
-        }
-      });
-    }
-    if (!a?.justification?.disconfirmer) warnings.push(`${tag}: missing disconfirmer`);
-    if (!a?.branch_idea_text) {
-      warnings.push(`${tag}: missing branch_idea_text`);
-    } else if (NEUTRALITY_LEAK.test(a.branch_idea_text)) {
-      const m = a.branch_idea_text.match(NEUTRALITY_LEAK);
-      leakCandidates.push(`${tag}: branch_idea_text contains "${m[0]}" — possible open=>wanted leak`);
-    }
-    if (!READINESS.has(a?.readiness)) warnings.push(`${tag}: readiness "${a?.readiness}" not in enum`);
-    if (a?.lane_ref && !lanes.some((l) => l?.id === a.lane_ref)) {
-      warnings.push(`${tag}: lane_ref "${a.lane_ref}" does not resolve to a lane`);
-    }
-    // Banned verdict language anywhere in the angle's visible prose.
-    for (const field of [a?.title, a?.concept, a?.justification?.opening?.text, a?.justification?.bet?.text, a?.justification?.disconfirmer]) {
-      if (typeof field === "string" && BANNED_VERDICT.test(field)) {
-        warnings.push(`${tag}: banned verdict word in prose ("${field.match(BANNED_VERDICT)[0]}")`);
-      }
-    }
-  });
-
-  // Terrain lanes: substitute_tell present; demand_question rules.
-  lanes.forEach((l, i) => {
-    const tag = `lane[${i}]${l?.id ? ` (${l.id})` : ""}`;
-    if (!l?.substitute_tell) warnings.push(`${tag}: missing substitute_tell`);
-    const dq = l?.demand_question ?? null;
-    const needsDq = l?.status === "open" || l?.status === "lightly_served" || l?.lane_type === "crowded_free_tools";
-    const dqNullOk = l?.lane_type === "crowded_with_gap";
-    if (needsDq && !dq) warnings.push(`${tag}: demand_question required for status/lane_type "${l?.status}/${l?.lane_type}" but null`);
-    if (dq && dqNullOk) warnings.push(`${tag}: demand_question present on crowded_with_gap (expected null — paying incumbents)`);
-  });
-
-  // Next Move: id resolution on targets + actions.
-  const tIds = nextMove?.targets?.angle_ids;
-  if (Array.isArray(tIds)) {
-    tIds.forEach((id) => { if (!angleIds.has(id)) warnings.push(`next_move.targets references unknown angle "${id}"`); });
-  }
-  const actions = Array.isArray(nextMove?.actions) ? nextMove.actions : [];
-  actions.forEach((act, i) => {
-    const ids = Array.isArray(act?.target_angle_ids) ? act.target_angle_ids : [];
-    ids.forEach((id) => { if (!angleIds.has(id)) warnings.push(`next_move.actions[${i}] references unknown angle "${id}"`); });
-    if (act?.type === "compare_selected" && act?.enabled && ids.length < 2) {
-      warnings.push(`next_move.actions[${i}] compare_selected enabled with <2 targets`);
-    }
-  });
-
-  // Forbidden field: the model must NOT emit fan_state.
-  if (Object.prototype.hasOwnProperty.call(explore, "fan_state")) {
-    warnings.push(`model emitted fan_state (route-derived only — must not be emitted)`);
-  }
-
-  // Optimism leak in USER-FACING prose (dominant_uncertainty.text + recommendation).
-  // Distinct severity from the branch_idea_text leak: Deep never ingests these,
-  // so it is a tone flag (warning), not a spine break (leak_candidate). But the
-  // same word reaching into the open-space read makes "honest fork" sound like a
-  // verdict that the space is wanted — caught here so the next prose pass sees it.
-  const duText = nextMove?.dominant_uncertainty?.text;
-  if (typeof duText === "string" && NEUTRALITY_LEAK.test(duText)) {
-    warnings.push(`next_move.dominant_uncertainty.text uses "${duText.match(NEUTRALITY_LEAK)[0]}" — confirm by eye: a two-sided fork ("open because X, or because unwanted?") is fine; asserting the space IS underserved is the leak`);
-  }
-  const rec = nextMove?.recommendation;
-  if (typeof rec === "string" && NEUTRALITY_LEAK.test(rec)) {
-    warnings.push(`next_move.recommendation uses "${rec.match(NEUTRALITY_LEAK)[0]}" — confirm by eye: describing where to test is fine; asserting the target is underserved is the leak`);
-  }
-
-  return {
-    fan_state,
-    angle_count: angles.length,
-    facet_count: 0, // V1.2 base shape has no facet band yet
-    clean: warnings.length === 0 && leakCandidates.length === 0,
-    warnings,
-    leak_candidates: leakCandidates,
-  };
-}
