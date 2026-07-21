@@ -14,10 +14,16 @@ import { Caption } from "./MetaPills";
 //   read       { reflection, clear[], open[], branchability{state,reason_type,reason} }
 //   angles[]   { id, title, concept, branch_idea_text, basis{primary,secondary},
 //                identity_guard{preserves,changes,drift_risk},
-//                justification{ opening{text,evidence_refs[],trust}, bet{text,rests_on}, disconfirmer },
-//                readiness, lane_ref }
-//   terrain    { lanes[{id,label,status,lane_type,reference_items[{name,type}],
-//                substitute_tell{exists,signal},demand_question}], firms_up_fastest{text,angle_refs[]} }
+//                justification{ opening{text,evidence_refs[{type,label,why_relevant,
+//                receipt?{name,url,source,evidence_strength,data_source}}],trust},
+//                bet{text,rests_on}, disconfirmer },
+//                readiness (routing plumbing — NOT rendered; see label-maps note), lane_ref }
+//   terrain    { lanes[{id,label,status,lane_type,reference_items[{name,type,
+//                receipt?{...}}], substitute_tell{exists,signal},demand_question}],
+//                firms_up_fastest{text,angle_refs[]} }
+//   `receipt` is route-hydrated (slice 1) from validated Stage 1 items; absent
+//   on payloads saved before the hydration shipped — every receipt render is
+//   subtractive, so old payloads simply show unlinked chips or no row.
 //   next_move  { dominant_uncertainty{type,text}, recommendation, primary_action,
 //                targets{angle_ids,use_original_idea}, actions[{type,enabled,target_angle_ids,use_original_idea,label}] }
 //
@@ -34,7 +40,7 @@ import { Caption } from "./MetaPills";
 //     handle in the shared SSE consumer's baseOf/step mapping.
 // ============================================================================
 
-import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { PageContainer, AuthModal } from "./components";
 
 // ---- Dawn identity (locked) ------------------------------------------------
@@ -84,12 +90,6 @@ const BoltIc = () => <Svg w={15}><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></Svg>;
 const PlusIc = () => <Svg w={12} sw={2}><path d="M12 5v14M5 12h14" /></Svg>;
 const CmpIc = () => <Svg w={12} sw={2}><rect x="4" y="4" width="7" height="16" rx="1" /><rect x="14" y="4" width="6" height="16" rx="1" /></Svg>;
 
-const ReadyGlyph = {
-  ready_for_deep: () => <Svg w={15}><path d="M14 4h5v16h-5" /><path d="M3 12h11M10 8l4 4-4 4" /></Svg>,
-  worth_shaping: () => <Svg w={15}><path d="M5 19 16 8M14 6l4 4M12 8l-7 7v4h4" /></Svg>,
-  probably_thin: () => <Svg w={15} sw={1.8}><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" opacity="0.6" /><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none" opacity="0.3" /></Svg>,
-};
-
 function StatusShape({ status }) {
   if (status === "crowded")
     return <Svg w={12} fill="var(--exmut)" style={{ color: "var(--exmut)" }}><g fill="currentColor" stroke="none"><circle cx="6" cy="7" r="2.4" /><circle cx="12" cy="7" r="2.4" /><circle cx="18" cy="7" r="2.4" /><circle cx="9" cy="14" r="2.4" /><circle cx="15" cy="14" r="2.4" /></g></Svg>;
@@ -99,37 +99,27 @@ function StatusShape({ status }) {
 }
 
 // ---- label maps ------------------------------------------------------------
-const READY_LABEL = { ready_for_deep: "Ready for Deep", worth_shaping: "Worth shaping", probably_thin: "Lightly grounded" };
+// (removed) The readiness chip. The enum compressed three axes into one word —
+// evidence footing, commercial condition, and workflow routing — and the
+// compression lied in the dangerous direction: probably_thin fires on a
+// STRONGLY-evidenced direction blocked by an incumbent, and any grounding-
+// flavored display word ("Lightly grounded" was the worst offender) misreads
+// that as weak evidence. The atoms already carry the card honestly and
+// single-axis each: the wall's KIND badge (below) is the commercial condition;
+// the receipts row is the evidence footing. readiness stays in the payload as
+// routing plumbing; it is no longer a visible grade.
 
 // the disconfirmer (kill) named on the card face — the wall, not just the way in
 const KIND_LABEL = {
   direct_incumbent_holds: "Incumbent holds", free_substitute_floor: "Free substitute",
   demand_unproven: "Demand unproven", structural_barrier: "Structural wall", closeable_gap: "Closeable gap",
 };
-const KIND_DOT = {
-  direct_incumbent_holds: "#d98a8a", free_substitute_floor: "#c89e6b",
-  demand_unproven: "#d4b86a", structural_barrier: "#8b94a1", closeable_gap: "#7aa2ff",
-};
-// readiness as a glanceable triage chip (the dial that actually discriminates now)
-const READY_CHIP = {
-  ready_for_deep: { bg: "rgba(122,162,255,0.22)", bd: "#7aa2ff",                fg: "#d2e0ff", dot: "#d2e0ff" },
-  worth_shaping:  { bg: "rgba(122,162,255,0.13)", bd: "rgba(122,162,255,0.34)", fg: "#bcd0f4", dot: "#7aa2ff" },
-  probably_thin:  { bg: "rgba(204,158,107,0.13)", bd: "rgba(204,158,107,0.34)", fg: "#dab488", dot: "#c89e6b" },
-};
+// (removed) KIND_DOT. The wall-kind moved up into the comparison rail, and the
+// rail is deliberately colorless: a red dot on "incumbent holds" vs blue on
+// "closeable gap" is a grade in miniature — exactly what the rail exists to
+// avoid. The kind differentiates by its words.
 const WALL_CLAY = "#c89e6b";
 const WallIc = () => <Svg w={13} sw={1.8}><circle cx="12" cy="12" r="8.5" /><path d="M6.5 6.5l11 11" /></Svg>;
-
-function ReadinessChip({ readiness }) {
-  const c = READY_CHIP[readiness] || READY_CHIP.worth_shaping;
-  return (
-    <span style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "monospace",
-      fontSize: 9, letterSpacing: "0.04em", textTransform: "uppercase", fontWeight: 600, whiteSpace: "nowrap",
-      borderRadius: 20, padding: "3px 8px 3px 7px", background: c.bg, border: `1px solid ${c.bd}`, color: c.fg }}>
-      <span style={{ width: 5, height: 5, borderRadius: "50%", background: c.dot }} />
-      {READY_LABEL[readiness] || "Worth shaping"}
-    </span>
-  );
-}
 
 const SHIFT_LABEL = {
   target_shift: "Target shift", buyer_shift: "Buyer shift", mechanism_shift: "Mechanism shift",
@@ -151,11 +141,12 @@ const ZONES = [
   ["open", "Open"],
 ];
 
-const ZONE_VIS = {
-  crowded:        { dot: "#c89e6b", badge: "rgba(200,158,107,0.16)", badgeFg: "#d6ac78", fill: "linear-gradient(90deg,#c89e6b,#d6ac78)" },
-  lightly_served: { dot: "#8b94a1", badge: "rgba(139,148,161,0.16)", badgeFg: "#aab2bd", fill: "#8b94a1" },
-  open:           { dot: "#7aa2ff", badge: "rgba(122,162,255,0.14)", badgeFg: "#9db8f2", fill: "#7aa2ff" },
-};
+// (removed) ZONE_VIS. The zones used to carry a color each — and "open" wore
+// Dawn blue, the mode's own identity color, which made the empty region read
+// as the house pick. Color may not carry judgment any more than motion may:
+// the zones differentiate by StatusShape glyph and label; the dots are one
+// neutral value; blue stays an INTERACTION color (selection), never a zone's.
+const ZONE_DOT = "#8b94a1";
 
 const BRANCH_LABEL = (state, reasonType) => {
   if (state === "branchable") return "Branchable";
@@ -166,7 +157,157 @@ const BRANCH_LABEL = (state, reasonType) => {
   return "Not branchable";
 };
 
-const TRUST_OPACITY = { strong: 1, moderate: 0.55, weak: 0.28 };
+// ---- receipts --------------------------------------------------------------
+// The evidence an angle or lane visibly rests on — rendered in DEEP'S evidence
+// idiom, not a new one. Evidence is the single spine both modes share (same
+// Stage 1, same retrieval, same receipts), so it wears one visual language:
+// the TYPE carries the color, exactly the typeBadge tokens Deep's field uses
+// (components.js, dark theme) — direct red, adjacent amber, substitute blue,
+// model-only gray — and the name links out when a receipt url exists, same as
+// Deep's roster rows. Prose-fact refs (landscape_fact / barrier) have no named
+// item behind them: hollow dot, no link. Fully subtractive on older payloads:
+// no receipt → an uncolored, unlinked chip; no refs → no row.
+// ONE EVIDENCE INK (variant A of the evidence-ink mockup, Emre's call):
+// every named receipt — prose and chips alike — wears a single light
+// steel-dawn. The signal is single and learnable: "this is a named, reachable
+// receipt." Deep's semantic type palette stays Deep's: on Explore's surface,
+// coloring a direct competitor red is a threat grade — a quiet verdict in the
+// no-verdict mode (the freight eval, all-direct, painted the whole page red).
+// Type and source live in the tooltip; grounding lives in the link itself.
+const EVIDENCE_INK = "#9fc0e7";
+const PROSE_REF_TYPES = new Set(["landscape_fact", "barrier"]);
+
+function ReceiptChip({ r }) {
+  const [h, setH] = useState(false);
+  const label = r.label || r.name || "";
+  const rc = r.receipt || null;
+  const proseRef = PROSE_REF_TYPES.has(r.type);
+  const ctype = rc?.competitor_type || null;
+  const title = [r.why_relevant, ctype ? ctype : null, rc?.source ? `source: ${rc.source}` : null,
+    rc?.evidence_strength ? `trust: ${rc.evidence_strength}` : null]
+    .filter(Boolean).join(" · ");
+  const inner = (
+    <span
+      onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+      title={title}
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 6,
+        fontFamily: "monospace", fontSize: 10, letterSpacing: "0.03em",
+        color: h && rc?.url ? "var(--extext)" : "var(--exsec)",
+        border: "1px solid var(--exborder-soft)", borderRadius: 5, padding: "3px 8px",
+        whiteSpace: "nowrap", cursor: rc?.url ? "pointer" : "default",
+        transition: "color .14s, border-color .14s",
+        borderColor: h && rc?.url ? "rgba(255,255,255,0.16)" : "var(--exborder-soft)",
+      }}>
+      <span style={{
+        width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+        background: proseRef ? "transparent" : EVIDENCE_INK,
+        border: proseRef ? "1px solid var(--exmut)" : "none",
+      }} />
+      {label}
+      {rc?.url && <span style={{ fontSize: 9, color: "var(--exmut)" }}>↗</span>}
+    </span>
+  );
+  return rc?.url
+    ? <a href={rc.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>{inner}</a>
+    : inner;
+}
+
+function ReceiptRow({ refs, lead }) {
+  const list = (Array.isArray(refs) ? refs : []).filter((r) => r && (r.label || r.name));
+  if (!list.length) return null;
+  return (
+    <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+      <span style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.13em", textTransform: "uppercase", flex: "0 0 66px", marginTop: 4, color: "var(--exmut)" }}>{lead}</span>
+      <span style={{ flex: 1, minWidth: 0, display: "flex", flexWrap: "wrap", gap: 7 }}>
+        {list.map((r, i) => <ReceiptChip key={i} r={r} />)}
+      </span>
+    </div>
+  );
+}
+
+// ---- evidence names IN PROSE ----------------------------------------------
+// Deep's signature move: evidence names are colored and linked inside the
+// prose itself — "the case" reads with the actors lit up in place. Explore
+// inherits the same behavior so the two modes visibly share one evidence
+// spine: any name the canonical index knows (route-hydrated receipts on angle
+// refs + lane reference_items) gets colored wherever it appears in Explore's
+// prose, and links out when a receipt url exists. One ink for all of it —
+// EVIDENCE_INK above — per the evidence-ink mockup decision (variant A). Old
+// payloads have no receipts → the entity list is empty → all prose renders
+// exactly as before (subtractive, like every receipt surface).
+function buildEvidenceEntities(analysis) {
+  const seen = new Map();
+  const add = (name, rc) => {
+    if (!name || typeof name !== "string") return;
+    const key = name.toLowerCase().trim();
+    if (key.length < 3 || seen.has(key)) return;
+    seen.set(key, { name, key, url: rc?.url || null, color: EVIDENCE_INK,
+      type: rc?.competitor_type || null, source: rc?.source || null });
+  };
+  for (const a of analysis?.angles || []) {
+    for (const r of a?.justification?.opening?.evidence_refs || []) {
+      if (r?.receipt) add(r.receipt.name || r.label, r.receipt);
+    }
+  }
+  for (const l of analysis?.terrain?.lanes || []) {
+    for (const r of l?.reference_items || []) {
+      if (r?.receipt) add(r.receipt.name || r.name, r.receipt);
+      else if (r?.name) add(r.name, null); // sorter-named, un-hydrated: colored, unlinked
+    }
+  }
+  // longest first so "Tyler Munis attachment" wins over "Tyler"
+  return [...seen.values()].sort((a, b) => b.key.length - a.key.length);
+}
+
+const isWordChar = (ch) => /[A-Za-z0-9]/.test(ch || "");
+
+function segmentProse(text, entities) {
+  const lower = text.toLowerCase();
+  const out = [];
+  let pos = 0, plain = 0;
+  while (pos < text.length) {
+    let hit = null;
+    for (const e of entities) {
+      if (lower.startsWith(e.key, pos)
+        && !isWordChar(text[pos - 1])
+        && !isWordChar(text[pos + e.key.length])) { hit = e; break; }
+    }
+    if (hit) {
+      if (plain < pos) out.push({ t: text.slice(plain, pos) });
+      out.push({ t: text.slice(pos, pos + hit.key.length), e: hit });
+      pos += hit.key.length; plain = pos;
+    } else pos++;
+  }
+  if (plain < text.length) out.push({ t: text.slice(plain) });
+  return out;
+}
+
+function EntitySpan({ seg }) {
+  const [h, setH] = useState(false);
+  const e = seg.e;
+  const inner = (
+    <span
+      onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+      title={[e.type, e.source ? `source: ${e.source}` : null].filter(Boolean).join(" \u00b7 ") || undefined}
+      style={{ color: e.color, textDecoration: h && e.url ? "underline" : "none",
+        textUnderlineOffset: 2, cursor: e.url ? "pointer" : "inherit" }}>
+      {seg.t}
+    </span>
+  );
+  return e.url
+    ? <a href={e.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>{inner}</a>
+    : inner;
+}
+
+// Drop-in prose renderer: <Prose text={...} entities={entities} /> in place of
+// {text}. No entities or no text -> plain passthrough.
+function Prose({ text, entities }) {
+  if (typeof text !== "string" || !text || !entities?.length) return text ?? null;
+  const segs = segmentProse(text, entities);
+  if (segs.length === 1 && !segs[0].e) return text;
+  return <>{segs.map((sg, i) => (sg.e ? <EntitySpan key={i} seg={sg} /> : <span key={i}>{sg.t}</span>))}</>;
+}
 
 // ============================================================================
 // Section eyebrow
@@ -251,7 +392,7 @@ function SeedSurface({ idea, t }) {
   );
 }
 
-function ReadSurface({ read, t }) {
+function ReadSurface({ read, t, entities }) {
   if (!read) return null;
   const b = read.branchability || {};
   const open = Array.isArray(read.open) ? read.open : [];
@@ -265,9 +406,16 @@ function ReadSurface({ read, t }) {
         {read.reflection && (
           <p style={{ fontSize: 14.5, color: "#c9cdd5", lineHeight: 1.62, margin: "0 0 24px", paddingLeft: 18, borderLeft: "2px solid rgba(122,162,255,0.55)", maxWidth: 840 }}>
             <span style={{ fontFamily: "monospace", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: EX.base, display: "block", marginBottom: 9, fontWeight: 600 }}>We read this as</span>
-            {read.reflection}
+            <Prose text={read.reflection} entities={entities} />
           </p>
         )}
+        {/* (removed) The clear[] block. It rendered "grounded enough to branch
+            on" as a bullet list — but the reflection paragraph directly above
+            already states the understood ground in prose, so the list read as
+            the founder's input echoed twice before the one thing this section
+            exists for. The section's own subtitle is the rule: what's still
+            open is the point. clear[] stays in the payload (display is
+            subtractive); only the render went. */}
         {open.length > 0 && (
           <>
             <div style={{ fontFamily: "monospace", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: EX.base, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
@@ -277,7 +425,7 @@ function ReadSurface({ read, t }) {
               {open.map((it, i) => (
                 <li key={i} style={{ display: "flex", gap: 11, fontSize: 15, lineHeight: 1.52, color: "#e9ebef" }}>
                   <span style={{ flexShrink: 0, color: EX.base, fontWeight: 700, fontSize: 15, lineHeight: 1.3 }}>?</span>
-                  <span>{it}</span>
+                  <span><Prose text={it} entities={entities} /></span>
                 </li>
               ))}
             </ul>
@@ -300,10 +448,11 @@ function ReadSurface({ read, t }) {
 // ============================================================================
 // 2 · Where it could go — the fan
 // ============================================================================
-function EssenceCard({ angle, active, dimmed, onEnter, onLeave, onClick }) {
+function EssenceCard({ angle, active, dimmed, onEnter, onLeave, onClick, entities }) {
   const opening = angle.justification?.opening || {};
   const kill = angle.justification?.disconfirmer || "";
   const kind = angle.disconfirmer_kind;
+  const restsOn = angle.justification?.bet?.rests_on || null;
   return (
     <div data-aid={angle.id} onMouseEnter={onEnter} onMouseLeave={onLeave} onClick={onClick} style={{
       flex: 1, minWidth: 0, cursor: "default", display: "flex", flexDirection: "column",
@@ -321,15 +470,41 @@ function EssenceCard({ angle, active, dimmed, onEnter, onLeave, onClick }) {
         <span style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.13em", textTransform: "uppercase", color: "var(--exmut)", border: "1px solid var(--exborder-soft)", borderRadius: 5, padding: "3px 7px", whiteSpace: "nowrap" }}>
           {SHIFT_LABEL[angle.basis?.primary] || "New angle"}
         </span>
-        <ReadinessChip readiness={angle.readiness} />
       </div>
       <h3 style={{ fontSize: 15, fontWeight: 600, margin: "0 0 2px", color: "var(--extext)", letterSpacing: "0.1px", lineHeight: 1.3 }}>{angle.title}</h3>
+
+      {/* THE COMPARISON RAIL (angle-cards mockup, variant A — Emre's call):
+          two single-axis atoms in the SAME slots on every card — the bet's
+          rests_on (what must become true; the fit axis) and the wall's kind
+          (what presently pushes back; the condition axis). The glaze the
+          readiness chip used to fake, rebuilt from honest parts: the eye
+          column-compares across the fan, no card wears a grade. Degrades
+          per-token — an old payload without atoms simply shows no rail. */}
+      {(restsOn || (kind && KIND_LABEL[kind])) && (
+        <>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 13 }}>
+            {restsOn && (
+              <span style={{ fontFamily: "monospace", fontSize: 8.5, letterSpacing: "0.07em", textTransform: "uppercase", whiteSpace: "nowrap", border: "1px solid var(--exborder-soft)", borderRadius: 4, padding: "3px 7px" }}>
+                <span style={{ color: "var(--exfaint, #4d5560)" }}>bet · </span>
+                <span style={{ color: "#cfd5de", fontWeight: 600 }}>{restsOn}</span>
+              </span>
+            )}
+            {kind && KIND_LABEL[kind] && (
+              <span style={{ fontFamily: "monospace", fontSize: 8.5, letterSpacing: "0.07em", textTransform: "uppercase", whiteSpace: "nowrap", border: "1px solid var(--exborder-soft)", borderRadius: 4, padding: "3px 7px" }}>
+                <span style={{ color: "var(--exfaint, #4d5560)" }}>wall · </span>
+                <span style={{ color: "#cfd5de", fontWeight: 600 }}>{KIND_LABEL[kind]}</span>
+              </span>
+            )}
+          </div>
+          <div style={{ height: 1, background: "var(--exborder-soft)", margin: "12px 0 0" }} />
+        </>
+      )}
 
       <div style={{ marginTop: 14, minWidth: 0 }}>
         <div style={{ fontFamily: "monospace", fontSize: 8.5, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--exmut)", marginBottom: 5 }}>The opening</div>
         <div style={{ display: "flex", gap: 9, minWidth: 0 }}>
           <span style={{ flexShrink: 0, color: EX.base, opacity: 0.9, marginTop: 1, display: "flex" }}><RoadIc /></span>
-          <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.5, color: "#cdd0d6", overflowWrap: "anywhere", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{opening.text}</span>
+          <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.5, color: "#cdd0d6", overflowWrap: "anywhere", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}><Prose text={opening.text} entities={entities} /></span>
         </div>
       </div>
 
@@ -338,14 +513,8 @@ function EssenceCard({ angle, active, dimmed, onEnter, onLeave, onClick }) {
           <div style={{ fontFamily: "monospace", fontSize: 8.5, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--exmut)", marginBottom: 5 }}>The wall</div>
           <div style={{ display: "flex", gap: 9, minWidth: 0 }}>
             <span style={{ flexShrink: 0, color: WALL_CLAY, marginTop: 1, display: "flex" }}><WallIc /></span>
-            <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.5, color: "#b7bcc6", overflowWrap: "anywhere", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{kill}</span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.5, color: "#b7bcc6", overflowWrap: "anywhere", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}><Prose text={kill} entities={entities} /></span>
           </div>
-          {kind && KIND_LABEL[kind] && (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 8, fontFamily: "monospace", fontSize: 8, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--exsec)", border: "1px solid var(--exborder-soft)", borderRadius: 4, padding: "2px 6px" }}>
-              <span style={{ width: 5, height: 5, borderRadius: "50%", background: KIND_DOT[kind] || EX.base }} />
-              {KIND_LABEL[kind]}
-            </span>
-          )}
         </div>
       )}
 
@@ -420,7 +589,7 @@ function DeepAffordance({ onClick, doneIdeaId, onOpen }) {
   );
 }
 
-function FanSurface({ idea, angles, fanState, t, onSave, saveState, onExploreAngle, onTakeToDeep, branchReason, angleStatus, onOpenChild, readOnly }) {
+function FanSurface({ idea, angles, fanState, t, onSave, saveState, onExploreAngle, onTakeToDeep, branchReason, angleStatus, onOpenChild, readOnly, entities }) {
   const fanRef = useRef(null);
   const nodeRef = useRef(null);
   const rowRef = useRef(null);
@@ -581,7 +750,7 @@ function FanSurface({ idea, angles, fanState, t, onSave, saveState, onExploreAng
               <div style={{ display: "flex", justifyContent: "center" }}>{node}</div>
               <div ref={rowRef} style={{ display: "flex", gap: 22, marginTop: 92, alignItems: "stretch" }}>
                 {angles.map((a) => (
-                  <EssenceCard key={a.id} angle={a}
+                  <EssenceCard key={a.id} angle={a} entities={entities}
                     active={a.id === activeId}
                     dimmed={!!activeId && a.id !== activeId}
                     onEnter={() => onEnter(a.id)}
@@ -612,17 +781,23 @@ function FanSurface({ idea, angles, fanState, t, onSave, saveState, onExploreAng
                       card started instead of repeating the wall. */}
                   <div style={{ display: "flex", gap: 16, marginBottom: 13 }}>
                     <span style={{ ...lead, color: EX.base }}>the opening</span>
-                    <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.58, color: "#e3e5e9" }}>{pa.justification?.opening?.text}</span>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.58, color: "#e3e5e9" }}><Prose text={pa.justification?.opening?.text} entities={entities} /></span>
                   </div>
                   <div style={{ display: "flex", gap: 16, marginBottom: 13 }}>
                     <span style={{ ...lead, color: WALL_CLAY }}>the wall</span>
-                    <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.58, color: "var(--exsec)" }}>{pa.justification?.disconfirmer}</span>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.58, color: "var(--exsec)" }}><Prose text={pa.justification?.disconfirmer} entities={entities} /></span>
                   </div>
                   <div style={{ display: "flex", gap: 16, marginBottom: 13 }}>
                     <span style={{ ...lead, color: EX.bright }}>the bet</span>
-                    <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.58, color: "#e3e5e9" }}>Works only if {bet.text}.{bet.rests_on && (
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.58, color: "#e3e5e9" }}>Works only if <Prose text={bet.text} entities={entities} />.{bet.rests_on && (
                       <span style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.06em", color: "var(--exmut)", border: "1px solid var(--exborder-soft)", borderRadius: 4, padding: "1px 6px", marginLeft: 7, whiteSpace: "nowrap", textTransform: "uppercase" }}>{bet.rests_on}</span>
                     )}</span>
+                  </div>
+                  {/* what this angle visibly rests on — the receipts the opening
+                      was read from, hydrated route-side. Absent on older
+                      payloads → the row simply doesn't render. */}
+                  <div style={{ marginBottom: 13 }}>
+                    <ReceiptRow refs={pa.justification?.opening?.evidence_refs} lead="rests on" />
                   </div>
                   {!readOnly && (
                   <div style={{ display: "flex", gap: 26, alignItems: "center", borderTop: "1px solid var(--exdivider)", paddingTop: 14, marginTop: 2, flexWrap: "wrap" }}>
@@ -650,35 +825,35 @@ function FanSurface({ idea, angles, fanState, t, onSave, saveState, onExploreAng
 // ============================================================================
 // 3 · Where this could fit — terrain (map + reader)
 // ============================================================================
-function TerrainSurface({ terrain, angles, t }) {
+function TerrainSurface({ terrain, t, entities }) {
   const lanes = Array.isArray(terrain?.lanes) ? terrain.lanes : [];
   const firms = terrain?.firms_up_fastest || null;
 
-  // lanes that the fastest angle(s) sit in (firms_up_fastest references angles)
-  const fastLaneIds = new Set();
-  if (firms && Array.isArray(firms.angle_refs)) {
-    firms.angle_refs.forEach((aid) => {
-      const a = angles.find((x) => x.id === aid);
-      if (a?.lane_ref) fastLaneIds.add(a.lane_ref);
-    });
-  }
-
-  const defaultLane = (lanes.find((l) => l.status === "open") || lanes[0] || null);
-  const [selId, setSelId] = useState(defaultLane?.id || null);
-  useEffect(() => { setSelId(defaultLane?.id || null); /* eslint-disable-next-line */ }, [lanes.length]);
-  const sel = lanes.find((l) => l.id === selId) || defaultLane;
+  // Default selection = the FIRST lane in payload order. It used to prefer the
+  // open lane — auto-focusing the empty region, on top of its old brand-blue
+  // dot, made "open" read as the house pick. Payload order carries no rank
+  // (the synthesis emits lanes as it clusters them), so it is the neutral seat.
+  // Selection is DERIVED, not synced: selId only ever changes by click; when
+  // the payload changes and the id goes stale, the find simply falls back to
+  // the first lane in payload order (the neutral seat). No effect, no
+  // state-reset — the previous setSelId-inside-useEffect was a lint-correct
+  // smell and an unnecessary render.
+  const [selId, setSelId] = useState(null);
+  const sel = lanes.find((l) => l.id === selId) || lanes[0] || null;
 
   if (lanes.length === 0) return null;
 
-  // real competitor density per zone (distinct named players across its lanes)
-  const zoneCounts = {};
-  let maxCount = 1;
-  ZONES.forEach(([zkey]) => {
-    const names = new Set();
-    lanes.filter((l) => l.status === zkey).forEach((l) => (l.reference_items || []).forEach((r) => { if (r && r.name) names.add(String(r.name).toLowerCase()); }));
-    zoneCounts[zkey] = names.size;
-    if (names.size > maxCount) maxCount = names.size;
-  });
+  // Only zones the pipeline actually produced render. The old fixed scaffold
+  // drew all three bands and captioned an empty OPEN band "open ground,
+  // nothing here" — a market fact nobody measured, manufactured by the frame.
+  // An unproduced state gets no frame: degrade subtracts.
+  const zonesWithLanes = ZONES.filter(([zkey]) => lanes.some((l) => l.status === zkey));
+
+  // (removed) zoneCounts + fill bars. The numbers counted reference_items —
+  // the sorter's ILLUSTRATIVE members list, capped at 5 representative per
+  // field ("naming, not counting") — and drew them as a census with magnitude
+  // bars. Code owns the numbers, and the route committed none here. The lanes
+  // themselves show the named ground.
 
   return (
     <section style={{ marginTop: 48 }}>
@@ -688,49 +863,50 @@ function TerrainSurface({ terrain, angles, t }) {
         .ilc-pulse::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid currentColor; opacity: 0; animation: ilcPing 2.4s ease-out infinite }
         @media (prefers-reduced-motion: reduce) { .ilc-pulse::after { animation: none; opacity: 0 } }
       `}</style>
-      <Eyebrow num="3" icon={<SectionIcon.terr />} title="Where this could fit" sub="The market around these directions" t={t} />
+      <Eyebrow num="3" icon={<SectionIcon.terr />} title="Where this could fit" sub="Among the actors named in this evidence" t={t} />
       <div style={{ display: "grid", gridTemplateColumns: "296px 1fr", border: `1px solid ${t.border}`, borderRadius: 14, overflow: "hidden", minHeight: 300 }}>
         <div style={{ borderRight: `1px solid ${t.divider}`, background: t.surfAlt }}>
-          {ZONES.map(([zkey, zlabel], i) => {
+          {zonesWithLanes.map(([zkey, zlabel], i) => {
             const inZone = lanes.filter((l) => l.status === zkey);
-            const vis = ZONE_VIS[zkey] || ZONE_VIS.lightly_served;
-            const count = zoneCounts[zkey] || 0;
-            const fill = Math.round((count / maxCount) * 100);
             return (
               <div key={zkey} style={{ padding: "14px 16px 12px", borderTop: i === 0 ? "none" : `1px solid ${t.divider}` }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 9 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                   <span style={{ color: t.mut, display: "flex" }}><StatusShape status={zkey} /></span>
                   <span style={{ fontFamily: "monospace", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: t.mut }}>{zlabel}</span>
-                  <span style={{ marginLeft: "auto", fontFamily: "monospace", fontSize: 9, fontWeight: 700, borderRadius: 20, padding: "1px 7px", background: vis.badge, color: vis.badgeFg }}>{count}</span>
                 </div>
-                <div style={{ height: 5, borderRadius: 3, marginBottom: inZone.length ? 6 : 2, overflow: "hidden",
-                  background: zkey === "open" ? "transparent" : "rgba(255,255,255,0.06)",
-                  border: zkey === "open" ? "1px dashed rgba(122,162,255,0.3)" : "none" }}>
-                  {zkey !== "open" && <div style={{ height: "100%", width: `${fill}%`, borderRadius: 3, background: vis.fill }} />}
-                </div>
-                {inZone.length ? inZone.map((l) => (
-                  <LaneNode key={l.id} lane={l} selected={l.id === selId} t={t} onSelect={() => setSelId(l.id)} dotColor={vis.dot} />
-                )) : (
-                  <div style={{ fontSize: 12, color: t.faint, fontStyle: "italic", padding: "6px 2px 2px" }}>— {zkey === "open" ? "open ground, nothing here" : "nothing here"}</div>
-                )}
+                {inZone.map((l) => (
+                  <LaneNode key={l.id} lane={l} selected={l.id === sel?.id} t={t} onSelect={() => setSelId(l.id)} dotColor={ZONE_DOT} />
+                ))}
               </div>
             );
           })}
         </div>
         <div style={{ padding: "30px 32px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          {sel && <LaneReader lane={sel} fast={fastLaneIds.has(sel.id)} t={t} />}
+          {sel && <LaneReader lane={sel} t={t} entities={entities} />}
         </div>
       </div>
+      {/* firms_up_fastest — contractually "a read of the ground, not a
+          recommendation... where clarity is cheapest to buy, not which
+          direction is best." The old render crowned it "YOUR NEXT MOVE ·
+          CHEAPEST TEST ON THE BOARD" — an imperative the field's own contract
+          disclaims — inside a glowing brand-blue panel. The field stays; the
+          crown goes: its own name, a neutral frame, quiet placement. */}
+      {/* firms_up_fastest as THE CLOSING CHORD (firms-panel mockup, variant C
+          — Emre's call): unboxed, a dawn top rule, the read in larger
+          light-weight prose. Explore's cousin of Deep's hinge — weight carried
+          by typography, never by an imperative frame. The old render crowned
+          it "YOUR NEXT MOVE"; the flat-box interim buried it; this gives the
+          section's one forward-leaning read real presence while staying what
+          the contract says it is: a read of the ground, not a recommendation. */}
       {firms?.text && (
-        <div style={{ marginTop: 20, display: "flex", gap: 16, alignItems: "flex-start",
-          border: "1px solid rgba(122,162,255,0.28)", borderRadius: 13,
-          background: `linear-gradient(120deg, ${EX.dim}, transparent 64%), var(--exsurf2)`,
-          padding: "20px 24px" }}>
-          <span style={{ flexShrink: 0, color: EX.base, marginTop: 1 }}><BoltIc /></span>
-          <div>
-            <div style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase", color: EX.base, marginBottom: 9 }}>Your next move · cheapest test on the board</div>
-            <div style={{ fontSize: 14, color: "var(--extext)", lineHeight: 1.55, maxWidth: 800 }}>{firms.text}</div>
+        <div style={{ marginTop: 30 }}>
+          <div style={{ height: 2, background: `linear-gradient(90deg, ${EX.base}, rgba(122,162,255,0.05))`, borderRadius: 2, marginBottom: 16, maxWidth: 220 }} />
+          <div style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 13, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ color: EX.base, display: "flex" }}><BoltIc /></span>
+            <span style={{ color: EX.base }}>Firms up fastest</span>
+            <span style={{ color: t.mut }}>— where clarity is cheapest to buy</span>
           </div>
+          <div style={{ fontSize: 15.5, fontWeight: 300, color: "#d3d8e0", lineHeight: 1.62, maxWidth: 860 }}><Prose text={firms.text} entities={entities} /></div>
         </div>
       )}
     </section>
@@ -742,7 +918,7 @@ function LaneNode({ lane, selected, t, onSelect, dotColor }) {
   const on = selected || h;
   return (
     <button
-      onClick={onSelect} onMouseEnter={() => { setH(true); onSelect(); }} onMouseLeave={() => setH(false)}
+      onClick={onSelect} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
       style={{
         display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
         background: on ? "rgba(122,162,255,0.08)" : "var(--exsurface)",
@@ -752,39 +928,48 @@ function LaneNode({ lane, selected, t, onSelect, dotColor }) {
         transform: h && !selected ? "translateY(-1px)" : "none",
         transition: "border-color .15s, box-shadow .2s, transform .15s, background .15s",
       }}>
-      <span className="ilc-pulse" style={{ flexShrink: 0, width: 7, height: 7, borderRadius: "50%", background: dotColor || EX.base, color: dotColor || EX.base }} />
+      <span className="ilc-pulse" style={{ flexShrink: 0, width: 7, height: 7, borderRadius: "50%", background: dotColor || ZONE_DOT, color: dotColor || ZONE_DOT }} />
       <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.4, color: on ? "var(--extext)" : "var(--exsec)" }}>{lane.label}</span>
       <span style={{ flexShrink: 0, color: on ? EX.base : "var(--exmut)", display: "flex", transition: "color .15s, transform .15s", transform: h ? "translateX(2px)" : "none" }}><RoadIc /></span>
     </button>
   );
 }
 
-function LaneReader({ lane, fast, t }) {
+function LaneReader({ lane, t, entities }) {
   const answered = lane.demand_question == null;
   const typePhrase = lane.lane_type ? LANE_TYPE_PHRASE[lane.lane_type] : null;
-  // Crowded lane (demand_question null): lead with the lane_type read — real
-  // backend content — rather than a canned sentence. Open lane: the
-  // demand_question is the hero, lane_type rides under it as characterization.
+  // Open/unproven lane: the demand_question is the hero, lane_type rides under
+  // it as characterization. A lane with a null question: null now means the
+  // evidence explicitly NAMED payment (the slice-1 contract change) — the
+  // fallback copy says exactly that and no more; the old fallback asserted
+  // "paying incumbents" the pipeline never verified.
   const hero = answered
-    ? (typePhrase || "Demand is evidenced by the paying incumbents — the open question is how you'd differ, not whether anyone wants it.")
+    ? (typePhrase || "Payment is named in this field's evidence — the open question is differentiation.")
     : lane.demand_question;
-  const refs = Array.isArray(lane.reference_items) ? lane.reference_items.map((r) => r.name).filter(Boolean) : [];
   return (
     <>
-      {fast && (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.1em", textTransform: "uppercase", color: EX.bright, border: `1px solid ${EX.line}`, borderRadius: 20, padding: "3px 9px", marginBottom: 15, alignSelf: "flex-start" }}>
-          <BoltIc /> Firms up fastest
-        </span>
-      )}
       <div style={{ fontFamily: "monospace", fontSize: 10, letterSpacing: "0.13em", textTransform: "uppercase", color: t.mut, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
         {answered ? <ReadLinesIc /> : <QIc />}{answered ? "The read" : "The open question"}
       </div>
-      <div style={{ fontSize: 17, fontWeight: 300, lineHeight: 1.5, color: answered ? t.sec : EX.bright, letterSpacing: "0.1px" }}>{hero}</div>
+      {/* Hero in NEUTRAL light, not dawn-bright (evidence-hero mockup,
+          variant C — Emre's call): the ink is dawn-family, so a dawn-bright
+          hero drowned evidence names in blue-on-blue. The question keeps its
+          weight through size and placement; evidence keeps one ink, one rule,
+          everywhere. The dawn identity stays on the section marks and the
+          "?" lead, not on prose that carries evidence. */}
+      <div style={{ fontSize: 17, fontWeight: 300, lineHeight: 1.5, color: answered ? t.sec : "#dfe3ea", letterSpacing: "0.1px" }}><Prose text={hero} entities={entities} /></div>
       {!answered && typePhrase && (
         <div style={{ fontSize: 12.5, color: t.mut, lineHeight: 1.55, marginTop: 12, fontStyle: "italic" }}>{typePhrase}</div>
       )}
-      {lane.substitute_tell?.signal && <div style={{ fontSize: 12.5, color: t.sec, lineHeight: 1.55, marginTop: 16 }}>Today, {lane.substitute_tell.signal}.</div>}
-      {refs.length > 0 && <div style={{ fontSize: 12, color: t.mut, marginTop: 9 }}>Alongside {refs.join(", ")}</div>}
+      {lane.substitute_tell?.signal && <div style={{ fontSize: 12.5, color: t.sec, lineHeight: 1.55, marginTop: 16 }}>Today, <Prose text={lane.substitute_tell.signal} entities={entities} />.</div>}
+      {/* The named actors, as receipts instead of a flat comma list — same
+          chip treatment as the angles, hydrated route-side, plain on old
+          payloads. */}
+      {Array.isArray(lane.reference_items) && lane.reference_items.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <ReceiptRow refs={lane.reference_items} lead="alongside" />
+        </div>
+      )}
     </>
   );
 }
@@ -921,7 +1106,7 @@ function SaveTile({ user, viewingFromSaved, onSave, onAuth, goToMyIdeas, angleCo
   );
 }
 
-function NextMoveSurface({ nextMove, angleCount, t, user, viewingFromSaved, onSave, onExplore, onDeep, onAuth, goToMyIdeas }) {
+function NextMoveSurface({ nextMove, angleCount, t, user, viewingFromSaved, onSave, onExplore, onDeep, onAuth, goToMyIdeas, entities }) {
   const du = (nextMove && nextMove.dominant_uncertainty) || {};
   return (
     <section style={{ marginTop: 48 }}>
@@ -934,7 +1119,7 @@ function NextMoveSurface({ nextMove, angleCount, t, user, viewingFromSaved, onSa
               <span style={{ color: EX.base, fontSize: 12 }}>?</span>THE OPEN QUESTION
             </div>
             <div style={{ borderLeft: `2px solid ${EX.line}`, paddingLeft: 20, marginBottom: 24 }}>
-              <h2 style={{ fontWeight: 400, fontSize: 17, lineHeight: 1.5, letterSpacing: "-0.01em", color: M4.ink, margin: 0 }}>{du.text}</h2>
+              <h2 style={{ fontWeight: 400, fontSize: 17, lineHeight: 1.5, letterSpacing: "-0.01em", color: M4.ink, margin: 0 }}><Prose text={du.text} entities={entities} /></h2>
             </div>
             <div style={{ height: 1, background: M4.line2, margin: "24px 0 20px" }} />
           </>
@@ -1007,6 +1192,10 @@ export default function ExploreView({
   onBackToCurrent,
   outdatedMeta,
 }) {
+  // Hooks BEFORE the guard — hooks must run unconditionally on every render
+  // (the entities memo briefly sat below this return: a real conditional-hook
+  // bug, caught in the lint pass). buildEvidenceEntities is null-safe.
+  const entities = useMemo(() => buildEvidenceEntities(analysis), [analysis]);
   if (!analysis || analysis.schema_version !== "ll2_explore_v1") return null;
 
   const { idea, fan_state: fanState, read, angles = [], terrain, next_move: nextMove } = analysis;
@@ -1088,15 +1277,16 @@ export default function ExploreView({
               </span>
             </div>
           )}
-          <ReadSurface read={read} t={xt} />
-          <FanSurface idea={idea} angles={angles} fanState={fanState} t={xt}
+          <ReadSurface read={read} t={xt} entities={entities} />
+          <FanSurface idea={idea} angles={angles} fanState={fanState} t={xt} entities={entities}
             onSave={onSaveAngle} saveState={effectiveState}
             onExploreAngle={(a) => onExploreAngle && onExploreAngle(a)}
             onTakeToDeep={onTakeToDeep} branchReason={read?.branchability?.reason}
             angleStatus={angleStatus} onOpenChild={onOpenChild} readOnly={readOnly} />
-          <TerrainSurface terrain={terrain} angles={angles} t={xt} />
+          <TerrainSurface terrain={terrain} t={xt} entities={entities} />
           {!readOnly && (
           <NextMoveSurface
+            entities={entities}
             nextMove={nextMove}
             angleCount={angles.length}
             t={xt}

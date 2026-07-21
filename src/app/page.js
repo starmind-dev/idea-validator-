@@ -100,7 +100,7 @@ const STREAM_SRC_DOT = { github: "#9a9aa2", tavily: "#2dd4bf", exa: "#a78bfa", g
 // StreamOverlay — the call sites already pass the mode, so nothing else moves.
 const STREAM_VARIANTS = {
   deep:    { accent: "#8a82c2", glow: "rgba(138,130,194,0.55)", label: "EVALUATION PIPELINE" },
-  explore: { accent: "#60a5fa", glow: "rgba(96,165,250,0.55)",  label: "WIDENING THE IDEA" },
+  explore: { accent: "#7aa2ff", glow: "rgba(122,162,255,0.55)", label: "WIDENING THE IDEA" },
   reeval:  { accent: "#8b5cf6", glow: "rgba(139,92,246,0.55)",  label: "EVOLUTION PIPELINE" },
 };
 
@@ -168,14 +168,18 @@ function StreamOverlay({ streamSteps, t, mode = "deep" }) {
 }
 
 // ============================================================================
-// LeaveGuardModal — fires before a take-to action leaves an UNSAVED exploration.
-// An unsaved fan is at risk: navigating to Deep/Explore loses the read, the
-// terrain, and the directions not taken. Leads with "Save & continue" (the
-// on-brand "nothing is lost" move); "Leave anyway" stays available. Matches the
-// Explore Dawn identity; the violet destination word marks the Deep handoff.
+// LeaveGuardModal — fires before ANY leave path exits an UNSAVED exploration.
+// An unsaved fan is at risk: leaving loses the read, the terrain, and the
+// directions not taken. Two variants share the modal: a HANDOFF (dest "deep" /
+// "explore" — the take-to actions, the original guard) names the destination;
+// a NAV leave (dest "nav" — sidebar, back links, any plain navigation) states
+// the loss without one. Leads with "Save & continue" (the on-brand "nothing is
+// lost" move); "Leave anyway" stays available. Matches the Explore Dawn
+// identity; the violet destination word marks the Deep handoff.
 // ============================================================================
 function LeaveGuardModal({ target, dest, onCancel, onLeave, onSave }) {
   const [saving, setSaving] = useState(false);
+  const isHandoff = dest === "deep" || dest === "explore";
   const destLabel = dest === "deep" ? "to Deep" : "to Explore";
   const doSave = async () => {
     if (saving) return;
@@ -191,7 +195,11 @@ function LeaveGuardModal({ target, dest, onCancel, onLeave, onSave }) {
         </div>
         <h2 style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.01em", margin: "0 0 12px", color: "#e9eef5" }}>Leave without saving?</h2>
         <p style={{ fontSize: 14, lineHeight: 1.62, color: "#8b94a1", margin: "0 0 8px" }}>
-          You haven&apos;t saved this exploration. Taking <b style={{ color: "#c3ccd7", fontWeight: 500 }}>{target}</b> <span style={{ color: "#9a8fd8", fontWeight: 500 }}>{destLabel}</span> leaves it behind — the read, the terrain, and the directions you didn&apos;t take go with it.
+          {isHandoff ? (
+            <>You haven&apos;t saved this exploration. Taking <b style={{ color: "#c3ccd7", fontWeight: 500 }}>{target}</b> <span style={{ color: "#9a8fd8", fontWeight: 500 }}>{destLabel}</span> leaves it behind — the read, the terrain, and the directions you didn&apos;t take go with it.</>
+          ) : (
+            <>You haven&apos;t saved this exploration. Leaving now leaves it behind — the read, the terrain, and the directions you didn&apos;t take go with it.</>
+          )}
         </p>
         <p style={{ fontSize: 14, lineHeight: 1.62, color: "#8b94a1", margin: 0 }}>
           <b style={{ color: "#c3ccd7", fontWeight: 500 }}>Save</b> keeps the whole family in My Ideas, then continues.
@@ -988,7 +996,7 @@ export default function Home() {
               finalAnalysis = event.data;
               setStreamSteps((prev) => [
                 ...prev.map((s) => (s.done ? s : { ...s, done: true })),
-                { step: "complete", message: "Evaluation complete ✓", done: true },
+                { step: "complete", message: action === "explore" ? "Exploration ready ✓" : "Evaluation complete ✓", done: true },
               ]);
             } else if (event.step === "retry") {
               // F4/B+ — soft transient-failure notice. NOT an error: the run is
@@ -2940,7 +2948,7 @@ export default function Home() {
     return (
       <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
-        active=""
+        active="explore"
         userEmail={user?.email}
         authLoading={authLoading}
         onLogin={() => setShowAuthModal(true)}
@@ -2979,7 +2987,7 @@ export default function Home() {
     return (
       <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
-        active=""
+        active="deep"
         userEmail={user?.email}
         authLoading={authLoading}
         onLogin={() => setShowAuthModal(true)}
@@ -3015,7 +3023,7 @@ export default function Home() {
     return (
       <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
-        active=""
+        active={inputMode === "explore" ? "explore" : "deep"}
         userEmail={user?.email}
         authLoading={authLoading}
         onLogin={() => setShowAuthModal(true)}
@@ -3181,7 +3189,7 @@ export default function Home() {
     return (
       <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
-        active=""
+        active="hub"
         userEmail={user?.email}
         authLoading={authLoading}
         onLogin={() => setShowAuthModal(true)}
@@ -3652,7 +3660,7 @@ export default function Home() {
     return (
       <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
-        active=""
+        active="deep"
         userEmail={user?.email}
         authLoading={authLoading}
         onLogin={() => setShowAuthModal(true)}
@@ -3740,15 +3748,25 @@ export default function Home() {
       else slot.explore = c.id;
       angleStatus[aid] = slot;
     });
+    // NAVIGATION GUARD (bypass closure): the take-to handlers below were always
+    // guarded, but three plain-navigation paths could leave an unsaved
+    // exploration silently — the sidebar (railNav), the BackLink's
+    // setCurrentScreen("input"), and goToMyIdeas. The moment currentScreen
+    // changes, the session stash drops and the family is unrecoverable on
+    // refresh. Every leave path from this screen now flows through guardLeave;
+    // the wrapper is transparent when the exploration is saved or was reopened
+    // from the hub (exploreUnsaved() false → straight through, no modal).
+    const guardedNav = (fn) => (...args) =>
+      guardLeave("this exploration", "nav", () => fn(...args));
     return (
       <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
-        active=""
+        active="explore"
         userEmail={user?.email}
         authLoading={authLoading}
         onLogin={() => setShowAuthModal(true)}
         onLogout={handleLogout}
-        onNavigate={railNav}
+        onNavigate={guardedNav(railNav)}
       >
       <ExploreView
         screen="explore"
@@ -3761,11 +3779,11 @@ export default function Home() {
         user={user}
         viewingFromSaved={viewingFromSaved}
         showAuthModal={showAuthModal}
-        setCurrentScreen={setCurrentScreen}
+        setCurrentScreen={guardedNav(setCurrentScreen)}
         setShowAuthModal={setShowAuthModal}
         setUser={setUser}
         setViewingFromSaved={setViewingFromSaved}
-        goToMyIdeas={goToMyIdeas}
+        goToMyIdeas={guardedNav(goToMyIdeas)}
         onSaveBranch={async (ids) => {
           // Persist each selected angle's branch_idea_text as a saved idea
           // (eval-less) via the additive Explore route. Returns a promise so
@@ -3880,7 +3898,7 @@ export default function Home() {
     return (
       <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
-        active=""
+        active="deep"
         userEmail={user?.email}
         authLoading={authLoading}
         onLogin={() => setShowAuthModal(true)}
@@ -3959,7 +3977,7 @@ export default function Home() {
     return (
       <DashboardShell capacityWall={capacityWall} onCapacityClose={() => setCapacityWall(false)}
         t={t}
-        active=""
+        active="deep"
         userEmail={user?.email}
         authLoading={authLoading}
         onLogin={() => setShowAuthModal(true)}
