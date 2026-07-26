@@ -698,7 +698,10 @@ export function Card({ children, style = {}, t }) {
 // ============================================
 // PAGE CONTAINER - ensures padding on ALL screens
 // ============================================
-export function PageContainer({ children, wide = false }) {
+// `xwide` (1160) is the Explore results tier — the Explore_Full_v2 surface
+// composes at ~1100+ (reflection column 1000, question grid wider, full-span
+// fan). Additive: nothing else changes; Deep stays on `wide` (960).
+export function PageContainer({ children, wide = false, xwide = false }) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -712,7 +715,7 @@ export function PageContainer({ children, wide = false }) {
     <div
       style={{
         width: "100%",
-        maxWidth: wide ? 960 : 640,
+        maxWidth: xwide ? 1160 : wide ? 960 : 640,
         marginLeft: "auto",
         marginRight: "auto",
         paddingLeft: isMobile ? 16 : 32,

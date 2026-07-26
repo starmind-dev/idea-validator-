@@ -107,13 +107,13 @@ export function DirectionCard({
         <h4 style={{ fontSize: compact ? 14.5 : 15.5, fontWeight: 600, margin: 0, color: pewter && !done ? "#e9eef5" : c.on }}>{title}</h4>
       </div>
       {desc && !compact && (
-        <p style={{ fontSize: 12.5, lineHeight: 1.5, color: "#8b94a1", margin: "0 0 auto" }}>{desc}</p>
+        <p style={{ fontSize: 13, lineHeight: 1.58, color: "#939caa", margin: "0 0 auto" }}>{desc}</p>
       )}
       {cue && (
         <span style={{
-          display: "flex", alignItems: "center", gap: 7, marginTop: compact ? 8 : 11,
-          fontFamily: "monospace", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
-          color: pewter && !done ? "#646d79" : c.ac,
+          display: "flex", alignItems: "center", gap: 7, marginTop: compact ? 8 : 12,
+          fontFamily: "monospace", fontSize: 10.5, letterSpacing: "0.1em", textTransform: "uppercase",
+          color: pewter && !done ? "#79818f" : c.ac,
         }}>
           {busy ? "…" : cue}
           {arrow && !busy && (

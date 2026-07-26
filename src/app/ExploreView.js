@@ -90,13 +90,6 @@ const BoltIc = () => <Svg w={15}><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></Svg>;
 const PlusIc = () => <Svg w={12} sw={2}><path d="M12 5v14M5 12h14" /></Svg>;
 const CmpIc = () => <Svg w={12} sw={2}><rect x="4" y="4" width="7" height="16" rx="1" /><rect x="14" y="4" width="6" height="16" rx="1" /></Svg>;
 
-function StatusShape({ status }) {
-  if (status === "crowded")
-    return <Svg w={12} fill="var(--exmut)" style={{ color: "var(--exmut)" }}><g fill="currentColor" stroke="none"><circle cx="6" cy="7" r="2.4" /><circle cx="12" cy="7" r="2.4" /><circle cx="18" cy="7" r="2.4" /><circle cx="9" cy="14" r="2.4" /><circle cx="15" cy="14" r="2.4" /></g></Svg>;
-  if (status === "open")
-    return <Svg w={12} sw={2}><circle cx="12" cy="12" r="8" strokeDasharray="3 3.2" /></Svg>;
-  return <Svg w={12}><g fill="currentColor" stroke="none"><circle cx="8" cy="12" r="2.4" /><circle cx="15" cy="9" r="2.4" opacity="0.5" /></g></Svg>;
-}
 
 // ---- label maps ------------------------------------------------------------
 // (removed) The readiness chip. The enum compressed three axes into one word —
@@ -135,19 +128,14 @@ const LANE_TYPE_PHRASE = {
   emerging_unclear: "Still forming — too fresh to read with confidence.",
 };
 
-const ZONES = [
-  ["crowded", "Crowded"],
-  ["lightly_served", "Lightly served"],
-  ["open", "Open"],
-];
+// (removed) ZONES + ZONE_DOT + StatusShape — the zone-grouped lane rail they
+// served was retired with the two-pane terrain. The colorless-density ruling
+// they encoded survives in the transect: position comes from the status enum,
+// the axis legend is one neutral value, and blue stays an interaction colour.
 
-// (removed) ZONE_VIS. The zones used to carry a color each — and "open" wore
-// Dawn blue, the mode's own identity color, which made the empty region read
-// as the house pick. Color may not carry judgment any more than motion may:
-// the zones differentiate by StatusShape glyph and label; the dots are one
-// neutral value; blue stays an INTERACTION color (selection), never a zone's.
-const ZONE_DOT = "#8b94a1";
-
+// (currently unrendered) branchability display was retired with the Observatory
+// read — the section ends on the dark-patches caption. Helper kept: restoring
+// the chip is one JSX line and this mapping is the vocabulary for it.
 const BRANCH_LABEL = (state, reasonType) => {
   if (state === "branchable") return "Branchable";
   if (state === "partially_branchable") return "Partially branchable";
@@ -193,11 +181,11 @@ function ReceiptChip({ r }) {
       style={{
         display: "inline-flex", alignItems: "center", gap: 6,
         fontFamily: "monospace", fontSize: 10, letterSpacing: "0.03em",
-        color: h && rc?.url ? "var(--extext)" : "var(--exsec)",
-        border: "1px solid var(--exborder-soft)", borderRadius: 5, padding: "3px 8px",
+        color: h && rc?.url ? "#e4ebf8" : "#aeb6c4",
+        border: "1px solid rgba(148,163,200,0.14)", borderRadius: 5, padding: "3px 8px",
         whiteSpace: "nowrap", cursor: rc?.url ? "pointer" : "default",
         transition: "color .14s, border-color .14s",
-        borderColor: h && rc?.url ? "rgba(255,255,255,0.16)" : "var(--exborder-soft)",
+        borderColor: h && rc?.url ? "rgba(148,163,200,0.3)" : "rgba(148,163,200,0.14)",
       }}>
       <span style={{
         width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
@@ -205,7 +193,7 @@ function ReceiptChip({ r }) {
         border: proseRef ? "1px solid var(--exmut)" : "none",
       }} />
       {label}
-      {rc?.url && <span style={{ fontSize: 9, color: "var(--exmut)" }}>↗</span>}
+      {rc?.url && <span style={{ fontSize: 9, color: "#79818f" }}>↗</span>}
     </span>
   );
   return rc?.url
@@ -218,7 +206,7 @@ function ReceiptRow({ refs, lead }) {
   if (!list.length) return null;
   return (
     <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-      <span style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.13em", textTransform: "uppercase", flex: "0 0 66px", marginTop: 4, color: "var(--exmut)" }}>{lead}</span>
+      <span style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.13em", textTransform: "uppercase", flex: "0 0 72px", marginTop: 4, color: "#79818f" }}>{lead}</span>
       <span style={{ flex: 1, minWidth: 0, display: "flex", flexWrap: "wrap", gap: 7 }}>
         {list.map((r, i) => <ReceiptChip key={i} r={r} />)}
       </span>
@@ -303,6 +291,12 @@ function EntitySpan({ seg }) {
 // Drop-in prose renderer: <Prose text={...} entities={entities} /> in place of
 // {text}. No entities or no text -> plain passthrough.
 function Prose({ text, entities }) {
+  // (angle_N) is an internal angle id the engine sometimes references in
+  // firms_up_fastest prose. It is not reader vocabulary; scrubLeaks upstream
+  // does not cover it (known residual). Stripping the token is display-side
+  // sanitisation, not authorship — no words are added, the committed sentence
+  // just stops carrying an internal name.
+  if (typeof text === "string") text = text.replace(/\s*\(angle_\d+\)/g, "");
   if (typeof text !== "string" || !text || !entities?.length) return text ?? null;
   const segs = segmentProse(text, entities);
   if (segs.length === 1 && !segs[0].e) return text;
@@ -312,18 +306,19 @@ function Prose({ text, entities }) {
 // ============================================================================
 // Section eyebrow
 // ============================================================================
-function Eyebrow({ num, icon, title, sub, t, right }) {
+function Eyebrow({ num, icon, title, sub, t, right, mb = 28 }) {
   return (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 20 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 13, marginBottom: mb }}>
       <span style={{
-        width: 22, height: 22, borderRadius: "50%", border: `1px solid ${EX.line}`, color: EX.bright,
+        width: 24, height: 24, borderRadius: "50%", border: `1px solid ${EX.line}`, color: EX.bright,
         fontSize: 11, fontFamily: "monospace", display: "flex", alignItems: "center", justifyContent: "center",
-        flexShrink: 0, boxShadow: `0 0 0 3px ${EX.dim}, 0 0 14px -2px ${EX.base}`, alignSelf: "center",
+        flexShrink: 0, boxShadow: `0 0 0 3px rgba(122,162,255,0.1), 0 0 14px -2px ${EX.base}`,
       }}>{num}</span>
-      <span style={{ display: "flex", alignItems: "center", color: EX.bright, alignSelf: "center" }}>{icon}</span>
-      <span style={{ fontFamily: "monospace", fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase", color: t.sec }}>{title}</span>
-      <span style={{ fontSize: 12.5, color: t.sec }}>{sub}</span>
-      {right && <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>{right}</div>}
+      <span style={{ display: "flex", color: EX.bright }}>{icon}</span>
+      <span style={{ fontFamily: "monospace", fontSize: 13.5, letterSpacing: "0.26em", textTransform: "uppercase", color: "#eef2f8", fontWeight: 600, whiteSpace: "nowrap" }}>{title}</span>
+      <span style={{ fontSize: 13.5, color: "#8f98a6", minWidth: 0 }}>{sub}</span>
+      <span style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(148,163,200,0.18), transparent)", marginLeft: 10 }} />
+      {right && <span style={{ display: "flex", alignItems: "center", gap: 16, whiteSpace: "nowrap" }}>{right}</span>}
     </div>
   );
 }
@@ -357,20 +352,21 @@ function SeedSurface({ idea, t }) {
   const { preview, truncated } = firstSentences(idea, 2);
   return (
     <>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 4 }}>
-        <div style={{ width: "100%", maxWidth: 560, border: "1px solid rgba(122,162,255,0.22)", borderRadius: 13,
-          background: `linear-gradient(180deg, ${EX.dim}, ${t.surface})`, padding: "16px 20px" }}>
-          <div style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase", color: EX.base, marginBottom: 9, display: "flex", alignItems: "center", gap: 7 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 16 }}>
+        <div style={{ width: "100%", maxWidth: 560, border: "1px solid rgba(122,162,255,0.22)", borderRadius: 14,
+          background: "linear-gradient(180deg, rgba(122,162,255,0.1), #0e1219)", padding: "18px 22px",
+          boxShadow: "0 22px 50px -34px rgba(0,0,0,0.9)" }}>
+          <div style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase", color: EX.base, marginBottom: 10, display: "flex", alignItems: "center", gap: 7 }}>
             <span style={{ display: "flex", color: EX.base }}><PlusIc /></span> Your idea
           </div>
-          <div style={{ fontSize: 13.5, lineHeight: 1.58, color: "#cdd0d6" }}>{preview}</div>
+          <div style={{ fontSize: 14, lineHeight: 1.62, color: "#d3d8e1" }}>{preview}</div>
           {truncated && (
-            <button onClick={() => setShowFull(true)} style={{ marginTop: 11, background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 12.5, color: EX.base, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <button onClick={() => setShowFull(true)} style={{ marginTop: 12, background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 12.5, color: EX.base, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 6 }}>
               View full idea <span style={{ display: "flex" }}><Svg w={13} sw={2}><path d="M5 12h14M13 6l6 6-6 6" /></Svg></span>
             </button>
           )}
         </div>
-        <div style={{ width: 1, height: 32, background: `linear-gradient(${EX.base}, transparent)` }} />
+        <div style={{ width: 1, height: 36, background: `linear-gradient(${EX.base}, transparent)` }} />
       </div>
 
       {showFull && (
@@ -392,53 +388,45 @@ function SeedSurface({ idea, t }) {
   );
 }
 
+// EXPLORE_FULL_V2 VERBATIM. Reflection at display (21/300/1.66, -0.004em,
+// #eef3fa, 1000 max), a labelled "still dark" rule at 56, the open questions
+// as a plain 2-col field (52x130 gap, 15.5/1.68 #bdc6d4, dawn ?), the mono
+// caption closing at 48. The Observatory void-patches are gone — the v2 page
+// carries the darkness in spacing, not in painted patches.
+// clear[] stays unrendered (unchanged reasoning; still in the payload).
+// branchability stays unrendered — the section ends on the caption. Helper
+// BRANCH_LABEL kept above; restoring the chip is one JSX line.
 function ReadSurface({ read, t, entities }) {
   if (!read) return null;
-  const b = read.branchability || {};
   const open = Array.isArray(read.open) ? read.open : [];
   return (
-    <section style={{ marginTop: 48 }}>
-      <Eyebrow num="1" icon={<SectionIcon.read />} title="Our read" sub="What's still open is the point" t={t} />
-      <div style={{
-        background: `linear-gradient(90deg, ${EX.dim}, transparent 22%), ${t.surface}`,
-        border: `1px solid var(--exborder-soft)`, borderRadius: 14, padding: "26px 30px 22px",
-      }}>
-        {read.reflection && (
-          <p style={{ fontSize: 14.5, color: "#c9cdd5", lineHeight: 1.62, margin: "0 0 24px", paddingLeft: 18, borderLeft: "2px solid rgba(122,162,255,0.55)", maxWidth: 840 }}>
-            <span style={{ fontFamily: "monospace", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: EX.base, display: "block", marginBottom: 9, fontWeight: 600 }}>We read this as</span>
-            <Prose text={read.reflection} entities={entities} />
-          </p>
-        )}
-        {/* (removed) The clear[] block. It rendered "grounded enough to branch
-            on" as a bullet list — but the reflection paragraph directly above
-            already states the understood ground in prose, so the list read as
-            the founder's input echoed twice before the one thing this section
-            exists for. The section's own subtitle is the rule: what's still
-            open is the point. clear[] stays in the payload (display is
-            subtractive); only the render went. */}
-        {open.length > 0 && (
-          <>
-            <div style={{ fontFamily: "monospace", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: EX.base, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ display: "flex", color: EX.base }}><QIc /></span> Still open
-            </div>
-            <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 38px" }}>
-              {open.map((it, i) => (
-                <li key={i} style={{ display: "flex", gap: 11, fontSize: 15, lineHeight: 1.52, color: "#e9ebef" }}>
-                  <span style={{ flexShrink: 0, color: EX.base, fontWeight: 700, fontSize: 15, lineHeight: 1.3 }}>?</span>
-                  <span><Prose text={it} entities={entities} /></span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-        {(b.state || b.reason) && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, borderTop: `1px solid ${t.divider}`, marginTop: 22, paddingTop: 16 }}>
-            <span style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 7, fontFamily: "monospace", fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase", color: EX.bright, border: `1px solid ${EX.line}`, borderRadius: 20, padding: "4px 11px" }}>
-              <span style={{ width: 7, height: 7, border: `1.5px solid ${EX.base}`, transform: "rotate(45deg)", display: "inline-block" }} /> {BRANCH_LABEL(b.state, b.reason_type)}
+    <section style={{ marginTop: 88 }}>
+      <Eyebrow num="1" mb={32} icon={<SectionIcon.read />} title="Our read" sub="What's lit — and what's still dark" t={t} />
+      {read.reflection && (
+        <p style={{ fontSize: 21, fontWeight: 300, lineHeight: 1.66, letterSpacing: "-0.004em", color: "#eef3fa", margin: 0, maxWidth: 1000, textWrap: "pretty" }}>
+          <Prose text={read.reflection} entities={entities} />
+        </p>
+      )}
+      {open.length > 0 && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 56 }}>
+            <span style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.22em", textTransform: "uppercase", color: "#7f8794", whiteSpace: "nowrap" }}>
+              <span style={{ color: EX.base }}>?</span>&nbsp; still dark — the open questions
             </span>
-            <span style={{ fontSize: 12.5, color: t.sec, lineHeight: 1.5 }}>{b.reason}</span>
+            <span style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(148,163,200,0.12), transparent)" }} />
           </div>
-        )}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "52px 130px", marginTop: 36 }}>
+            {open.map((it, i) => (
+              <div key={i} style={{ display: "flex", gap: 13, fontSize: 15.5, lineHeight: 1.68, color: "#bdc6d4" }}>
+                <span style={{ color: EX.base, fontWeight: 700, flex: "0 0 12px" }}>?</span>
+                <span style={{ minWidth: 0 }}><Prose text={it} entities={entities} /></span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      <div style={{ fontFamily: "monospace", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "#565c68", marginTop: 48 }}>
+        the dark patches are the unlit parts of the idea
       </div>
     </section>
   );
@@ -448,7 +436,15 @@ function ReadSurface({ read, t, entities }) {
 // ============================================================================
 // 2 · Where it could go — the fan
 // ============================================================================
-function EssenceCard({ angle, active, dimmed, onEnter, onLeave, onClick, entities }) {
+// DE-CARDED. The four directions keep every element and the whole fan geometry
+// — seed node, gradient connectors, the room that opens beneath — but they stop
+// being cards: no border, no surface, no radius, no shadow, no hover lift. A
+// column of text separated from its neighbours by a hairline and space. The
+// selected state can no longer be "the box lights up", so it moves to a top
+// rule in dawn (the connector landing on the column), the title brightening,
+// and the existing sibling dimming. Nothing moves on selection, so the
+// connector geometry stops re-drawing under the cursor.
+function EssenceCard({ angle, active, dimmed, first, onEnter, onLeave, onClick, entities }) {
   const opening = angle.justification?.opening || {};
   const kill = angle.justification?.disconfirmer || "";
   const kind = angle.disconfirmer_kind;
@@ -456,22 +452,18 @@ function EssenceCard({ angle, active, dimmed, onEnter, onLeave, onClick, entitie
   return (
     <div data-aid={angle.id} onMouseEnter={onEnter} onMouseLeave={onLeave} onClick={onClick} style={{
       flex: 1, minWidth: 0, cursor: "default", display: "flex", flexDirection: "column",
-      borderRadius: 13, padding: "22px 22px 16px",
-      border: `1px solid ${active ? EX.line : "var(--exborder)"}`,
-      background: active ? "var(--exsurf2)" : "var(--exsurface)",
-      boxShadow: active ? "0 16px 38px -22px rgba(0,0,0,0.8)" : "none",
-      transform: active ? "translateY(-5px)" : "none",
-      position: active ? "relative" : "static",
-      zIndex: active ? 5 : "auto",
-      opacity: dimmed ? 0.55 : 1,
-      transition: "border-color .18s, box-shadow .25s, transform .25s, opacity .2s",
+      padding: first ? "18px 20px 14px 0" : "18px 0 14px 22px",
+      borderTop: `2px solid ${active ? EX.base : "transparent"}`,
+      borderLeft: first ? "none" : "1px solid rgba(148,163,200,0.1)",
+      opacity: dimmed ? 0.5 : 1,
+      transition: "border-color .18s, opacity .2s",
     }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, marginBottom: 14 }}>
-        <span style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.13em", textTransform: "uppercase", color: "var(--exmut)", border: "1px solid var(--exborder-soft)", borderRadius: 5, padding: "3px 7px", whiteSpace: "nowrap" }}>
+        <span style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.13em", textTransform: "uppercase", color: "#8b94a1", border: "1px solid rgba(148,163,200,0.14)", borderRadius: 5, padding: "3px 7px", whiteSpace: "nowrap" }}>
           {SHIFT_LABEL[angle.basis?.primary] || "New angle"}
         </span>
       </div>
-      <h3 style={{ fontSize: 15, fontWeight: 600, margin: "0 0 2px", color: "var(--extext)", letterSpacing: "0.1px", lineHeight: 1.3 }}>{angle.title}</h3>
+      <h3 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 2px", color: active ? "#f2f5fa" : "#c3cad6", letterSpacing: "-0.01em", lineHeight: 1.35, transition: "color .18s" }}>{angle.title}</h3>
 
       {/* THE COMPARISON RAIL (angle-cards mockup, variant A — Emre's call):
           two single-axis atoms in the SAME slots on every card — the bet's
@@ -484,41 +476,41 @@ function EssenceCard({ angle, active, dimmed, onEnter, onLeave, onClick, entitie
         <>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 13 }}>
             {restsOn && (
-              <span style={{ fontFamily: "monospace", fontSize: 8.5, letterSpacing: "0.07em", textTransform: "uppercase", whiteSpace: "nowrap", border: "1px solid var(--exborder-soft)", borderRadius: 4, padding: "3px 7px" }}>
-                <span style={{ color: "var(--exfaint, #4d5560)" }}>bet · </span>
-                <span style={{ color: "#cfd5de", fontWeight: 600 }}>{restsOn}</span>
+              <span style={{ fontFamily: "monospace", fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap", border: "1px solid rgba(148,163,200,0.12)", borderRadius: 4, padding: "3px 7px" }}>
+                <span style={{ color: "#6a7280" }}>bet · </span>
+                <span style={{ color: active ? "#dfe5ee" : "#b6bdc9", fontWeight: 600, transition: "color .18s" }}>{String(restsOn).replace(/_/g, " ")}</span>
               </span>
             )}
             {kind && KIND_LABEL[kind] && (
-              <span style={{ fontFamily: "monospace", fontSize: 8.5, letterSpacing: "0.07em", textTransform: "uppercase", whiteSpace: "nowrap", border: "1px solid var(--exborder-soft)", borderRadius: 4, padding: "3px 7px" }}>
-                <span style={{ color: "var(--exfaint, #4d5560)" }}>wall · </span>
-                <span style={{ color: "#cfd5de", fontWeight: 600 }}>{KIND_LABEL[kind]}</span>
+              <span style={{ fontFamily: "monospace", fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap", border: "1px solid rgba(148,163,200,0.12)", borderRadius: 4, padding: "3px 7px" }}>
+                <span style={{ color: "#6a7280" }}>wall · </span>
+                <span style={{ color: active ? "#dfe5ee" : "#b6bdc9", fontWeight: 600, transition: "color .18s" }}>{KIND_LABEL[kind]}</span>
               </span>
             )}
           </div>
-          <div style={{ height: 1, background: "var(--exborder-soft)", margin: "12px 0 0" }} />
+          <div style={{ height: 1, background: "rgba(148,163,200,0.1)", margin: "14px 0 0" }} />
         </>
       )}
 
-      <div style={{ marginTop: 14, minWidth: 0 }}>
-        <div style={{ fontFamily: "monospace", fontSize: 8.5, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--exmut)", marginBottom: 5 }}>The opening</div>
+      <div style={{ marginTop: 15, minWidth: 0 }}>
+        <div style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.18em", textTransform: "uppercase", color: "#7f8794", marginBottom: 7 }}>The opening</div>
         <div style={{ display: "flex", gap: 9, minWidth: 0 }}>
           <span style={{ flexShrink: 0, color: EX.base, opacity: 0.9, marginTop: 1, display: "flex" }}><RoadIc /></span>
-          <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.5, color: "#cdd0d6", overflowWrap: "anywhere", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}><Prose text={opening.text} entities={entities} /></span>
+          <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.6, color: active ? "#d6dbe4" : "#aeb6c4", transition: "color .18s", overflowWrap: "anywhere", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}><Prose text={opening.text} entities={entities} /></span>
         </div>
       </div>
 
       {kill && (
-        <div style={{ marginTop: 14, minWidth: 0 }}>
-          <div style={{ fontFamily: "monospace", fontSize: 8.5, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--exmut)", marginBottom: 5 }}>The wall</div>
+        <div style={{ marginTop: 15, minWidth: 0 }}>
+          <div style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.18em", textTransform: "uppercase", color: "#7f8794", marginBottom: 7 }}>The wall</div>
           <div style={{ display: "flex", gap: 9, minWidth: 0 }}>
             <span style={{ flexShrink: 0, color: WALL_CLAY, marginTop: 1, display: "flex" }}><WallIc /></span>
-            <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.5, color: "#b7bcc6", overflowWrap: "anywhere", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}><Prose text={kill} entities={entities} /></span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.6, color: active ? "#b7bcc6" : "#9aa3b1", transition: "color .18s", overflowWrap: "anywhere", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}><Prose text={kill} entities={entities} /></span>
           </div>
         </div>
       )}
 
-      <div style={{ marginTop: "auto", display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--exdivider)", paddingTop: 13 }}>
+      <div style={{ marginTop: "auto", display: "flex", justifyContent: "flex-end", borderTop: "1px solid rgba(148,163,200,0.08)", paddingTop: 13 }}>
         <span style={{ flexShrink: 0, fontSize: 11.5, color: active ? EX.bright : EX.base, fontWeight: 500, whiteSpace: "nowrap" }}>look closer ›</span>
       </div>
     </div>
@@ -626,11 +618,11 @@ function FanSurface({ idea, angles, fanState, t, onSave, saveState, onExploreAng
       const bez = `M ${x1} ${y1} C ${x1} ${c1}, ${x2} ${c2}, ${x2} ${y2}`;
       const on = c.getAttribute("data-aid") === activeId;
       const o1 = on ? 0.28 : 0.2;
-      const o2 = on ? 0.85 : (any ? 0.22 : 0.58);
+      const o2 = on ? 0.85 : (any ? 0.38 : 0.58);
       p += `<path d="${bez}" fill="none" stroke="url(#exlg)" stroke-width="2" opacity="${o1}" filter="url(#exgl)"/>`;
       p += `<path d="${bez}" fill="none" stroke="url(#exlg)" stroke-width="${on ? 1.3 : 1.1}" opacity="${o2}"/>`;
       p += `<circle cx="${x2}" cy="${y2}" r="6" fill="${EX.gradB}" opacity="0.16"/>`;
-      p += `<circle cx="${x2}" cy="${y2}" r="${on ? 3.6 : 3}" fill="${EX.gradB}" opacity="${on ? 1 : (any ? 0.5 : 1)}"/>`;
+      p += `<circle cx="${x2}" cy="${y2}" r="${on ? 3.6 : 3}" fill="${EX.gradB}" opacity="${on ? 1 : (any ? 0.6 : 1)}"/>`;
     });
     p += `<circle cx="${x1}" cy="${y1}" r="3.5" fill="${EX.gradA}"/>`;
     setPaths(p);
@@ -709,26 +701,26 @@ function FanSurface({ idea, angles, fanState, t, onSave, saveState, onExploreAng
   const node = (
     <div ref={nodeRef} style={{
       width: 252, border: `1px solid ${EX.line}`, borderRadius: 14,
-      background: `radial-gradient(120% 150% at 50% 0%, ${EX.dim}, transparent 62%), ${t.surfAlt}`,
+      background: `radial-gradient(120% 150% at 50% 0%, ${EX.dim}, transparent 62%), #12161f`,
       padding: "18px 20px 20px", position: "relative", boxShadow: `0 0 46px -14px ${EX.base}`,
     }}>
       <div style={{ position: "absolute", left: "50%", bottom: -6, width: 11, height: 11, borderRadius: "50%", background: EX.gradA, boxShadow: `0 0 0 5px ${EX.dim}, 0 0 16px 2px ${EX.gradA}`, transform: "translateX(-50%)" }} />
       <div style={{ fontFamily: "monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: EX.bright, display: "flex", gap: 7, alignItems: "center", marginBottom: 9 }}>
         <SectionIcon.node /> your rough idea
       </div>
-      <div style={{ fontSize: 13, color: t.text, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{idea}</div>
+      <div style={{ fontSize: 13, color: "#eef2f8", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{idea}</div>
     </div>
   );
 
   const right = fanState !== "empty"
-    ? <span style={{ fontSize: 11, color: t.mut, fontFamily: "monospace", letterSpacing: "0.03em" }}>fan order · not ranked</span>
+    ? <span style={{ fontSize: 11, color: "#79818f", fontFamily: "monospace", letterSpacing: "0.03em" }}>fan order · not ranked</span>
     : null;
 
-  const lead = { fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.13em", textTransform: "uppercase", flex: "0 0 66px", marginTop: 2 };
+  const lead = { fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.13em", textTransform: "uppercase", flex: "0 0 72px", marginTop: 2 };
 
   return (
-    <section style={{ marginTop: 48 }} className="ex-scope">
-      <Eyebrow num="2" icon={<SectionIcon.dir />} title="Where it could go" sub="Directions the evidence supports" t={t} right={right} />
+    <section style={{ marginTop: 104 }} className="ex-scope">
+      <Eyebrow num="2" mb={36} icon={<SectionIcon.dir />} title="Where it could go" sub="Directions the evidence supports" t={t} right={right} />
       {fanState === "empty" ? (
         <div style={{ display: "grid", gridTemplateColumns: "252px 1fr", gap: 30, alignItems: "center" }}>
           {node}
@@ -749,8 +741,9 @@ function FanSurface({ idea, angles, fanState, t, onSave, saveState, onExploreAng
             <div style={{ position: "relative", zIndex: 1 }}>
               <div style={{ display: "flex", justifyContent: "center" }}>{node}</div>
               <div ref={rowRef} style={{ display: "flex", gap: 22, marginTop: 92, alignItems: "stretch" }}>
-                {angles.map((a) => (
+                {angles.map((a, i) => (
                   <EssenceCard key={a.id} angle={a} entities={entities}
+                    first={i === 0}
                     active={a.id === activeId}
                     dimmed={!!activeId && a.id !== activeId}
                     onEnter={() => onEnter(a.id)}
@@ -767,11 +760,11 @@ function FanSurface({ idea, angles, fanState, t, onSave, saveState, onExploreAng
             style={{ overflow: "hidden", height: wellH, transition: "height .3s cubic-bezier(.3,.8,.35,1)" }}>
             <div ref={innerRef} style={{ paddingTop: 18 }}>
               {pa && (
-                <div style={{ position: "relative", border: "1px solid var(--exborder)", borderTop: `1px solid ${EX.line}`, borderRadius: 12, background: "var(--exsurf2)", padding: "18px 24px 13px", boxShadow: "0 18px 44px -26px rgba(0,0,0,0.8)" }}>
-                  <span style={{ position: "absolute", top: -6, left: caretLeft, width: 11, height: 11, background: "var(--exsurf2)", borderLeft: `1px solid ${EX.line}`, borderTop: `1px solid ${EX.line}`, transform: "translateX(-50%) rotate(45deg)" }} />
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 15, flexWrap: "wrap" }}>
+                <div style={{ position: "relative", border: "1px solid rgba(148,163,200,0.14)", borderTop: `1px solid ${EX.line}`, borderRadius: 12, background: "linear-gradient(180deg, rgba(122,162,255,0.04), rgba(255,255,255,0.012) 120px), #10141d", padding: "22px 28px 16px", boxShadow: "0 24px 54px -32px rgba(0,0,0,0.85)" }}>
+                  <span style={{ position: "absolute", top: -6, left: caretLeft, width: 11, height: 11, background: "#131926", borderLeft: `1px solid ${EX.line}`, borderTop: `1px solid ${EX.line}`, transform: "translateX(-50%) rotate(45deg)", transition: "left .3s cubic-bezier(.3,.8,.35,1)" }} />
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
                     <span style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.13em", textTransform: "uppercase", color: EX.bright, border: `1px solid ${EX.line}`, borderRadius: 5, padding: "3px 7px" }}>{SHIFT_LABEL[pa.basis?.primary] || "New angle"}</span>
-                    <span style={{ fontSize: 14.5, fontWeight: 600, color: "var(--extext)", letterSpacing: "0.1px" }}>{pa.title}</span>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: "#f0f3f9", letterSpacing: "-0.01em" }}>{pa.title}</span>
                   </div>
                   {/* The expansion COMPLETES the card: full opening + full wall
                       (the two fields the card clamps to 2 lines), then the bet as
@@ -779,28 +772,28 @@ function FanSurface({ idea, angles, fanState, t, onSave, saveState, onExploreAng
                       same field (justification.disconfirmer) shown twice — the
                       duplicate row is dropped so clicking finishes the thought the
                       card started instead of repeating the wall. */}
-                  <div style={{ display: "flex", gap: 16, marginBottom: 13 }}>
+                  <div style={{ display: "flex", gap: 18, marginBottom: 15 }}>
                     <span style={{ ...lead, color: EX.base }}>the opening</span>
-                    <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.58, color: "#e3e5e9" }}><Prose text={pa.justification?.opening?.text} entities={entities} /></span>
+                    <span style={{ flex: 1, minWidth: 0, maxWidth: 900, fontSize: 13.5, lineHeight: 1.68, color: "#e3e7ee" }}><Prose text={pa.justification?.opening?.text} entities={entities} /></span>
                   </div>
-                  <div style={{ display: "flex", gap: 16, marginBottom: 13 }}>
+                  <div style={{ display: "flex", gap: 18, marginBottom: 15 }}>
                     <span style={{ ...lead, color: WALL_CLAY }}>the wall</span>
-                    <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.58, color: "var(--exsec)" }}><Prose text={pa.justification?.disconfirmer} entities={entities} /></span>
+                    <span style={{ flex: 1, minWidth: 0, maxWidth: 900, fontSize: 13, lineHeight: 1.68, color: "#b2bac7" }}><Prose text={pa.justification?.disconfirmer} entities={entities} /></span>
                   </div>
-                  <div style={{ display: "flex", gap: 16, marginBottom: 13 }}>
+                  <div style={{ display: "flex", gap: 18, marginBottom: 15 }}>
                     <span style={{ ...lead, color: EX.bright }}>the bet</span>
-                    <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.58, color: "#e3e5e9" }}>Works only if <Prose text={bet.text} entities={entities} />.{bet.rests_on && (
-                      <span style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.06em", color: "var(--exmut)", border: "1px solid var(--exborder-soft)", borderRadius: 4, padding: "1px 6px", marginLeft: 7, whiteSpace: "nowrap", textTransform: "uppercase" }}>{bet.rests_on}</span>
+                    <span style={{ flex: 1, minWidth: 0, maxWidth: 900, fontSize: 13.5, lineHeight: 1.68, color: "#e3e7ee" }}>Works only if <Prose text={bet.text} entities={entities} />.{bet.rests_on && (
+                      <span style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.06em", color: "#8b94a1", border: "1px solid rgba(148,163,200,0.14)", borderRadius: 4, padding: "1px 6px", marginLeft: 7, whiteSpace: "nowrap", textTransform: "uppercase" }}>{String(bet.rests_on).replace(/_/g, " ")}</span>
                     )}</span>
                   </div>
                   {/* what this angle visibly rests on — the receipts the opening
                       was read from, hydrated route-side. Absent on older
                       payloads → the row simply doesn't render. */}
-                  <div style={{ marginBottom: 13 }}>
+                  <div style={{ marginBottom: 15 }}>
                     <ReceiptRow refs={pa.justification?.opening?.evidence_refs} lead="rests on" />
                   </div>
                   {!readOnly && (
-                  <div style={{ display: "flex", gap: 26, alignItems: "center", borderTop: "1px solid var(--exdivider)", paddingTop: 14, marginTop: 2, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: 28, alignItems: "center", borderTop: "1px solid rgba(148,163,200,0.1)", paddingTop: 15, marginTop: 4, flexWrap: "wrap" }}>
                     <SaveAffordance state={(saveState || {})[pa.id]} onClick={() => onSave && onSave(pa)} />
                     <ExploreAffordance
                       doneIdeaId={(angleStatus && angleStatus[pa.id] && angleStatus[pa.id].explore) || null}
@@ -825,152 +818,361 @@ function FanSurface({ idea, angles, fanState, t, onSave, saveState, onExploreAng
 // ============================================================================
 // 3 · Where this could fit — terrain (map + reader)
 // ============================================================================
-function TerrainSurface({ terrain, t, entities }) {
+// ── THE GROUND ──────────────────────────────────────────────────────────────
+// A single density curve across the whole width, three equal territories under
+// it, one dot per named actor scattered in the field, and a magnify-on-hover
+// overlay that names them. Click, or the look-closer link, selects the lane and
+// drives the reader below.
+//
+// TWO THINGS THIS RENDER ASSERTS, BOTH WORTH KNOWING:
+//
+// 1. CURVE HEIGHT COMES FROM HOW MANY ACTORS A LANE NAMES. Stage 2a caps
+//    `members` at five per field and calls the list "illustrative, not
+//    exhaustive", so this is the size of the retrieved sample, not the size of
+//    the field. The count is printed under every lane, which is the only reason
+//    it is defensible: the reader can see the number the shape came from. Set
+//    CURVE_FROM = "status" to drive it off the density word instead.
+// 2. STATUS TINT IS OFF. Amber-for-crowded shading to green-for-open is a
+//    verdict gradient — it reads "go where it's empty", which is the advice the
+//    mode exists to refuse, and it is the one thing the terrain ruling locks by
+//    name. The hook is here; flip STATUS_TINT to the commented map to turn it on.
+const CHART_H = 160;
+const CURVE_PEAK = 0.88;
+const SIGMA = 0.155;
+const CURVE_FROM = "actors"; // "actors" | "status"
+const STATUS_WEIGHT = { crowded: 1, lightly_served: 0.45, open: 0.12 };
+const STATUS_TINT = null;
+// const STATUS_TINT = { crowded: "#c9a227", lightly_served: "#8b94a1", open: "#5fbf8f" };
+const STATUS_WORD = { crowded: "crowded", open: "open" }; // lightly served prints no word
+const BAND_ORDER = ["crowded", "lightly_served", "open"];
+
+function seeded(seed) {
+  let a = 0;
+  for (let i = 0; i < String(seed).length; i++) a = (a * 31 + String(seed).charCodeAt(i)) | 0;
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const tint = (status) => (STATUS_TINT && STATUS_TINT[status]) || null;
+const refsOf = (l) => (Array.isArray(l?.reference_items) ? l.reference_items : []);
+
+// sum of one gaussian per territory, sampled across the width and normalised
+function densityCurve(lanes) {
+  const n = lanes.length, N = 200;
+  const amp = lanes.map((l) => CURVE_FROM === "status"
+    ? (STATUS_WEIGHT[l?.status] ?? STATUS_WEIGHT.lightly_served)
+    : refsOf(l).length);
+  const max = Math.max(...amp, 1);
+  const pts = [];
+  for (let i = 0; i <= N; i++) {
+    const x = i / N;
+    let h = 0;
+    for (let k = 0; k < n; k++) {
+      const d = (x - (k + 0.5) / n) / SIGMA;
+      h += (amp[k] / max) * Math.exp(-(d * d) / 2);
+    }
+    pts.push(h);
+  }
+  const peak = Math.max(...pts, 1e-4);
+  return pts.map((h) => h / peak);
+}
+const curveY = (norm) => CHART_H - norm * CHART_H * CURVE_PEAK;
+
+// one dot per named actor, seeded and spaced so they never sit on top of each
+// other. Placement is relative to the CURVE at that dot's own x — the middle
+// of the filled area, not a fixed band — so a dot never hugs the ground line
+// and never floats above the fill where it runs shallow at the open end.
+function actorDots(lane, i, n, norm) {
+  const r = seeded((lane.id || lane.label) + "|dots");
+  const N = norm.length - 1;
+  const left = (i / n) * 100, w = 100 / n;
+  const out = [];
+  refsOf(lane).forEach(() => {
+    let x, y, ok = false;
+    for (let k = 0; k < 40 && !ok; k++) {
+      x = left + w * (0.14 + r() * 0.72);
+      const top = curveY(norm[Math.round((x / 100) * N)]);
+      y = top + (CHART_H - top) * (0.26 + r() * 0.5);
+      ok = !out.some((p) => Math.abs(p.y - y) < 11 && Math.abs(p.x - x) < w * 0.15);
+    }
+    out.push({ x, y });
+  });
+  return out;
+}
+
+// CONTAINED. Chips wrap horizontally inside the band instead of stacking out
+// of it, so nothing can ever reach the section header above. Width is capped at
+// 48% of the territory, which forces at least two per row and pins five chips
+// to three rows at any lane count — the height budget is 97px for chips (160
+// band, less 20 padding, less 43 for the count line, the link and the gaps),
+// and three rows is 84. A name past the cap ellipses and carries the full
+// string in `title`; the receipt link is untouched.
+//
+// The cap that makes this hold is Stage 2a's: at most five members per field.
+// If that ever rises, this budget is what breaks first.
+function TerritoryChip({ r, tight }) {
+  const [h, setH] = useState(false);
+  const name = typeof r === "string" ? r : (r?.name || "");
+  const url = typeof r === "string" ? null : (r?.receipt?.url || null);
+  const outer = { display: "inline-flex", maxWidth: "48%", minWidth: 0, textDecoration: "none" };
+  const body = (
+    <span title={name} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)} style={{
+      display: "inline-flex", alignItems: "center", gap: tight ? 7 : 8, minWidth: 0, maxWidth: "100%",
+      padding: tight ? "5px 9px" : "6px 11px", borderRadius: tight ? 6 : 7,
+      border: `1px solid ${h ? EX.line : "rgba(148,163,200,0.16)"}`,
+      background: h ? "rgba(122,162,255,0.10)" : "rgba(16,20,28,0.9)",
+      fontFamily: "monospace", fontSize: tight ? 10 : 10.5, letterSpacing: "0.01em",
+      color: h ? "#e4ebf8" : "#cfd8e8", transition: "border-color .15s, background .15s, color .15s",
+    }}>
+      <span style={{ width: 5, height: 5, borderRadius: "50%", background: EX.base, flexShrink: 0 }} />
+      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{name}</span>
+      {url && <span style={{ opacity: 0.5, fontSize: 9, flexShrink: 0 }}>↗</span>}
+    </span>
+  );
+  return url
+    ? <a href={url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={outer}>{body}</a>
+    : <span style={outer}>{body}</span>;
+}
+
+function TerrainSurface({ terrain, angles, t, entities }) {
   const lanes = Array.isArray(terrain?.lanes) ? terrain.lanes : [];
   const firms = terrain?.firms_up_fastest || null;
-
-  // Default selection = the FIRST lane in payload order. It used to prefer the
-  // open lane — auto-focusing the empty region, on top of its old brand-blue
-  // dot, made "open" read as the house pick. Payload order carries no rank
-  // (the synthesis emits lanes as it clusters them), so it is the neutral seat.
-  // Selection is DERIVED, not synced: selId only ever changes by click; when
-  // the payload changes and the id goes stale, the find simply falls back to
-  // the first lane in payload order (the neutral seat). No effect, no
-  // state-reset — the previous setSelId-inside-useEffect was a lint-correct
-  // smell and an unnecessary render.
   const [selId, setSelId] = useState(null);
-  const sel = lanes.find((l) => l.id === selId) || lanes[0] || null;
+  const [hovId, setHovId] = useState(null);
 
   if (lanes.length === 0) return null;
 
-  // Only zones the pipeline actually produced render. The old fixed scaffold
-  // drew all three bands and captioned an empty OPEN band "open ground,
-  // nothing here" — a market fact nobody measured, manufactured by the frame.
-  // An unproduced state gets no frame: degrade subtracts.
-  const zonesWithLanes = ZONES.filter(([zkey]) => lanes.some((l) => l.status === zkey));
+  const ordered = [...lanes].sort((a, b) => {
+    const ia = BAND_ORDER.indexOf(a?.status), ib = BAND_ORDER.indexOf(b?.status);
+    return (ia < 0 ? 1 : ia) - (ib < 0 ? 1 : ib);
+  });
+  const sel = ordered.find((l) => l.id === selId) || ordered[0];
+  const n = ordered.length;
+  const norm = densityCurve(ordered);
+  const N = norm.length - 1;
 
-  // (removed) zoneCounts + fill bars. The numbers counted reference_items —
-  // the sorter's ILLUSTRATIVE members list, capped at 5 representative per
-  // field ("naming, not counting") — and drew them as a census with magnitude
-  // bars. Code owns the numbers, and the route committed none here. The lanes
-  // themselves show the named ground.
+  let line = "", i = 0;
+  for (; i <= N; i++) line += `${i ? " L" : "M"} ${(i / N) * 1000} ${curveY(norm[i]).toFixed(2)}`;
+  const fill = `${line} L 1000 ${CHART_H} L 0 ${CHART_H} Z`;
 
   return (
-    <section style={{ marginTop: 48 }}>
+    <section style={{ marginTop: 104 }}>
       <style>{`
-        @keyframes ilcPing { 0% { transform: scale(.6); opacity: .55 } 80%, 100% { transform: scale(1.85); opacity: 0 } }
+        @keyframes ilcPing { 0% { transform: scale(.6); opacity: .5 } 80%, 100% { transform: scale(1.7); opacity: 0 } }
         .ilc-pulse { position: relative }
-        .ilc-pulse::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid currentColor; opacity: 0; animation: ilcPing 2.4s ease-out infinite }
+        .ilc-pulse::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid currentColor; opacity: 0; animation: ilcPing 2.6s ease-out infinite }
         @media (prefers-reduced-motion: reduce) { .ilc-pulse::after { animation: none; opacity: 0 } }
       `}</style>
-      <Eyebrow num="3" icon={<SectionIcon.terr />} title="Where this could fit" sub="Among the actors named in this evidence" t={t} />
-      <div style={{ display: "grid", gridTemplateColumns: "296px 1fr", border: `1px solid ${t.border}`, borderRadius: 14, overflow: "hidden", minHeight: 300 }}>
-        <div style={{ borderRight: `1px solid ${t.divider}`, background: t.surfAlt }}>
-          {zonesWithLanes.map(([zkey, zlabel], i) => {
-            const inZone = lanes.filter((l) => l.status === zkey);
-            return (
-              <div key={zkey} style={{ padding: "14px 16px 12px", borderTop: i === 0 ? "none" : `1px solid ${t.divider}` }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <span style={{ color: t.mut, display: "flex" }}><StatusShape status={zkey} /></span>
-                  <span style={{ fontFamily: "monospace", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: t.mut }}>{zlabel}</span>
+      <Eyebrow num="3" mb={28} icon={<SectionIcon.terr />} title="Where this could fit" sub="The ground, and who already stands on it" t={t} />
+
+      <div style={{ display: "flex", justifyContent: "flex-end", fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.16em", textTransform: "uppercase", color: "#79818f", marginBottom: 10 }}>
+        ⌖ hover a territory to magnify
+      </div>
+
+      <div onMouseLeave={() => setHovId(null)}>
+      <div style={{ position: "relative", height: CHART_H }}>
+        <svg viewBox={`0 0 1000 ${CHART_H}`} preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: CHART_H }}>
+          <defs>
+            <linearGradient id="exgrd" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(122,162,255,0.15)" />
+              <stop offset="100%" stopColor="rgba(122,162,255,0.012)" />
+            </linearGradient>
+          </defs>
+          <path d={fill} fill="url(#exgrd)" />
+          <path d={line} fill="none" stroke="rgba(122,162,255,0.5)" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
+        </svg>
+
+        {/* actor dots — one per named actor, in every territory at once */}
+        {ordered.map((lane, li) => actorDots(lane, li, n, norm).map((p, k) => (
+          <span key={`${lane.id}-${k}`} style={{
+            position: "absolute", left: `${p.x}%`, top: p.y, width: 6, height: 6, borderRadius: "50%",
+            transform: "translate(-50%,-50%)", background: "#aab8e0",
+            opacity: hovId && hovId !== lane.id ? 0.3 : 0.9, transition: "opacity .18s",
+          }} />
+        )))}
+
+        {/* territories */}
+        {ordered.map((lane, li) => {
+          const on = lane.id === hovId;
+          const refs = refsOf(lane);
+          const word = STATUS_WORD[lane.status];
+          const c = tint(lane.status);
+          return (
+            <div key={lane.id}
+              onMouseEnter={() => setHovId(lane.id)}
+              onClick={() => setSelId(lane.id)}
+              style={{
+                position: "absolute", top: 0, height: CHART_H, left: `${(li / n) * 100}%`, width: `${100 / n}%`,
+                cursor: "pointer", zIndex: on ? 6 : 1,
+                background: on ? "radial-gradient(62% 95% at 50% 58%, rgba(122,162,255,0.11), transparent 78%)" : "transparent",
+                transition: "background .25s",
+              }}>
+              {on && (
+                <div style={{
+                  position: "absolute", left: 0, right: 0, top: 10, bottom: 10, padding: "0 10px",
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
+                }}>
+                  <span style={{ fontFamily: "monospace", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: c || "#8b94a1" }}>
+                    {refs.length} {refs.length === 1 ? "actor" : "actors"}{word ? ` · ${word}` : ""}
+                  </span>
+                  {refs.length > 0 && (
+                    <span style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", maxWidth: "100%" }}>
+                      {refs.map((r, k) => <TerritoryChip key={k} r={r} tight={refs.length >= 4} />)}
+                    </span>
+                  )}
+                  {refs.length === 0 && (
+                    <span style={{ fontFamily: "monospace", fontSize: 10.5, color: "var(--exfaint, #4d5560)" }}>
+                      unclaimed in the retrieved set
+                    </span>
+                  )}
+                  <span style={{ fontSize: 12, color: EX.base }}>look closer ›</span>
                 </div>
-                {inZone.map((l) => (
-                  <LaneNode key={l.id} lane={l} selected={l.id === sel?.id} t={t} onSelect={() => setSelId(l.id)} dotColor={ZONE_DOT} />
+              )}
+            </div>
+          );
+        })}
+
+        {/* the ground line */}
+        <div style={{ position: "absolute", left: 0, right: 0, top: CHART_H, height: 1, background: "rgba(255,255,255,0.14)" }} />
+        {ordered.map((lane, li) => {
+          const on = lane.id === sel?.id;
+          return (
+            <span key={`d-${lane.id}`} className={on ? "ilc-pulse" : undefined} style={{
+              position: "absolute", left: `${((li + 0.5) / n) * 100}%`, top: CHART_H,
+              transform: "translate(-50%,-50%)", borderRadius: "50%",
+              width: on ? 11 : 8, height: on ? 11 : 8,
+              background: on ? "#dbe4f6" : "#6d7684", color: EX.base,
+              boxShadow: on ? "0 0 13px 3px rgba(122,162,255,0.45)" : "none",
+              transition: "width .15s, height .15s, background .15s", pointerEvents: "none",
+            }} />
+          );
+        })}
+      </div>
+
+      {/* lane names under the line */}
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))`, marginTop: 18 }}>
+        {ordered.map((lane) => {
+          const on = lane.id === sel?.id;
+          return (
+            <button key={`n-${lane.id}`} onClick={() => setSelId(lane.id)}
+              onMouseEnter={() => setHovId(lane.id)}
+              style={{
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 7, padding: "0 16px",
+                background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "center",
+              }}>
+              <span style={{ fontSize: 15, lineHeight: 1.4, color: on ? "#f0f3f8" : "#aeb6c4", transition: "color .15s" }}>{lane.label}</span>
+              <span style={{ fontFamily: "monospace", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "#79818f" }}>
+                {refsOf(lane).length} {refsOf(lane).length === 1 ? "actor" : "actors"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* the scale — it names the axis, not a population */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 22, fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase" }}>
+        <span style={{ color: tint("crowded") || "#7f8b9e" }}>⋮⋮ crowded</span>
+        <span style={{ color: tint("open") || "#7f8b9e" }}>·· open ground</span>
+      </div>
+      </div>
+
+      {sel && <LaneReader lane={sel} idx={ordered.indexOf(sel)} n={n} t={t} entities={entities} />}
+
+      {/* firms_up_fastest — the terrain's yield. The committed shape is
+          { text, angle_refs[] }: the cheapest clarity, and which fan angles
+          hinge on it. So the block renders as the section's hot line — the
+          page's labelled-rule grammar (§1) inked in dawn — with the previously
+          orphaned angle_refs resolved to angle titles as a bridge row back to
+          the fan. The old floating 220px bar (decoration, no meaning) is gone.
+          Chips are non-interactive: naming the dependency, not ranking it. */}
+      {firms?.text && (() => {
+        const refIds = Array.isArray(firms.angle_refs) ? firms.angle_refs : [];
+        const refTitles = refIds
+          .map((id) => (Array.isArray(angles) ? angles.find((a) => a?.id === id) : null))
+          .filter(Boolean).map((a) => a.title);
+        return (
+          <div style={{ marginTop: 72 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "monospace", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase" }}>
+              <span style={{ color: EX.base, display: "flex" }}><BoltIc /></span>
+              <span style={{ color: EX.base, fontWeight: 500, whiteSpace: "nowrap" }}>Firms up fastest</span>
+              <span style={{ color: "#8b94a1", whiteSpace: "nowrap" }}>— where clarity is cheapest to buy</span>
+              <span style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(122,162,255,0.35), transparent)", marginLeft: 8 }} />
+            </div>
+            <div style={{ fontSize: 16.5, fontWeight: 300, color: "#d9dee7", lineHeight: 1.68, maxWidth: 1000, textWrap: "pretty", marginTop: 18 }}><Prose text={firms.text} entities={entities} /></div>
+            {refTitles.length > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 18 }}>
+                <span style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.13em", textTransform: "uppercase", color: "#79818f" }}>angles</span>
+                {refTitles.map((title, i) => (
+                  <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "monospace", fontSize: 10, letterSpacing: "0.02em", color: "#aeb6c4", border: "1px solid rgba(148,163,200,0.14)", borderRadius: 5, padding: "3px 8px" }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: EX.base, flexShrink: 0 }} />
+                    {title}
+                  </span>
                 ))}
               </div>
-            );
-          })}
-        </div>
-        <div style={{ padding: "30px 32px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          {sel && <LaneReader lane={sel} t={t} entities={entities} />}
-        </div>
-      </div>
-      {/* firms_up_fastest — contractually "a read of the ground, not a
-          recommendation... where clarity is cheapest to buy, not which
-          direction is best." The old render crowned it "YOUR NEXT MOVE ·
-          CHEAPEST TEST ON THE BOARD" — an imperative the field's own contract
-          disclaims — inside a glowing brand-blue panel. The field stays; the
-          crown goes: its own name, a neutral frame, quiet placement. */}
-      {/* firms_up_fastest as THE CLOSING CHORD (firms-panel mockup, variant C
-          — Emre's call): unboxed, a dawn top rule, the read in larger
-          light-weight prose. Explore's cousin of Deep's hinge — weight carried
-          by typography, never by an imperative frame. The old render crowned
-          it "YOUR NEXT MOVE"; the flat-box interim buried it; this gives the
-          section's one forward-leaning read real presence while staying what
-          the contract says it is: a read of the ground, not a recommendation. */}
-      {firms?.text && (
-        <div style={{ marginTop: 30 }}>
-          <div style={{ height: 2, background: `linear-gradient(90deg, ${EX.base}, rgba(122,162,255,0.05))`, borderRadius: 2, marginBottom: 16, maxWidth: 220 }} />
-          <div style={{ fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 13, display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: EX.base, display: "flex" }}><BoltIc /></span>
-            <span style={{ color: EX.base }}>Firms up fastest</span>
-            <span style={{ color: t.mut }}>— where clarity is cheapest to buy</span>
+            )}
           </div>
-          <div style={{ fontSize: 15.5, fontWeight: 300, color: "#d3d8e0", lineHeight: 1.62, maxWidth: 860 }}><Prose text={firms.text} entities={entities} /></div>
-        </div>
-      )}
+        );
+      })()}
     </section>
   );
 }
 
-function LaneNode({ lane, selected, t, onSelect, dotColor }) {
-  const [h, setH] = useState(false);
-  const on = selected || h;
-  return (
-    <button
-      onClick={onSelect} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
-      style={{
-        display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
-        background: on ? "rgba(122,162,255,0.08)" : "var(--exsurface)",
-        border: `1px solid ${on ? "rgba(122,162,255,0.5)" : "var(--exborder-soft)"}`,
-        borderRadius: 10, padding: "11px 13px", marginTop: 7, cursor: "pointer", fontFamily: "inherit",
-        boxShadow: h && !selected ? "0 8px 22px -14px rgba(122,162,255,0.5)" : "none",
-        transform: h && !selected ? "translateY(-1px)" : "none",
-        transition: "border-color .15s, box-shadow .2s, transform .15s, background .15s",
-      }}>
-      <span className="ilc-pulse" style={{ flexShrink: 0, width: 7, height: 7, borderRadius: "50%", background: dotColor || ZONE_DOT, color: dotColor || ZONE_DOT }} />
-      <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.4, color: on ? "var(--extext)" : "var(--exsec)" }}>{lane.label}</span>
-      <span style={{ flexShrink: 0, color: on ? EX.base : "var(--exmut)", display: "flex", transition: "color .15s, transform .15s", transform: h ? "translateX(2px)" : "none" }}><RoadIc /></span>
-    </button>
-  );
-}
-
-function LaneReader({ lane, t, entities }) {
+// The reader for the selected lane — the §2 panel grammar with the walls
+// removed. A full-width dawn topline carries a caret that tracks the selected
+// lane's territory center (same kinetic as §2's panel caret); below it, the
+// head NAMES the selection (lane title + ground/standing chips — both facts
+// already rendered on the chart, humanized enum verbatim), and the readout
+// runs in §2's lead-gutter rows: the question / the read / today. No border
+// box, no background, no shadow — the topline + caret carry the attachment,
+// the open ground carries the reading. The lead label "today" replaces the
+// old prose lead-in "Today, …", which also retires the mid-sentence-capital
+// and double-period residue that lead-in produced. ALONGSIDE stays retired.
+function LaneReader({ lane, idx = 0, n = 1, t, entities }) {
   const answered = lane.demand_question == null;
   const typePhrase = lane.lane_type ? LANE_TYPE_PHRASE[lane.lane_type] : null;
-  // Open/unproven lane: the demand_question is the hero, lane_type rides under
-  // it as characterization. A lane with a null question: null now means the
-  // evidence explicitly NAMED payment (the slice-1 contract change) — the
-  // fallback copy says exactly that and no more; the old fallback asserted
-  // "paying incumbents" the pipeline never verified.
-  const hero = answered
-    ? (typePhrase || "Payment is named in this field's evidence — the open question is differentiation.")
-    : lane.demand_question;
+  const caretLeft = `${(((idx + 0.5) / Math.max(n, 1)) * 100).toFixed(2)}%`;
+  const actorCount = refsOf(lane).length;
+  const signal = lane.substitute_tell?.signal;
+  const lead = { fontFamily: "monospace", fontSize: 9.5, letterSpacing: "0.13em", textTransform: "uppercase", flex: "0 0 92px", marginTop: 3 };
+  const chip = { fontFamily: "monospace", fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap", border: "1px solid rgba(148,163,200,0.12)", borderRadius: 4, padding: "3px 7px" };
   return (
-    <>
-      <div style={{ fontFamily: "monospace", fontSize: 10, letterSpacing: "0.13em", textTransform: "uppercase", color: t.mut, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-        {answered ? <ReadLinesIc /> : <QIc />}{answered ? "The read" : "The open question"}
-      </div>
-      {/* Hero in NEUTRAL light, not dawn-bright (evidence-hero mockup,
-          variant C — Emre's call): the ink is dawn-family, so a dawn-bright
-          hero drowned evidence names in blue-on-blue. The question keeps its
-          weight through size and placement; evidence keeps one ink, one rule,
-          everywhere. The dawn identity stays on the section marks and the
-          "?" lead, not on prose that carries evidence. */}
-      <div style={{ fontSize: 17, fontWeight: 300, lineHeight: 1.5, color: answered ? t.sec : "#dfe3ea", letterSpacing: "0.1px" }}><Prose text={hero} entities={entities} /></div>
-      {!answered && typePhrase && (
-        <div style={{ fontSize: 12.5, color: t.mut, lineHeight: 1.55, marginTop: 12, fontStyle: "italic" }}>{typePhrase}</div>
-      )}
-      {lane.substitute_tell?.signal && <div style={{ fontSize: 12.5, color: t.sec, lineHeight: 1.55, marginTop: 16 }}>Today, <Prose text={lane.substitute_tell.signal} entities={entities} />.</div>}
-      {/* The named actors, as receipts instead of a flat comma list — same
-          chip treatment as the angles, hydrated route-side, plain on old
-          payloads. */}
-      {Array.isArray(lane.reference_items) && lane.reference_items.length > 0 && (
-        <div style={{ marginTop: 14 }}>
-          <ReceiptRow refs={lane.reference_items} lead="alongside" />
+    <div style={{ position: "relative", marginTop: 44 }}>
+      <div style={{ height: 1, background: EX.line }} />
+      {/* caret ground = T.dark.bg — it sits on open page ground, not a surface */}
+      <span style={{ position: "absolute", top: -5, left: caretLeft, width: 11, height: 11, background: "#0a0d13", borderLeft: `1px solid ${EX.line}`, borderTop: `1px solid ${EX.line}`, transform: "translateX(-50%) rotate(45deg)", transition: "left .3s cubic-bezier(.3,.8,.35,1)" }} />
+      <div style={{ paddingTop: 26, maxWidth: 1000 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 16, fontWeight: 600, color: "#f0f3f9", letterSpacing: "-0.01em" }}>{lane.label}</span>
+          {lane.status && (
+            <span style={chip}><span style={{ color: "#6a7280" }}>ground · </span><span style={{ color: "#dfe5ee", fontWeight: 600 }}>{String(lane.status).replace(/_/g, " ")}</span></span>
+          )}
+          <span style={chip}><span style={{ color: "#6a7280" }}>standing · </span><span style={{ color: "#dfe5ee", fontWeight: 600 }}>{actorCount} {actorCount === 1 ? "actor" : "actors"}</span></span>
         </div>
-      )}
-    </>
+        {!answered && (
+          <div style={{ display: "flex", gap: 18, marginBottom: 15 }}>
+            <span style={{ ...lead, color: EX.base }}>the question</span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 300, lineHeight: 1.68, letterSpacing: "-0.002em", color: "#e3e7ee", textWrap: "pretty" }}><Prose text={lane.demand_question} entities={entities} /></span>
+          </div>
+        )}
+        {(typePhrase || answered) && (
+          <div style={{ display: "flex", gap: 18, marginBottom: 15 }}>
+            <span style={{ ...lead, color: "#79818f" }}>the read</span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: answered ? 15 : 13, fontWeight: answered ? 300 : 400, lineHeight: 1.68, color: answered ? "#e3e7ee" : "#8f98a6", fontStyle: answered ? "normal" : "italic", textWrap: "pretty" }}>
+              {typePhrase || "Payment is named in this field's evidence — the open question is differentiation."}
+            </span>
+          </div>
+        )}
+        {signal && (
+          <div style={{ display: "flex", gap: 18 }}>
+            <span style={{ ...lead, color: EX.bright }}>today</span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, lineHeight: 1.68, color: "#b2bac7" }}><Prose text={signal} entities={entities} />{/^[.!?]$/.test(String(signal).trim().slice(-1)) ? "" : "."}</span>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -992,9 +1194,9 @@ function LaneReader({ lane, t, entities }) {
 // (the cross-mode handoff colour).
 // ============================================================================
 const M4 = {
-  ink: "#e9eef5", ink2: "#c3ccd7", mut: "#8b94a1", mut2: "#646d79",
-  line: "rgba(255,255,255,0.07)", line2: "rgba(255,255,255,0.05)",
-  panelA: "rgba(255,255,255,0.028)", panelB: "rgba(255,255,255,0.018)",
+  ink: "#e9eef6", ink2: "#c3ccd7", mut: "#8b94a1", mut2: "#79818f",
+  line: "rgba(148,163,200,0.12)", line2: "rgba(148,163,200,0.08)",
+  panelA: "rgba(255,255,255,0.028)", panelB: "rgba(255,255,255,0.014)",
 };
 
 const TILE_THEME = {
@@ -1002,7 +1204,7 @@ const TILE_THEME = {
     line: "rgba(255,255,255,0.16)", lineHi: "rgba(255,255,255,0.26)",
     bg: "rgba(255,255,255,0.045)", bgHi: "rgba(255,255,255,0.06)",
     medBg: "rgba(255,255,255,0.05)", medBgHi: "rgba(255,255,255,0.08)",
-    ic: "#aab4c3", icHi: "#d7deea", title: M4.ink, cue: "#646d79", cueHi: "#8b94a1",
+    ic: "#aab4c3", icHi: "#d7deea", title: M4.ink, cue: "#79818f", cueHi: "#8b94a1",
     shadow: "0 14px 34px rgba(0,0,0,0.34)", medGlow: "none", grad: false,
   },
   explore: {
@@ -1040,7 +1242,7 @@ function Tile({ variant, glyph, title, desc, cue, arrow, onClick, busy }) {
       style={{
         position: "relative", textAlign: "left", fontFamily: "inherit",
         cursor: busy ? "default" : "pointer",
-        borderRadius: 13, padding: "13px 15px 11px", minHeight: 96,
+        borderRadius: 13, padding: "14px 16px 12px", minHeight: 96,
         display: "flex", flexDirection: "column",
         border: `1px solid ${on ? c.lineHi : c.line}`,
         background: c.grad
@@ -1059,8 +1261,8 @@ function Tile({ variant, glyph, title, desc, cue, arrow, onClick, busy }) {
         }}>{glyph}</span>
         <h3 style={{ fontSize: 15.5, fontWeight: 600, margin: 0, color: c.title }}>{title}</h3>
       </div>
-      <p style={{ fontSize: 12.5, lineHeight: 1.5, color: M4.mut, margin: "0 0 auto" }}>{desc}</p>
-      <span style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 10, fontFamily: "monospace", fontSize: 10.5, letterSpacing: "0.1em", color: on ? c.cueHi : c.cue }}>
+      <p style={{ fontSize: 13, lineHeight: 1.58, color: "#939caa", margin: "0 0 auto" }}>{desc}</p>
+      <span style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 12, fontFamily: "monospace", fontSize: 10.5, letterSpacing: "0.1em", textTransform: "uppercase", color: on ? c.cueHi : c.cue }}>
         {cue}
         {arrow && (
           <span style={{ display: "inline-flex", transform: on ? "translateX(3px)" : "none", transition: "transform .18s" }}>
@@ -1109,53 +1311,56 @@ function SaveTile({ user, viewingFromSaved, onSave, onAuth, goToMyIdeas, angleCo
 function NextMoveSurface({ nextMove, angleCount, t, user, viewingFromSaved, onSave, onExplore, onDeep, onAuth, goToMyIdeas, entities }) {
   const du = (nextMove && nextMove.dominant_uncertainty) || {};
   return (
-    <section style={{ marginTop: 48 }}>
-      <Eyebrow num="4" icon={<SectionIcon.next />} title="From here" sub="What now — for the whole idea" t={t} />
-      <div style={{ border: `1px solid ${M4.line}`, borderRadius: 14, padding: "26px 30px 22px", background: `linear-gradient(180deg, ${M4.panelA}, ${M4.panelB})` }}>
+    <section style={{ marginTop: 104 }}>
+      <Eyebrow num="4" mb={28} icon={<SectionIcon.next />} title="From here" sub="What now — for the whole idea" t={t} />
 
-        {du.text && (
-          <>
-            <div style={{ fontFamily: "monospace", fontSize: 11, letterSpacing: "0.2em", color: M4.mut2, display: "flex", alignItems: "center", gap: 9, marginBottom: 16 }}>
-              <span style={{ color: EX.base, fontSize: 12 }}>?</span>THE OPEN QUESTION
-            </div>
-            <div style={{ borderLeft: `2px solid ${EX.line}`, paddingLeft: 20, marginBottom: 24 }}>
-              <h2 style={{ fontWeight: 400, fontSize: 17, lineHeight: 1.5, letterSpacing: "-0.01em", color: M4.ink, margin: 0 }}><Prose text={du.text} entities={entities} /></h2>
-            </div>
-            <div style={{ height: 1, background: M4.line2, margin: "24px 0 20px" }} />
-          </>
-        )}
+      {/* HORIZON treatment (mockup D, Jul 26). The enclosing panel is gone — the
+          question stands on open ground at display size, and a full-width dawn
+          ground line (the terrain's motif) divides thought from action: reading
+          above the line, everything actionable below it. The anchor dot marks
+          where the idea stands; the graduation ticks are cartography, not data.
+          Two-enclosure doctrine: the DirectionCards are now §4's only boxes. */}
+      {du.text && (
+        <p style={{ fontSize: 20, fontWeight: 300, lineHeight: 1.64, letterSpacing: "-0.004em", color: M4.ink, margin: "10px 0 0", maxWidth: 1000, textWrap: "pretty" }}><Prose text={du.text} entities={entities} /></p>
+      )}
 
-        <div style={{ fontFamily: "monospace", fontSize: 11, letterSpacing: "0.2em", color: M4.mut2, display: "flex", alignItems: "baseline", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
-          DO SOMETHING WITH IT
-          <span style={{ fontFamily: "inherit", fontStyle: "normal", fontSize: 13, letterSpacing: "0.01em", color: M4.mut }}>
-            your idea — the seed you explored
-            {angleCount > 0 ? <>, with all <b style={{ color: M4.ink2, fontWeight: 500 }}>{angleCount} direction{angleCount === 1 ? "" : "s"}</b> attached</> : null}
-          </span>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
-          <SaveTile user={user} viewingFromSaved={viewingFromSaved} onSave={onSave} onAuth={onAuth} goToMyIdeas={goToMyIdeas} angleCount={angleCount} />
-          <DirectionCard skin="explore" glyph="explore" title="Explore again"
-            desc="Re-widen into a fresh fan of directions."
-            cue="Widen" onClick={() => onExplore && onExplore()} />
-          <DirectionCard skin="deep" glyph="deep" title="Take to Deep"
-            desc="Send the whole idea for a scored verdict."
-            cue="To verdict" onClick={() => onDeep && onDeep()} />
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 11, marginTop: 22, paddingTop: 18, borderTop: `1px solid ${M4.line2}`, fontSize: 13, color: M4.mut }}>
-          <span style={{ color: M4.mut2, flexShrink: 0, display: "inline-flex" }}><Svg w={15} sw={1.7}><path d="M7 17 17 7M9 7h8v8" /></Svg></span>
-          <span>
-            Want to act on a single direction instead? Each angle above carries its own{" "}
-            <span style={{ fontFamily: "monospace", fontSize: 11, color: "#aab4c3" }}>save</span> ·{" "}
-            <span style={{ fontFamily: "monospace", fontSize: 11, color: EX.base }}>explore</span> ·{" "}
-            <span style={{ fontFamily: "monospace", fontSize: 11, color: "#9a8fd8" }}>take to Deep</span>.
-          </span>
-        </div>
+      <div style={{ position: "relative", marginTop: du.text ? 56 : 10, height: 2, background: "linear-gradient(90deg, rgba(122,162,255,0.65), rgba(122,162,255,0.18) 55%, rgba(122,162,255,0.04))" }}>
+        <span style={{ position: "absolute", left: 0, top: -3, width: 8, height: 8, borderRadius: "50%", background: EX.base, boxShadow: "0 0 12px 2px rgba(122,162,255,0.55)" }} />
+        <span style={{ position: "absolute", left: "25%", top: 2, width: 1, height: 7, background: "rgba(148,163,200,0.3)" }} />
+        <span style={{ position: "absolute", left: "50%", top: 2, width: 1, height: 7, background: "rgba(148,163,200,0.3)" }} />
+        <span style={{ position: "absolute", left: "75%", top: 2, width: 1, height: 7, background: "rgba(148,163,200,0.3)" }} />
       </div>
 
-      <div style={{ marginTop: 30, fontFamily: "monospace", fontSize: 11, letterSpacing: "0.05em", color: M4.mut2, textAlign: "center" }}>
-        While exploring:&nbsp;&nbsp;<b style={{ color: M4.mut, fontWeight: 400 }}>open more than one path in Deep</b>&nbsp;·&nbsp;<b style={{ color: M4.mut, fontWeight: 400 }}>look for patterns across directions</b>&nbsp;·&nbsp;<b style={{ color: M4.mut, fontWeight: 400 }}>follow curiosity, not commitment.</b>
+      <div style={{ fontFamily: "monospace", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: M4.mut2, display: "flex", alignItems: "baseline", gap: 12, marginTop: 18, flexWrap: "wrap" }}>
+        DO SOMETHING WITH IT
+        <span style={{ fontFamily: "inherit", fontStyle: "normal", fontSize: 13, letterSpacing: "0.01em", textTransform: "none", color: M4.mut }}>
+          your idea — the seed you explored
+          {angleCount > 0 ? <>, with all <b style={{ color: M4.ink2, fontWeight: 500 }}>{angleCount} direction{angleCount === 1 ? "" : "s"}</b> attached</> : null}
+        </span>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginTop: 20 }}>
+        <SaveTile user={user} viewingFromSaved={viewingFromSaved} onSave={onSave} onAuth={onAuth} goToMyIdeas={goToMyIdeas} angleCount={angleCount} />
+        <DirectionCard skin="explore" glyph="explore" title="Explore again"
+          desc="Re-widen into a fresh fan of directions."
+          cue="Widen" onClick={() => onExplore && onExplore()} />
+        <DirectionCard skin="deep" glyph="deep" title="Take to Deep"
+          desc="Send the whole idea for a scored verdict."
+          cue="To verdict" onClick={() => onDeep && onDeep()} />
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 11, marginTop: 26, fontSize: 13, color: M4.mut }}>
+        <span style={{ color: M4.mut2, flexShrink: 0, display: "inline-flex" }}><Svg w={15} sw={1.7}><path d="M7 17 17 7M9 7h8v8" /></Svg></span>
+        <span>
+          Want to act on a single direction instead? Each angle above carries its own{" "}
+          <span style={{ fontFamily: "monospace", fontSize: 11, color: "#aab4c3" }}>save</span> ·{" "}
+          <span style={{ fontFamily: "monospace", fontSize: 11, color: EX.base }}>explore</span> ·{" "}
+          <span style={{ fontFamily: "monospace", fontSize: 11, color: "#9a8fd8" }}>take to Deep</span>.
+        </span>
+      </div>
+
+      <div style={{ marginTop: 40, fontFamily: "monospace", fontSize: 11, letterSpacing: "0.05em", color: M4.mut2, textAlign: "center" }}>
+        While exploring:&nbsp;&nbsp;<b style={{ color: "#9aa3b1", fontWeight: 400 }}>open more than one path in Deep</b>&nbsp;·&nbsp;<b style={{ color: "#9aa3b1", fontWeight: 400 }}>look for patterns across directions</b>&nbsp;·&nbsp;<b style={{ color: "#9aa3b1", fontWeight: 400 }}>follow curiosity, not commitment.</b>
       </div>
     </section>
   );
@@ -1244,24 +1449,31 @@ export default function ExploreView({
   const xt = {
     ...t,
     bg: "#0a0d13", surface: "#0e1117", surfAlt: "#12161d", surf3: "#161b24",
-    border: "rgba(55,55,55,0.42)", text: "#f0f0f0", sec: "#a0a0a0",
-    mut: "#6b6f78", faint: "#474b54", divider: "#1d2027",
+    border: "rgba(148,163,200,0.14)", text: "#f0f0f0", sec: "#a0a0a0",
+    mut: "#6b6f78", faint: "#474b54", divider: "rgba(148,163,200,0.08)",
   };
 
   // CSS-var scope so nested cards inherit explore-aware tokens without prop drilling
   const scopeVars = {
     "--extext": xt.text, "--exsec": xt.sec, "--exmut": xt.mut, "--exfaint": xt.faint,
     "--exsurface": xt.surface, "--exsurf2": xt.surfAlt, "--exborder": xt.border,
-    "--exborder-soft": "rgba(55,55,55,0.24)", "--exdivider": xt.divider,
+    "--exborder-soft": "rgba(148,163,200,0.13)", "--exdivider": xt.divider,
   };
 
+  // NO ambient layer. The standalone's dawn pools were tried here twice and
+  // both times produced the giant-card effect: this root spans only the
+  // content area, so any background it paints — opaque base or clipped glow —
+  // reads as an inset rectangle against DashboardShell's flat chrome. If the
+  // atmosphere returns, it must live in the shell (a whole-viewport layer),
+  // not in this component. Root paints nothing; Explore sits on the same
+  // ground as Deep.
   return (
-    <div style={{ background: xt.bg, color: xt.text, overflowX: "hidden", ...scopeVars }}>
+    <div style={{ color: xt.text, overflowX: "hidden", ...scopeVars }}>
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal && setShowAuthModal(false)} onAuth={(u) => setUser && setUser(u)} t={t} />}
 
       <main style={{ flex: 1, paddingBottom: 80 }}>
-        <PageContainer wide>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0 22px" }}>
+        <PageContainer xwide>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0 26px" }}>
             <ModeTitle mode="explore" />
             <BackLink t={t} color={readOnly ? EX.bright : undefined} onClick={() => { if (readOnly) { onBackToCurrent && onBackToCurrent(); return; } if (viewingFromSaved) { setViewingFromSaved && setViewingFromSaved(false); goToMyIdeas && goToMyIdeas(); } else { setCurrentScreen && setCurrentScreen("input"); } }}>
               {readOnly ? "Back to current read" : (viewingFromSaved ? "Back to My Ideas" : "Back to idea")}
@@ -1283,7 +1495,7 @@ export default function ExploreView({
             onExploreAngle={(a) => onExploreAngle && onExploreAngle(a)}
             onTakeToDeep={onTakeToDeep} branchReason={read?.branchability?.reason}
             angleStatus={angleStatus} onOpenChild={onOpenChild} readOnly={readOnly} />
-          <TerrainSurface terrain={terrain} t={xt} entities={entities} />
+          <TerrainSurface terrain={terrain} angles={angles} t={xt} entities={entities} />
           {!readOnly && (
           <NextMoveSurface
             entities={entities}
@@ -1299,8 +1511,8 @@ export default function ExploreView({
             goToMyIdeas={goToMyIdeas}
           />
           )}
-          <div style={{ marginTop: 30, paddingTop: 18, borderTop: `1px solid ${t.border}` }}>
-            <Caption t={t} mono style={{ margin: 0, color: "#474b54" }}>EXPLORE — WIDENS A ROUGH IDEA · NO SCORE, NO RANK, NO VERDICT</Caption>
+          <div style={{ marginTop: 36, paddingTop: 20, borderTop: "1px solid rgba(148,163,200,0.1)", textAlign: "center" }}>
+            <Caption t={t} mono style={{ margin: 0, color: "#565c68", fontSize: 10.5, letterSpacing: "0.18em" }}>EXPLORE — WIDENS A ROUGH IDEA · NO SCORE, NO RANK, NO VERDICT</Caption>
           </div>
         </PageContainer>
       </main>
