@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ILC · The Main Shape — Shell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* ============ THE FIELD ============ */
+  body { display: flex; height: 100vh; overflow: hidden; }
+
+  /* ============ THE RAIL (memory is global) ============ */
+  .rail {
+    width: var(--rail-w); flex: none;
+    background: var(--paper-deep);
+    border-right: 1px solid var(--rule);
+    display: flex; flex-direction: column;
+    padding: 20px 12px 16px;
+  }
+  .rail-brand { display: flex; align-items: center; gap: 10px; padding: 2px 10px 22px; }
+  .rail-brand svg { flex: none; }
+  .rail-brand .rb-name { font-family: var(--font-author); font-weight: 500; font-size: 17px; letter-spacing: -0.005em; }
+  .rail-nav { display: flex; flex-direction: column; gap: 2px; }
+  .rail-item {
+    display: flex; align-items: center; gap: 11px;
+    font-family: var(--font-interface); font-size: var(--fs-14); font-weight: 500;
+    color: var(--ink-2); background: none; border: none; cursor: pointer;
+    padding: 8px 10px; border-radius: var(--r-2); text-align: left;
+    transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  }
+  .rail-item:hover { background: rgba(28,27,23,0.05); color: var(--ink); }
+  .rail-item.is-active { background: var(--paper-high); color: var(--ink); border: 1px solid var(--rule); padding: 7px 9px; }
+  .rail-item svg { flex: none; stroke: currentColor; }
+  .rail-spacer { flex: 1; }
+  .rail-util { display: flex; flex-direction: column; gap: 1px; padding-top: 12px; border-top: 1px solid var(--rule); }
+  .rail-util .rail-item { font-size: var(--fs-12); font-weight: 400; color: var(--ink-3); padding: 5px 10px; }
+  .rail-util .rail-item:hover { color: var(--ink-2); }
+  .rail-account { display: flex; align-items: center; gap: 9px; padding: 12px 10px 0; }
+  .rail-account .ra-dot {
+    width: 22px; height: 22px; border-radius: 50%; flex: none;
+    background: var(--paper-high); border: 1px solid var(--rule-strong);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-instrument); font-size: 10px; color: var(--ink-2);
+  }
+  .rail-account .ra-mail { font-family: var(--font-instrument); font-size: 10px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ============ MAIN COLUMN ============ */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+  .topbar {
+    height: 52px; flex: none;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px; border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+  }
+  .topbar .tp-room { font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
+  .topbar .tp-status { font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.06em; color: var(--ink-3); }
+  .topbar .tp-status b { color: var(--ink-2); font-weight: 600; }
+
+  /* ============ THREAD CONTEXT (inside an idea) ============ */
+  .threadctx {
+    flex: none; overflow: hidden;
+    background: var(--paper); border-bottom: 1px solid var(--rule);
+    max-height: 0; opacity: 0;
+    transition: max-height var(--t-move) var(--ease), opacity var(--t-move) var(--ease);
+  }
+  .threadctx.is-open { max-height: 96px; opacity: 1; }
+  .threadctx-inner { display: flex; align-items: center; gap: 28px; padding: 12px 28px 10px; }
+  .threadctx .tc-title { min-width: 0; }
+  .threadctx .tc-title .tt-name { font-family: var(--font-author); font-weight: 500; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .threadctx .tc-title .tt-meta { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.08em; color: var(--ink-3); text-transform: uppercase; margin-top: 1px; }
+  .threadctx .threadbar { flex: 1; max-width: 640px; }
+  .threadctx .tc-close { margin-left: auto; }
+
+  /* ============ THE ROOM (content viewport) ============ */
+  .room-viewport { flex: 1; overflow-y: auto; position: relative; }
+  .room { min-height: 100%; padding: 44px 48px 96px; }
+  .room-inner { max-width: 880px; margin: 0 auto; }
+
+  .room[data-register="air"]   { background: var(--air-tint); }
+  .room[data-register="press"] { background: var(--press-tint); }
+
+  .room-eyebrow { font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+  .room-title { font-family: var(--font-author); font-weight: 500; font-size: var(--fs-34); line-height: 1.2; margin: 10px 0 6px; }
+  .room-lede { font-size: var(--fs-15); color: var(--ink-2); max-width: var(--measure); }
+
+  /* register modulation — same parts, different aperture */
+  .room[data-register="air"] .room-title { font-weight: 400; letter-spacing: 0.002em; color: #2E3E4E; }
+  .room[data-register="air"] .room-lede { color: var(--air-ink); line-height: 1.85; }
+  .room[data-register="air"] .room-eyebrow { color: #5E7284; }
+  .room[data-register="press"] .room-title { font-weight: 600; color: #2A2519; }
+  .room[data-register="press"] .room-lede { color: var(--press-ink); line-height: 1.55; }
+  .room[data-register="press"] .room-eyebrow { color: #7A6F58; }
+
+  /* ---------- desk pieces ---------- */
+  .desk-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; margin-top: 36px; }
+  .card { background: var(--paper-high); border: 1px solid var(--rule); border-radius: var(--r-3); padding: 22px 24px; }
+  .card .c-eyebrow { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+  .card h3 { font-family: var(--font-author); font-weight: 500; font-size: var(--fs-21); margin: 8px 0 6px; }
+  .card p { font-size: var(--fs-14); color: var(--ink-2); }
+  .card .c-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .resume-thread { margin: 16px 0 2px; }
+  .doors { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }
+  .door {
+    border: 1px solid var(--rule); border-radius: var(--r-3);
+    padding: 22px 24px 24px; cursor: pointer; text-align: left;
+    transition: border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+    background: var(--paper-high); font: inherit;
+  }
+  .door:hover { border-color: var(--rule-strong); transform: translateY(-1px); }
+  .door .d-tag { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.16em; text-transform: uppercase; }
+  .door h4 { font-family: var(--font-author); font-size: 19px; font-weight: 500; margin: 9px 0 5px; }
+  .door p { font-size: var(--fs-12); color: var(--ink-3); line-height: 1.55; }
+  .door-air { background: var(--air-tint); }
+  .door-air .d-tag { color: #5E7284; }
+  .door-air h4 { font-weight: 400; color: #2E3E4E; }
+  .door-press { background: var(--press-tint); }
+  .door-press .d-tag { color: #7A6F58; }
+  .door-press h4 { font-weight: 600; color: #2A2519; }
+
+  /* ---------- explore fan ---------- */
+  .fan-wrap { margin-top: 40px; position: relative; }
+  .fan-svg { display: block; width: 100%; height: 120px; }
+  .fan-svg path { fill: none; stroke: rgba(68, 88, 106, 0.45); stroke-width: 1.2; transition: stroke var(--t-fast) var(--ease), opacity var(--t-fast) var(--ease); }
+  .fan-svg .seed-line { stroke: var(--rule-strong); }
+  .fan-note { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.12em; text-transform: uppercase; color: #5E7284; text-align: center; margin-top: 4px; }
+  .angles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 10px; }
+  .angle-card { background: rgba(252, 251, 247, 0.8); border: 1px solid rgba(68,88,106,0.2); border-radius: var(--r-3); padding: 20px 22px; transition: opacity var(--t-slow) var(--ease), border-color var(--t-fast) var(--ease); }
+  .angle-card .a-basis { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.14em; text-transform: uppercase; color: #5E7284; }
+  .angle-card h4 { font-family: var(--font-author); font-weight: 400; font-size: 18px; color: #2E3E4E; margin: 9px 0 7px; }
+  .angle-card p { font-size: var(--fs-12); color: var(--air-ink); line-height: 1.7; }
+  .angle-card .a-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .angle-card .btn { font-size: var(--fs-12); padding: 5px 12px; }
+  .fan-graduating .angle-card { opacity: 0.25; }
+  .fan-graduating .angle-card.is-chosen { opacity: 1; border-color: var(--thread-hair); }
+  .fan-graduating .fan-svg path { opacity: 0.2; }
+  .fan-graduating .fan-svg path.is-chosen { opacity: 1; stroke: var(--thread); stroke-width: 1.8; }
+
+  /* ---------- deep spine ---------- */
+  .deep-spine { position: relative; margin-top: 40px; padding-left: 46px; }
+  .deep-spine::before { content: ""; position: absolute; left: 18px; top: 6px; bottom: 6px; width: 1px; background: rgba(74, 67, 53, 0.3); }
+  .mv { position: relative; padding: 0 0 26px; }
+  .mv::before { content: ""; position: absolute; left: -32.5px; top: 7px; width: 10px; height: 10px; border-radius: 50%; background: var(--press-tint); border: 1.5px solid rgba(74,67,53,0.45); }
+  .mv.is-here::before { background: var(--thread); border-color: var(--thread); }
+  .mv .mv-label { font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.14em; text-transform: uppercase; color: #7A6F58; }
+  .mv.is-here .mv-label { color: var(--ink); font-weight: 600; }
+  .mv .mv-card { background: rgba(252, 251, 247, 0.75); border: 1px solid rgba(74,67,53,0.18); border-radius: var(--r-3); padding: 16px 20px; margin-top: 8px; }
+  .mv .mv-card p { font-size: var(--fs-14); color: var(--press-ink); line-height: 1.6; }
+  .mv .mv-card .v-author { font-size: 17px; color: #2A2519; }
+
+  /* ---------- compare seam ---------- */
+  .seam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 40px; position: relative; }
+  .seam-col { padding: 0 26px; }
+  .seam-col + .seam-col { border-left: 1px solid var(--rule-strong); }
+  .seam-col .sc-name { font-family: var(--font-author); font-weight: 500; font-size: 19px; margin-bottom: 4px; }
+  .seam-col .sc-meta { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 18px; }
+  .rung { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--rule); }
+  .rung .r-dim { font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); width: 88px; flex: none; }
+  .rung p { font-size: var(--fs-12); color: var(--ink-2); }
+  @media (prefers-reduced-motion: no-preference) {
+    .room.m-seam .seam-col:first-child { animation: seamL var(--t-slow) var(--ease) both; }
+    .room.m-seam .seam-col:last-child  { animation: seamR var(--t-slow) var(--ease) both; }
+  }
+  @keyframes seamL { from { transform: translateX(24px); opacity: 0.3; } to { transform: none; opacity: 1; } }
+  @keyframes seamR { from { transform: translateX(-24px); opacity: 0.3; } to { transform: none; opacity: 1; } }
+
+  /* ---------- lineage braid ---------- */
+  .braid { margin-top: 36px; background: var(--paper-high); border: 1px solid var(--rule); border-radius: var(--r-3); padding: 30px; overflow-x: auto; }
+  .braid svg { display: block; }
+  .braid text { font-family: var(--font-instrument); font-size: 10px; fill: var(--ink-2); letter-spacing: 0.04em; }
+  .braid .b-dead { opacity: 0.38; }
+
+  /* ---------- brief exit ---------- */
+  .brief-close { margin-top: 44px; position: relative; }
+  .brief-close .v-author-italic { font-size: 21px; color: var(--ink); max-width: 46ch; }
+  .brief-exit-svg { display: block; margin-top: 26px; width: 100%; height: 40px; }
+
+  /* room footer nav hint */
+  .demo-hint { margin-top: 56px; padding-top: 14px; border-top: 1px solid var(--rule); font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.08em; color: var(--ink-4); text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+  <!-- ============ RAIL — memory is global; thinking is per-thread ============ -->
+  <aside class="rail">
+    <div class="rail-brand">
+      <svg width="34" height="16" viewBox="0 0 150 54" fill="none">
+        <path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36"
+              stroke="#C2492F" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+      <span class="rb-name">IdeaLoop</span>
+    </div>
+    <nav class="rail-nav">
+      <button class="rail-item is-active" data-goto="desk">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 10.5 H13.5 M3 10.5 V13 M12 10.5 V13 M4.5 10.5 V6.5 A3 3 0 0 1 10.5 6.5 V10.5"/></svg>
+        The Desk
+      </button>
+      <button class="rail-item" data-goto="shelves">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 5 H13.5 M1.5 10.5 H13.5 M4 5 V2.5 M8 5 V3.5 M6 10.5 V8 M11 10.5 V8.5"/></svg>
+        The Shelves
+      </button>
+    </nav>
+    <div class="rail-spacer"></div>
+    <div class="rail-util">
+      <button class="rail-item">Settings</button>
+      <button class="rail-item">My plan</button>
+      <button class="rail-item">Get help</button>
+    </div>
+    <div class="rail-account">
+      <span class="ra-dot">e</span>
+      <span class="ra-mail">emre@idealoopcore.com</span>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <div class="topbar">
+      <span class="tp-room" id="tpRoom">the desk</span>
+      <span class="tp-status">beta · free — <b>2 runs</b> this week · refills thu</span>
+    </div>
+
+    <!-- thread context: slides in when a thread is picked up, survives every cut inside the idea -->
+    <div class="threadctx" id="threadctx">
+      <div class="threadctx-inner">
+        <div class="tc-title">
+          <div class="tt-name">Invoice hand-off for solo bookkeepers</div>
+          <div class="tt-meta">family of 3 · root · watched quarterly</div>
+        </div>
+        <div class="threadbar" id="threadbar">
+          <button class="tb-stop is-done" data-goto="explore"><span class="tb-dot"></span>captured</button>
+          <span class="tb-line is-done"></span>
+          <button class="tb-stop is-done" data-goto="explore"><span class="tb-dot"></span>explored</button>
+          <span class="tb-line" id="tbl-deep"></span>
+          <button class="tb-stop" id="tbs-deep" data-goto="deep"><span class="tb-dot"></span>deep</button>
+          <span class="tb-line is-open"></span>
+          <button class="tb-stop is-open" data-goto="compare"><span class="tb-dot"></span>compare</button>
+          <span class="tb-line is-open"></span>
+          <button class="tb-stop is-open" data-goto="brief"><span class="tb-dot"></span>brief</button>
+        </div>
+        <button class="btn btn-quiet tc-close" data-goto="desk" style="font-size:12px;">put down ⟶ desk</button>
+      </div>
+    </div>
+
+    <div class="room-viewport"><div id="roomHost"></div></div>
+  </div>
+
+  <!-- ============ ROOM TEMPLATES ============ -->
+
+  <template id="tpl-desk">
+    <div class="room" data-register="neutral">
+      <div class="room-inner">
+        <span class="room-eyebrow">the desk</span>
+        <h1 class="room-title">Where you left off</h1>
+        <p class="room-lede">Every idea, still in the loop. Memory is global — thinking happens
+          on a thread. Pick one up, or bring a new one.</p>
+
+        <div class="desk-grid">
+          <div class="card">
+            <span class="c-eyebrow">continue</span>
+            <h3>Invoice hand-off for solo bookkeepers</h3>
+            <div class="resume-thread threadbar" style="height:auto;">
+              <span class="tb-stop is-done"><span class="tb-dot"></span>captured</span>
+              <span class="tb-line is-done"></span>
+              <span class="tb-stop is-done"><span class="tb-dot"></span>explored</span>
+              <span class="tb-line is-open"></span>
+              <span class="tb-stop is-open"><span class="tb-dot"></span>deep</span>
+            </div>
+            <p>Explored six days ago — three angles open, none taken forward yet.</p>
+            <div class="c-actions">
+              <button class="btn btn-primary" data-goto="explore">Pick up the thread</button>
+            </div>
+          </div>
+          <div class="card">
+            <span class="c-eyebrow">needs your move</span>
+            <h3 style="font-size:17px;">The landscape moved</h3>
+            <p>Evidence Watch found two new actors near the wedge of
+              <em>Receipt inbox</em>. The idea text is unchanged — only the world moved.</p>
+            <div class="c-actions"><button class="btn" style="font-size:12.5px;">Re-read on new evidence</button></div>
+          </div>
+        </div>
+
+        <div style="margin-top:44px;">
+          <span class="room-eyebrow">start with how you want to think</span>
+          <div class="doors">
+            <button class="door door-air" data-goto="explore">
+              <span class="d-tag">explore · widen</span>
+              <h4>What could this become?</h4>
+              <p>A rough idea fans into angles. No score, no rank, no verdict — the aperture opens.</p>
+            </button>
+            <button class="door door-press" data-goto="deep">
+              <span class="d-tag">deep · pressure</span>
+              <h4>Does this hold?</h4>
+              <p>One serious version, held against the evidence. Harsh, fair, traceable.</p>
+            </button>
+          </div>
+        </div>
+        <div class="demo-hint">shell demo · desk = neutral register · doors carry the two apertures</div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-shelves">
+    <div class="room" data-register="neutral">
+      <div class="room-inner">
+        <span class="room-eyebrow">the shelves</span>
+        <h1 class="room-title">All your threads</h1>
+        <p class="room-lede">Two shelves: rough ideas waiting for a first pass, and families with
+          reads. One card per family, pinned to its root.</p>
+        <div style="margin-top:36px;">
+          <span class="room-eyebrow" style="font-size:10px;">rough ideas · 2</span>
+          <div class="desk-grid" style="grid-template-columns:1fr 1fr; margin-top:12px;">
+            <div class="card"><span class="c-eyebrow">✎ rough</span><h3 style="font-size:17px;">Meal-plan hand-me-downs</h3><p>Captured jul 14 · two doors open</p></div>
+            <div class="card"><span class="c-eyebrow">✎ rough</span><h3 style="font-size:17px;">Contractor punch-list voice notes</h3><p>Captured jul 20 · two doors open</p></div>
+          </div>
+        </div>
+        <div style="margin-top:34px;">
+          <span class="room-eyebrow" style="font-size:10px;">ideas · 3 families</span>
+          <div class="desk-grid" style="grid-template-columns:1fr 1fr; margin-top:12px;">
+            <div class="card">
+              <span class="c-eyebrow">⌖ deep · read jul 22</span>
+              <h3 style="font-size:17px;">Receipt inbox</h3>
+              <div style="display:flex; align-items:center; gap:10px; margin:10px 0 6px;">
+                <span class="score-pill"><span class="sp-band mid"></span>5.8</span>
+                <span class="handle" style="font-size:11.5px;">holds at rung 4 — distribution is the binding constraint</span>
+              </div>
+              <p style="font-size:12px;">⑂ 3 versions · lineage</p>
+            </div>
+            <div class="card">
+              <span class="c-eyebrow">◎ explored · jul 22</span>
+              <h3 style="font-size:17px;">Invoice hand-off for solo bookkeepers</h3>
+              <p style="margin-top:8px;">Three angles open · no verdict — exploration doesn't score.</p>
+              <div class="c-actions"><button class="btn" style="font-size:12px;" data-goto="explore">Open the room</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="demo-hint">shell demo · shelves = neutral register · a family card always shows its root</div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-explore">
+    <div class="room" data-register="air">
+      <div class="room-inner">
+        <span class="room-eyebrow">explore · the widening</span>
+        <h1 class="room-title">What could this become?</h1>
+        <p class="room-lede">Our read, then the fan. Three angles in fan order — not ranked.
+          Every strand points at a named piece of evidence or it was dropped.</p>
+
+        <div class="fan-wrap" id="fanWrap">
+          <svg class="fan-svg" viewBox="0 0 880 120" preserveAspectRatio="none">
+            <path class="seed-line" d="M0 100 L340 100"/>
+            <path id="strand-0" d="M340 100 C 420 100 450 30 560 24 L 880 24"/>
+            <path id="strand-1" d="M340 100 C 430 100 470 66 580 62 L 880 62"/>
+            <path id="strand-2" d="M340 100 C 430 100 480 100 590 100 L 880 100"/>
+          </svg>
+          <div class="fan-note">fan order · not ranked</div>
+          <div class="angles">
+            <div class="angle-card" data-strand="0">
+              <span class="a-basis">positioning · lane: unclaimed hand-off</span>
+              <h4>The bookkeeper's inbox, not the founder's scanner</h4>
+              <p>Sell to the bookkeeper who receives the mess, not the client who makes it.
+                 Opening rests on <span class="evidence-link">r/bookkeeping</span> friction threads.</p>
+              <div class="a-actions">
+                <button class="btn">Save as branch</button>
+                <button class="btn btn-primary grad-btn" data-strand="0">Take to deep →</button>
+              </div>
+            </div>
+            <div class="angle-card" data-strand="1">
+              <span class="a-basis">mechanism · lane: email-native</span>
+              <h4>Forward-to-file: no app at all</h4>
+              <p>The entire product is an email address. Bet: adoption friction is the real
+                 moat gap. Disconfirmer: <span class="evidence-link">docparser</span> already half-serves it.</p>
+              <div class="a-actions">
+                <button class="btn">Save as branch</button>
+                <button class="btn btn-primary grad-btn" data-strand="1">Take to deep →</button>
+              </div>
+            </div>
+            <div class="angle-card" data-strand="2">
+              <span class="a-basis">target · lane: vertical wedge</span>
+              <h4>Trades first: plumbers' paper glove-boxes</h4>
+              <p>Narrowest wedge with the loudest pain. Evidence is thin here —
+                 <span class="absence-chip">not in the evidence</span> a named buyer.</p>
+              <div class="a-actions">
+                <button class="btn">Save as branch</button>
+                <button class="btn btn-primary grad-btn" data-strand="2">Take to deep →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="demo-hint">shell demo · open-air register · “take to deep” runs the graduation motion —
+          the strand pulls taut and becomes the thread deep hangs from</div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-deep">
+    <div class="room" data-register="press">
+      <div class="room-inner">
+        <span class="room-eyebrow">deep · the pressure room</span>
+        <h1 class="room-title">Does this hold?</h1>
+        <p class="room-lede">Five movements on one spine. The number never appears before the read.
+          Same evidence as Explore — a different job.</p>
+
+        <div class="deep-spine">
+          <div class="mv is-here">
+            <div class="mv-label">Ⅰ · the read</div>
+            <div class="mv-card">
+              <p class="v-author">The evidence supports a narrow, real friction — and puts the
+                weight of this bet on distribution, not on the build.</p>
+              <div style="display:flex; align-items:center; gap:12px; margin-top:12px;">
+                <span class="score-pill"><span class="sp-band mid"></span>5.8 overall</span>
+                <span class="handle" style="font-size:11.5px;">what would move it: a named repeat buyer in the wedge ↗</span>
+              </div>
+            </div>
+          </div>
+          <div class="mv">
+            <div class="mv-label">Ⅱ · findings</div>
+            <div class="mv-card"><p>Four metrics, each with its ladder, its question gates, its
+              receipts, and its gap panel — the evidence visibly produces the number.</p></div>
+          </div>
+          <div class="mv">
+            <div class="mv-label">Ⅲ · the field</div>
+            <div class="mv-card"><p><span class="evidence-link">Mainline OCR</span>,
+              <span class="evidence-link">docparser</span>, and a baseline of spreadsheet habit.
+              Every actor breathes at the same amplitude — motion is never a verdict channel.</p></div>
+          </div>
+          <div class="mv">
+            <div class="mv-label">Ⅳ · the build</div>
+            <div class="mv-card"><p>TC as an equation: the idea, for anyone − your background = for
+              you. A weather report, not a verdict.</p></div>
+          </div>
+          <div class="mv">
+            <div class="mv-label">Ⅴ · the hinge</div>
+            <div class="mv-card"><p class="v-author" style="font-size:16px;">The read stops here.
+              The facts are checkable — and the next move is yours to make.</p></div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:8px;">
+          <button class="btn" data-goto="brief">Execution brief →</button>
+          <button class="btn" data-goto="compare">Add to compare</button>
+          <button class="btn btn-quiet" data-goto="lineage">See the braid</button>
+        </div>
+        <div class="demo-hint">shell demo · pressure register · arrived by settling inward — never by fanfare</div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-compare">
+    <div class="room" data-register="neutral">
+      <div class="room-inner">
+        <span class="room-eyebrow">compare · the seam</span>
+        <h1 class="room-title">Which bet is heavier?</h1>
+        <p class="room-lede">Two threads at one moment. The connector explains the weight of a
+          difference — never a cause. The display defers to the scores.</p>
+        <div class="seam-grid">
+          <div class="seam-col">
+            <div class="sc-name">Invoice hand-off</div>
+            <div class="sc-meta">read jul 26 · <span class="score-pill" style="padding:1px 7px;"><span class="sp-band mid"></span>5.8</span></div>
+            <div class="rung"><span class="r-dim">demand</span><p>Named friction, thin repeat signal.</p></div>
+            <div class="rung"><span class="r-dim">payment</span><p>First dollar plausible at the bookkeeper.</p></div>
+            <div class="rung"><span class="r-dim">positioning</span><p>Wedge open; two adjacent actors.</p></div>
+          </div>
+          <div class="seam-col">
+            <div class="sc-name">Receipt inbox</div>
+            <div class="sc-meta">read jul 22 · <span class="score-pill" style="padding:1px 7px;"><span class="sp-band mid"></span>5.2</span></div>
+            <div class="rung"><span class="r-dim">demand</span><p>Broader pain, noisier evidence.</p></div>
+            <div class="rung"><span class="r-dim">payment</span><p>Consumer-adjacent — slower first dollar.</p></div>
+            <div class="rung"><span class="r-dim">positioning</span><p>Crowded lane, one live substitute.</p></div>
+          </div>
+        </div>
+        <div class="demo-hint">shell demo · the field splits at a seam · deep × deep only — comparison is an evaluative act</div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-lineage">
+    <div class="room" data-register="neutral">
+      <div class="room-inner">
+        <span class="room-eyebrow">lineage · the braid</span>
+        <h1 class="room-title">Where this family went</h1>
+        <p class="room-lede">A phylogenetic tree, not a progress bar. Live, pruned, and dead
+          branches all stay visible — selection, not evolution.</p>
+        <div class="braid">
+          <svg width="820" height="220" viewBox="0 0 820 220" fill="none">
+            <!-- trunk -->
+            <path d="M30 110 L200 110" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round"/>
+            <!-- branch up (live, lead) -->
+            <path d="M200 110 C 260 110 270 50 330 46 L 560 46" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M560 46 L 790 46" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1 7"/>
+            <!-- branch mid (parked) -->
+            <path class="b-dead" d="M200 110 L 470 110" stroke="#524E44" stroke-width="1.4" stroke-linecap="round"/>
+            <!-- branch down (killed) -->
+            <path class="b-dead" d="M200 110 C 250 110 260 172 320 176 L 430 176" stroke="#524E44" stroke-width="1.4" stroke-linecap="round"/>
+            <path class="b-dead" d="M424 170 L 436 182 M436 170 L 424 182" stroke="#524E44" stroke-width="1.4" stroke-linecap="round"/>
+            <!-- nodes -->
+            <circle cx="30" cy="110" r="5" fill="#F6F4EE" stroke="#524E44" stroke-width="1.5"/>
+            <circle cx="200" cy="110" r="5" fill="#524E44"/>
+            <circle cx="560" cy="46" r="6" fill="#C2492F"/>
+            <circle cx="470" cy="110" r="5" fill="#F6F4EE" stroke="#524E44" stroke-width="1.5"/>
+            <text x="22" y="132">root · captured</text>
+            <text x="168" y="132">explored · 3 angles</text>
+            <text x="520" y="26">v3 · deep 5.8 · lead</text>
+            <text x="446" y="132" class="b-dead">v2 · parked</text>
+            <text x="300" y="200" class="b-dead">v1 · killed — evidence, kept</text>
+          </svg>
+        </div>
+        <div class="demo-hint">shell demo · arrived by zooming out · the red thread marks the live line only —
+          liveness, not merit</div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-brief">
+    <div class="room" data-register="neutral">
+      <div class="room-inner">
+        <span class="room-eyebrow">the brief · the handoff</span>
+        <h1 class="room-title">Your first move</h1>
+        <p class="room-lede">Six blocks: the bet, what to prove next, the order, what won't count,
+          the gates, the handoff. Opens and closes in the author's voice.</p>
+        <div class="card" style="margin-top:36px; padding:28px 32px;">
+          <span class="c-eyebrow">the bet</span>
+          <p class="v-author-italic" style="font-size:19px; margin-top:10px; max-width:52ch;">You are
+            betting that a bookkeeper will hand her inbox to a stranger's software before she will
+            hire another pair of hands — and the evidence says the friction is real, but the trust
+            is unproven.</p>
+        </div>
+        <div class="brief-close">
+          <span class="c-eyebrow">the handoff</span>
+          <p class="v-author-italic" style="margin-top:10px;">Over to you — it's yours now.</p>
+          <svg class="brief-exit-svg" viewBox="0 0 880 40" preserveAspectRatio="none">
+            <path d="M0 20 L 640 20" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M640 20 L 880 20" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1 8"/>
+          </svg>
+        </div>
+        <div class="demo-hint">shell demo · the thread runs off the page edge, uncut — handed over, never ended</div>
+      </div>
+    </div>
+  </template>
+
+<script>
+  /* ============ THE GRAMMAR ============
+     One motion per navigation; direction invariant.
+     Something always survives the cut: the rail globally,
+     the thread context inside an idea.                    */
+
+  const host = document.getElementById('roomHost');
+  const threadctx = document.getElementById('threadctx');
+  const tpRoom = document.getElementById('tpRoom');
+  const railItems = document.querySelectorAll('.rail-nav .rail-item');
+
+  const ROOMS = {
+    desk:    { tpl: 'tpl-desk',    label: 'the desk',              thread: false },
+    shelves: { tpl: 'tpl-shelves', label: 'the shelves',           thread: false },
+    explore: { tpl: 'tpl-explore', label: 'explore · the widening',thread: true  },
+    deep:    { tpl: 'tpl-deep',    label: 'deep · the pressure room', thread: true },
+    compare: { tpl: 'tpl-compare', label: 'compare · the seam',    thread: true  },
+    lineage: { tpl: 'tpl-lineage', label: 'lineage · the braid',   thread: true  },
+    brief:   { tpl: 'tpl-brief',   label: 'the brief · the handoff', thread: true },
+  };
+
+  // fixed direction per destination (the invariant grammar)
+  const MOTION = {
+    desk: 'm-widen', shelves: 'm-widen',
+    explore: 'm-widen', deep: 'm-pressure',
+    compare: 'm-seam', lineage: 'm-zoom-out', brief: 'm-along-fwd',
+  };
+  const ORDER = ['explore', 'deep', 'compare', 'brief']; // along the thread
+
+  let current = 'desk';
+  let deepDone = false;
+
+  function render(key, motionOverride) {
+    const room = ROOMS[key];
+    const tpl = document.getElementById(room.tpl);
+    host.innerHTML = '';
+    const node = tpl.content.cloneNode(true);
+    host.appendChild(node);
+    const el = host.querySelector('.room');
+
+    // along-thread backward beats the default motion
+    let motion = motionOverride || MOTION[key];
+    if (!motionOverride && room.thread && ROOMS[current] && ROOMS[current].thread) {
+      const from = ORDER.indexOf(current), to = ORDER.indexOf(key);
+      if (from > -1 && to > -1) motion = to >= from ? 'm-along-fwd' : 'm-along-back';
+      if (key === 'compare') motion = 'm-seam';
+      if (key === 'lineage') motion = 'm-zoom-out';
+    }
+    if (motion === 'm-seam') { el.classList.add('m-seam', 'm-widen'); }
+    else { el.classList.add(motion); }
+
+    // chrome state — what survives the cut
+    threadctx.classList.toggle('is-open', room.thread);
+    tpRoom.textContent = room.label;
+    railItems.forEach(b => b.classList.toggle('is-active', b.dataset.goto === key));
+    document.querySelector('.room-viewport').scrollTop = 0;
+
+    // thread bar state: deep lights up once visited
+    if (key === 'deep') deepDone = true;
+    const tbsDeep = document.getElementById('tbs-deep');
+    const tblDeep = document.getElementById('tbl-deep');
+    tbsDeep.classList.toggle('is-here', key === 'deep');
+    tbsDeep.classList.toggle('is-done', deepDone && key !== 'deep');
+    tbsDeep.classList.toggle('is-open', !deepDone && key !== 'deep');
+    tblDeep.classList.toggle('is-done', deepDone);
+    tblDeep.classList.toggle('is-open', !deepDone);
+
+    current = key;
+    wire(host);
+  }
+
+  function wire(scope) {
+    scope.querySelectorAll('[data-goto]').forEach(b => {
+      b.addEventListener('click', () => render(b.dataset.goto));
+    });
+    // graduation: the strand pulls out of the fan and becomes the taut thread
+    scope.querySelectorAll('.grad-btn').forEach(b => {
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wrap = document.getElementById('fanWrap');
+        if (!wrap) return render('deep');
+        const idx = b.dataset.strand;
+        wrap.classList.add('fan-graduating');
+        wrap.querySelector('#strand-' + idx).classList.add('is-chosen');
+        scope.querySelectorAll('.angle-card').forEach(c => {
+          c.classList.toggle('is-chosen', c.dataset.strand === idx);
+        });
+        const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        setTimeout(() => render('deep'), reduced ? 0 : 420);
+      });
+    });
+  }
+
+  // global chrome buttons
+  document.querySelectorAll('.rail [data-goto], .threadctx [data-goto]').forEach(b => {
+    b.addEventListener('click', () => render(b.dataset.goto));
+  });
+
+  render('desk', 'm-pickup');
+</script>
+</body>
+</html>
