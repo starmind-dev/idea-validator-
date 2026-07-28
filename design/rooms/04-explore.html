@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ILC · Room 4 — Explore, the Widening</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="room.css">
+<style>
+  /* ---------- open-air specifics ---------- */
+  .air-card { background: rgba(252,251,247,0.8); border: 1px solid rgba(68,88,106,0.2); border-radius: var(--r-3); }
+
+  /* our read */
+  .read-reflection { font-family: var(--font-author); font-size: 20px; line-height: 1.6; color: #2E3E4E; font-weight: 400; max-width: 60ch; margin-top: 10px; }
+  .read-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 22px; }
+  .read-col { padding: 18px 20px; }
+  .read-col .rc-h { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.14em; text-transform: uppercase; color: #5E7284; margin-bottom: 10px; }
+  .read-col li { font-size: var(--fs-14); color: var(--air-ink); line-height: 1.75; list-style: none; padding-left: 16px; position: relative; margin-bottom: 6px; }
+  .read-col.clear li::before  { content: "—"; position: absolute; left: 0; color: #5E7284; }
+  .read-col.open li::before   { content: "?"; position: absolute; left: 0; color: #5E7284; font-family: var(--font-instrument); font-size: 12px; }
+  .branchability { display: flex; align-items: baseline; gap: 12px; margin-top: 18px; padding: 12px 20px; border-top: 1px dashed rgba(68,88,106,0.3); }
+  .branchability .bb-k { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.14em; text-transform: uppercase; color: #5E7284; flex: none; }
+  .branchability p { font-size: var(--fs-14); color: var(--air-ink); }
+
+  /* the fan */
+  .fan-svg { display: block; width: 100%; height: 130px; }
+  .fan-svg path { fill: none; stroke: rgba(68,88,106,0.42); stroke-width: 1.2; }
+  .fan-svg .seed-line { stroke: rgba(68,88,106,0.6); stroke-width: 1.4; }
+  .fan-svg .seed-label { font-family: var(--font-instrument); font-size: 10px; fill: #5E7284; letter-spacing: 0.08em; }
+  .fan-note { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.12em; text-transform: uppercase; color: #5E7284; text-align: center; margin: 2px 0 14px; }
+
+  .angle { padding: 22px 24px; margin-bottom: 14px; }
+  .angle .a-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+  .angle .a-basis { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.14em; text-transform: uppercase; color: #5E7284; }
+  .angle .a-slot { font-family: var(--font-instrument); font-size: var(--fs-10); color: rgba(94,114,132,0.7); letter-spacing: 0.08em; }
+  .angle h4 { font-family: var(--font-author); font-weight: 400; font-size: 21px; color: #2E3E4E; margin: 10px 0 6px; }
+  .angle .a-concept { font-size: var(--fs-14); color: var(--air-ink); line-height: 1.8; max-width: 64ch; }
+  .angle .a-block { margin-top: 14px; display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: baseline; }
+  .angle .a-k { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.12em; text-transform: uppercase; color: #5E7284; }
+  .angle .a-v { font-size: var(--fs-14); color: var(--air-ink); line-height: 1.7; }
+  .angle .a-v .trust { font-family: var(--font-instrument); font-size: 10px; color: #5E7284; letter-spacing: 0.06em; }
+  .angle .a-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .angle .btn { font-size: var(--fs-12); padding: 6px 14px; }
+  .angle .a-done { font-family: var(--font-instrument); font-size: 11px; color: var(--evidence); letter-spacing: 0.04em; }
+
+  /* terrain lanes */
+  .lane { display: grid; grid-template-columns: 200px 1fr; gap: 18px; padding: 16px 0; border-top: 1px solid rgba(68,88,106,0.18); }
+  .lane:last-child { border-bottom: 1px solid rgba(68,88,106,0.18); }
+  .lane .ln-name { font-family: var(--font-author); font-size: 16px; color: #2E3E4E; }
+  .lane .ln-density { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #5E7284; margin-top: 3px; }
+  .lane .ln-body { font-size: var(--fs-14); color: var(--air-ink); line-height: 1.75; }
+  .lane .ln-q { font-family: var(--font-author); font-style: italic; color: #3D5165; margin-top: 6px; font-size: 15px; }
+
+  /* next move */
+  .nextmove { padding: 24px 28px; }
+  .nextmove .nm-uncert { font-family: var(--font-author); font-size: 19px; color: #2E3E4E; line-height: 1.55; max-width: 56ch; }
+  .nextmove .nm-rec { font-size: var(--fs-14); color: var(--air-ink); margin-top: 12px; max-width: 64ch; line-height: 1.8; }
+  .nextmove .nm-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+  <aside class="rail">
+    <div class="rail-brand">
+      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#C2492F" stroke-width="7" stroke-linecap="round"/></svg>
+      <span class="rb-name">IdeaLoop</span>
+    </div>
+    <nav class="rail-nav">
+      <a class="rail-item" href="02-desk.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 10.5 H13.5 M3 10.5 V13 M12 10.5 V13 M4.5 10.5 V6.5 A3 3 0 0 1 10.5 6.5 V10.5"/></svg>
+        The Desk
+      </a>
+      <a class="rail-item" href="03-shelves.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 5 H13.5 M1.5 10.5 H13.5 M4 5 V2.5 M8 5 V3.5 M6 10.5 V8 M11 10.5 V8.5"/></svg>
+        The Shelves
+      </a>
+    </nav>
+    <div class="rail-spacer"></div>
+    <div class="rail-util">
+      <a class="rail-item" href="#">Settings</a>
+      <a class="rail-item" href="#">My plan</a>
+      <a class="rail-item" href="#">Get help</a>
+    </div>
+    <div class="rail-account"><span class="ra-dot">e</span><span class="ra-mail">emre@idealoopcore.com</span></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="tp-room">explore · the widening</span>
+      <span class="tp-status">beta · free — <b>2 runs</b> this week · refills thu</span>
+    </div>
+
+    <!-- the thread context — survives every cut inside this idea -->
+    <div class="threadctx">
+      <div class="threadctx-inner">
+        <div class="tc-title">
+          <div class="tt-name">Invoice hand-off for solo bookkeepers</div>
+          <div class="tt-meta">family of 3 · root · read jul 22</div>
+        </div>
+        <div class="threadbar">
+          <span class="tb-stop is-done"><span class="tb-dot"></span>captured</span>
+          <span class="tb-line is-done"></span>
+          <span class="tb-stop is-here"><span class="tb-dot"></span>explored</span>
+          <span class="tb-line is-open"></span>
+          <a class="tb-stop is-open" href="05-deep.html" style="text-decoration:none;"><span class="tb-dot"></span>deep</a>
+          <span class="tb-line is-open"></span>
+          <a class="tb-stop is-open" href="07-compare.html" style="text-decoration:none;"><span class="tb-dot"></span>compare</a>
+          <span class="tb-line is-open"></span>
+          <a class="tb-stop is-open" href="09-brief.html" style="text-decoration:none;"><span class="tb-dot"></span>brief</a>
+        </div>
+        <a class="btn btn-quiet tc-close" href="02-desk.html" style="font-size:12px;">put down ⟶ desk</a>
+      </div>
+    </div>
+
+    <main class="room" data-register="air">
+      <div class="room-inner">
+        <span class="room-eyebrow">explore · the widening · no score, no rank, no verdict</span>
+        <h1 class="room-title">What could this become?</h1>
+        <p class="room-lede">The aperture opens. Our read of the seed, then the fan — every strand
+          points at a named piece of evidence, or it was dropped.</p>
+
+        <div class="spined" style="margin-top:44px;">
+
+          <!-- Ⅰ · OUR READ -->
+          <section class="sp-sec is-here">
+            <div class="sp-label">Ⅰ · our read</div>
+            <p class="read-reflection">You're describing a hand-off problem, not a scanning
+              problem — the pain lives at the moment a shoebox of paper becomes someone else's
+              job. That someone is more findable than the crowd.</p>
+            <div class="read-cols">
+              <div class="read-col clear air-card">
+                <div class="rc-h">what's already clear</div>
+                <ul>
+                  <li>The friction is documented where bookkeepers talk —
+                      <span class="evidence-link">r/bookkeeping</span> threads name it monthly.</li>
+                  <li>OCR itself is commodity — the build is not the bet.</li>
+                </ul>
+              </div>
+              <div class="read-col open air-card">
+                <div class="rc-h">still open</div>
+                <ul>
+                  <li>Who pays — the bookkeeper who suffers, or the client who causes it?</li>
+                  <li>Whether trust in handing over an inbox can be earned by software at all.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="branchability">
+              <span class="bb-k">branchability</span>
+              <p>Rich — the seed splits cleanly along positioning, mechanism, and target.
+                 Three strands hold under the evidence.</p>
+            </div>
+          </section>
+
+          <!-- Ⅱ · THE FAN -->
+          <section class="sp-sec">
+            <div class="sp-label">Ⅱ · the fan</div>
+            <svg class="fan-svg" viewBox="0 0 820 130" preserveAspectRatio="none">
+              <text class="seed-label" x="0" y="96">THE SEED</text>
+              <path class="seed-line" d="M64 92 L300 92"/>
+              <path d="M300 92 C 380 92 410 24 520 18 L 820 18"/>
+              <path d="M300 92 C 390 92 430 58 540 55 L 820 55"/>
+              <path d="M300 92 C 390 92 440 92 550 92 L 820 92"/>
+            </svg>
+            <div class="fan-note">fan order · not ranked</div>
+
+            <article class="angle air-card">
+              <div class="a-top">
+                <span class="a-basis">positioning · lane: the unclaimed hand-off</span>
+                <span class="a-slot">angle 1 of 3</span>
+              </div>
+              <h4>The bookkeeper's inbox, not the founder's scanner</h4>
+              <p class="a-concept">Sell to the professional who receives the mess, not the client
+                who makes it. The product is a client-facing drop-box that arrives as the
+                bookkeeper's own branded link.</p>
+              <div class="a-block">
+                <span class="a-k">opening</span>
+                <p class="a-v">Bookkeepers already ask clients for "everything by email" and
+                  reconcile by hand — <span class="evidence-link">r/bookkeeping</span>
+                  <span class="evidence-chip">reddit · 41 threads</span> names the intake step
+                  as the month's worst day. <span class="trust">trust: medium</span></p>
+              </div>
+              <div class="a-block">
+                <span class="a-k">the bet</span>
+                <p class="a-v">That intake is painful enough to pay for separately from the
+                  ledger software they already own.</p>
+              </div>
+              <div class="a-block">
+                <span class="a-k">disconfirmer</span>
+                <p class="a-v">If <span class="evidence-link">Dext</span> ships client-side intake
+                  in its base tier, this angle closes.</p>
+              </div>
+              <div class="a-actions">
+                <button class="btn">Save as branch</button>
+                <a class="btn btn-primary" href="05-deep.html">Take to deep →</a>
+              </div>
+            </article>
+
+            <article class="angle air-card">
+              <div class="a-top">
+                <span class="a-basis">mechanism · lane: email-native</span>
+                <span class="a-slot">angle 2 of 3</span>
+              </div>
+              <h4>Forward-to-file: no app at all</h4>
+              <p class="a-concept">The entire product is an email address. Anything forwarded to
+                it comes back filed, coded, and export-ready. No dashboard to learn, nothing to
+                install.</p>
+              <div class="a-block">
+                <span class="a-k">opening</span>
+                <p class="a-v">Email is the one intake channel every client already uses —
+                  <span class="evidence-link">docparser</span>
+                  <span class="evidence-chip">github · 4.1k ★</span> proves parsing demand but
+                  ships a dashboard-first product. <span class="trust">trust: high</span></p>
+              </div>
+              <div class="a-block">
+                <span class="a-k">the bet</span>
+                <p class="a-v">Adoption friction, not parsing accuracy, is the real gap in this
+                  lane.</p>
+              </div>
+              <div class="a-block">
+                <span class="a-k">disconfirmer</span>
+                <p class="a-v">If forward-to-file already exists inside
+                  <span class="evidence-link">Hubdoc</span>'s onboarding and users still don't
+                  use it, friction wasn't the gap.</p>
+              </div>
+              <div class="a-actions">
+                <span class="a-done">✓ in deep — view the read →</span>
+              </div>
+            </article>
+
+            <article class="angle air-card">
+              <div class="a-top">
+                <span class="a-basis">target · lane: vertical wedge</span>
+                <span class="a-slot">angle 3 of 3</span>
+              </div>
+              <h4>Trades first: the glove-box ledger</h4>
+              <p class="a-concept">Narrow the audience to trade contractors — plumbers,
+                electricians — whose receipts live in vehicles and pockets until quarter's end.</p>
+              <div class="a-block">
+                <span class="a-k">opening</span>
+                <p class="a-v">Loudest pain in the retrieved threads, but the thinnest paper
+                  trail: <span class="absence-chip">not in the evidence</span> a named buyer or a
+                  live competitor in the wedge. <span class="trust">trust: low</span></p>
+              </div>
+              <div class="a-block">
+                <span class="a-k">the bet</span>
+                <p class="a-v">That the wedge's silence means it's unserved — rather than
+                  unservable.</p>
+              </div>
+              <div class="a-block">
+                <span class="a-k">disconfirmer</span>
+                <p class="a-v">Ten contractor interviews where "my accountant handles it" ends
+                  the conversation.</p>
+              </div>
+              <div class="a-actions">
+                <button class="btn">Save as branch</button>
+                <a class="btn btn-primary" href="05-deep.html">Take to deep →</a>
+              </div>
+            </article>
+          </section>
+
+          <!-- Ⅲ · THE TERRAIN -->
+          <section class="sp-sec">
+            <div class="sp-label">Ⅲ · the terrain</div>
+            <p style="font-size:var(--fs-14); color:var(--air-ink); margin:8px 0 18px; max-width:64ch;">
+              The lanes the evidence actually shows — with what stands in each one.</p>
+            <div class="lane">
+              <div>
+                <div class="ln-name">Receipt OCR &amp; capture</div>
+                <div class="ln-density">verified · crowded</div>
+              </div>
+              <div class="ln-body">
+                <span class="evidence-link">Dext</span>, <span class="evidence-link">Hubdoc</span>,
+                <span class="evidence-link">Expensify</span> — capture is solved and priced.
+                <div class="ln-q">The question this lane asks: what do they all make the client do?</div>
+              </div>
+            </div>
+            <div class="lane">
+              <div>
+                <div class="ln-name">The intake hand-off</div>
+                <div class="ln-density">emerging · unverified</div>
+              </div>
+              <div class="ln-body">
+                No retrieved actor owns the moment paper changes hands. Substitute tell:
+                bookkeepers describe manual chase-by-email as the workaround.
+                <div class="ln-q">Firms up fastest — one named buyer would verify it.</div>
+              </div>
+            </div>
+            <div class="lane">
+              <div>
+                <div class="ln-name">Do-nothing baseline</div>
+                <div class="ln-density">verified · permanent</div>
+              </div>
+              <div class="ln-body">
+                The shoebox and the spreadsheet. Free, familiar, and the true competitor for
+                every client under ~50 receipts a month.
+                <div class="ln-q">Any angle must beat this, not the software.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Ⅳ · FROM HERE -->
+          <section class="sp-sec" style="padding-bottom:8px;">
+            <div class="sp-label">Ⅳ · from here</div>
+            <div class="nextmove air-card" style="margin-top:10px;">
+              <p class="nm-uncert">The dominant uncertainty is who pays — everything else is
+                downstream of that answer.</p>
+              <p class="nm-rec">The hand-off lane firms up fastest: it has a substitute tell, a
+                findable buyer, and no retrieved owner. Taking angle 1 to Deep would put that lane
+                under pressure; saving angle 3 keeps the wedge alive without spending a run on
+                thin evidence.</p>
+              <div class="nm-actions">
+                <a class="btn btn-primary" href="05-deep.html">Take angle 1 to deep →</a>
+                <button class="btn">Save angle 3 as branch</button>
+                <button class="btn btn-quiet">Explore a variation</button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="room-foot">
+          <p>Explore widens. It never scores — a fan has no rank. · <a href="#">how to read this room</a></p>
+          <p>room 4 of 9 · open-air register</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</body>
+</html>

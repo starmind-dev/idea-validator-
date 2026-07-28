@@ -1,0 +1,121 @@
+/* ============================================================
+   ILC · Ink & Field — shared room chrome
+   Linked by every room mockup after ../tokens.css.
+   The chrome IS the continuity: rail (global memory),
+   topbar, thread context (survives every cut inside an idea).
+   ============================================================ */
+
+body { display: flex; min-height: 100vh; }
+
+/* ---------- rail ---------- */
+.rail {
+  width: var(--rail-w); flex: none;
+  background: var(--paper-deep);
+  border-right: 1px solid var(--rule);
+  display: flex; flex-direction: column;
+  padding: 20px 12px 16px;
+  position: sticky; top: 0; height: 100vh;
+}
+.rail-brand { display: flex; align-items: center; gap: 10px; padding: 2px 10px 22px; }
+.rail-brand .rb-name { font-family: var(--font-author); font-weight: 500; font-size: 17px; }
+.rail-nav { display: flex; flex-direction: column; gap: 2px; }
+.rail-item {
+  display: flex; align-items: center; gap: 11px;
+  font-family: var(--font-interface); font-size: var(--fs-14); font-weight: 500;
+  color: var(--ink-2); background: none; border: none; cursor: pointer;
+  padding: 8px 10px; border-radius: var(--r-2); text-align: left;
+  text-decoration: none;
+}
+.rail-item:hover { background: rgba(28,27,23,0.05); color: var(--ink); }
+.rail-item.is-active { background: var(--paper-high); color: var(--ink); border: 1px solid var(--rule); padding: 7px 9px; }
+.rail-item svg { flex: none; stroke: currentColor; }
+.rail-spacer { flex: 1; }
+.rail-util { display: flex; flex-direction: column; gap: 1px; padding-top: 12px; border-top: 1px solid var(--rule); }
+.rail-util .rail-item { font-size: var(--fs-12); font-weight: 400; color: var(--ink-3); padding: 5px 10px; }
+.rail-account { display: flex; align-items: center; gap: 9px; padding: 12px 10px 0; }
+.rail-account .ra-dot {
+  width: 22px; height: 22px; border-radius: 50%; flex: none;
+  background: var(--paper-high); border: 1px solid var(--rule-strong);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-instrument); font-size: 10px; color: var(--ink-2);
+}
+.rail-account .ra-mail { font-family: var(--font-instrument); font-size: 10px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- main column ---------- */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.topbar {
+  height: 52px; flex: none;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+  position: sticky; top: 0; z-index: 30;
+}
+.topbar .tp-room { font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
+.topbar .tp-status { font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.06em; color: var(--ink-3); }
+.topbar .tp-status b { color: var(--ink-2); font-weight: 600; }
+
+/* ---------- thread context ---------- */
+.threadctx { background: var(--paper); border-bottom: 1px solid var(--rule); position: sticky; top: 52px; z-index: 29; }
+.threadctx-inner { display: flex; align-items: center; gap: 28px; padding: 12px 28px 10px; }
+.threadctx .tc-title { min-width: 0; }
+.threadctx .tt-name { font-family: var(--font-author); font-weight: 500; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.threadctx .tt-meta { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.08em; color: var(--ink-3); text-transform: uppercase; margin-top: 1px; }
+.threadctx .threadbar { flex: 1; max-width: 640px; }
+.threadctx .tc-close { margin-left: auto; }
+
+/* ---------- room scaffold ---------- */
+.room { flex: 1; padding: 44px 48px 110px; }
+.room[data-register="air"]   { background: var(--air-tint); }
+.room[data-register="press"] { background: var(--press-tint); }
+.room-inner { max-width: 880px; margin: 0 auto; }
+.room-eyebrow { font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+.room-title { font-family: var(--font-author); font-weight: 500; font-size: var(--fs-34); line-height: 1.2; margin: 10px 0 6px; }
+.room-lede { font-size: var(--fs-15); color: var(--ink-2); max-width: var(--measure); }
+
+.room[data-register="air"] .room-title { font-weight: 400; color: #2E3E4E; }
+.room[data-register="air"] .room-lede { color: var(--air-ink); line-height: 1.85; }
+.room[data-register="air"] .room-eyebrow { color: #5E7284; }
+.room[data-register="press"] .room-title { font-weight: 600; color: #2A2519; }
+.room[data-register="press"] .room-lede { color: var(--press-ink); line-height: 1.55; }
+.room[data-register="press"] .room-eyebrow { color: #7A6F58; }
+
+/* ---------- cards ---------- */
+.card { background: var(--paper-high); border: 1px solid var(--rule); border-radius: var(--r-3); padding: 22px 24px; }
+.card .c-eyebrow { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+.card h3 { font-family: var(--font-author); font-weight: 500; font-size: var(--fs-21); margin: 8px 0 6px; }
+.card p { font-size: var(--fs-14); color: var(--ink-2); }
+
+/* ---------- the page spine (content sections) ---------- */
+.spined { position: relative; padding-left: 46px; }
+.spined::before { content: ""; position: absolute; left: 18px; top: 8px; bottom: 8px; width: 1px; background: var(--rule-strong); }
+.spined .sp-sec { position: relative; padding-bottom: 44px; }
+.spined .sp-sec::before {
+  content: ""; position: absolute; left: -32.5px; top: 7px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--paper); border: 1.5px solid var(--rule-strong);
+}
+.spined .sp-sec.is-here::before { background: var(--thread); border-color: var(--thread); }
+.sp-label { font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
+.sp-sec.is-here > .sp-label { color: var(--ink); font-weight: 600; }
+.sp-title { font-family: var(--font-author); font-weight: 500; font-size: var(--fs-21); margin: 6px 0 4px; }
+
+/* register spine tints */
+.room[data-register="air"] .spined::before { background: rgba(68,88,106,0.3); }
+.room[data-register="air"] .spined .sp-sec::before { background: var(--air-tint); border-color: rgba(68,88,106,0.45); }
+.room[data-register="air"] .spined .sp-sec.is-here::before { background: var(--thread); border-color: var(--thread); }
+.room[data-register="air"] .sp-label { color: #5E7284; }
+.room[data-register="press"] .spined::before { background: rgba(74,67,53,0.3); }
+.room[data-register="press"] .spined .sp-sec::before { background: var(--press-tint); border-color: rgba(74,67,53,0.45); }
+.room[data-register="press"] .spined .sp-sec.is-here::before { background: var(--thread); border-color: var(--thread); }
+.room[data-register="press"] .sp-label { color: #7A6F58; }
+
+/* ---------- footer ---------- */
+.room-foot { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--rule); display: flex; justify-content: space-between; gap: 20px; }
+.room-foot p { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.06em; color: var(--ink-4); }
+.room-foot a { color: var(--ink-3); }
+
+/* ---------- utility ---------- */
+.stack-8  > * + * { margin-top: 8px; }
+.stack-14 > * + * { margin-top: 14px; }
+.stack-18 > * + * { margin-top: 18px; }
+.row { display: flex; align-items: center; gap: 12px; }

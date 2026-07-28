@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ILC · Room 2 — The Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="room.css">
+<style>
+  /* desk-specific */
+  .desk-top { display: grid; grid-template-columns: 1.45fr 1fr; gap: 18px; margin-top: 36px; }
+
+  .resume .threadbar { margin: 14px 0 10px; height: auto; }
+  .resume .c-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+  /* a signal card: the thread is waiting here — red tick on the edge,
+     marking position/liveness, never judgment */
+  .signal { position: relative; }
+  .signal::before { content: ""; position: absolute; left: -1px; top: 18px; bottom: 18px; width: 2px; background: var(--thread); border-radius: 2px; }
+  .signal .sg-what { font-size: var(--fs-14); color: var(--ink-2); margin-top: 8px; }
+  .signal .sg-what em { font-style: normal; font-weight: 600; color: var(--ink); }
+  .signal .sg-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .signal .btn { font-size: var(--fs-12); padding: 5px 12px; }
+
+  .doors { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 14px; }
+  .door {
+    border: 1px solid var(--rule); border-radius: var(--r-3);
+    padding: 22px 24px 24px; cursor: pointer; text-align: left;
+    background: var(--paper-high); font: inherit; text-decoration: none; display: block;
+    transition: border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+  }
+  .door:hover { border-color: var(--rule-strong); transform: translateY(-1px); }
+  .door .d-tag { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.16em; text-transform: uppercase; }
+  .door h4 { font-family: var(--font-author); font-size: 19px; font-weight: 500; margin: 9px 0 5px; color: var(--ink); }
+  .door p { font-size: var(--fs-12); color: var(--ink-3); line-height: 1.55; }
+  .door-air { background: var(--air-tint); }
+  .door-air .d-tag { color: #5E7284; }
+  .door-air h4 { font-weight: 400; color: #2E3E4E; }
+  .door-press { background: var(--press-tint); }
+  .door-press .d-tag { color: #7A6F58; }
+  .door-press h4 { font-weight: 600; color: #2A2519; }
+  .door .d-hint { font-family: var(--font-instrument); font-size: 10px; color: var(--ink-4); margin-top: 12px; letter-spacing: 0.04em; }
+
+  /* the board — a ledger, not a dashboard */
+  .board { margin-top: 14px; background: var(--paper-high); border: 1px solid var(--rule); border-radius: var(--r-3); overflow: hidden; }
+  .board table { width: 100%; border-collapse: collapse; }
+  .board th {
+    font-family: var(--font-instrument); font-size: var(--fs-10); font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3);
+    text-align: left; padding: 12px 18px 10px; border-bottom: 1px solid var(--rule);
+  }
+  .board td { padding: 14px 18px; border-bottom: 1px solid var(--rule); vertical-align: middle; font-size: var(--fs-14); }
+  .board tr:last-child td { border-bottom: none; }
+  .board .b-name { font-family: var(--font-author); font-weight: 500; font-size: 16px; }
+  .board .b-name .bn-fam { font-family: var(--font-instrument); font-size: 10px; color: var(--ink-3); letter-spacing: 0.05em; display: block; margin-top: 2px; }
+  .board .b-state { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); white-space: nowrap; }
+  .board .b-read { white-space: nowrap; }
+  .board .b-dash { font-family: var(--font-instrument); color: var(--ink-4); }
+  .board .b-note { font-size: var(--fs-12); color: var(--ink-3); max-width: 26ch; }
+  .board tr.is-dim td { opacity: 0.55; }
+
+  /* activity ledger — the machine reports */
+  .ledger { margin-top: 14px; }
+  .ledger .lg-row {
+    display: flex; align-items: baseline; gap: 14px;
+    font-family: var(--font-instrument); font-size: var(--fs-12);
+    color: var(--ink-2); padding: 7px 2px; border-bottom: 1px solid var(--rule);
+  }
+  .ledger .lg-row:last-child { border-bottom: none; }
+  .ledger .lg-when { color: var(--ink-4); font-size: var(--fs-10); width: 64px; flex: none; letter-spacing: 0.04em; }
+  .ledger .lg-verb { color: var(--ink); font-weight: 600; width: 84px; flex: none; }
+  .ledger .lg-what { color: var(--ink-2); }
+
+  .sect { margin-top: 52px; }
+  .sect > .room-eyebrow { font-size: var(--fs-10); }
+</style>
+</head>
+<body>
+
+  <aside class="rail">
+    <div class="rail-brand">
+      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#C2492F" stroke-width="7" stroke-linecap="round"/></svg>
+      <span class="rb-name">IdeaLoop</span>
+    </div>
+    <nav class="rail-nav">
+      <a class="rail-item is-active" href="02-desk.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 10.5 H13.5 M3 10.5 V13 M12 10.5 V13 M4.5 10.5 V6.5 A3 3 0 0 1 10.5 6.5 V10.5"/></svg>
+        The Desk
+      </a>
+      <a class="rail-item" href="03-shelves.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 5 H13.5 M1.5 10.5 H13.5 M4 5 V2.5 M8 5 V3.5 M6 10.5 V8 M11 10.5 V8.5"/></svg>
+        The Shelves
+      </a>
+    </nav>
+    <div class="rail-spacer"></div>
+    <div class="rail-util">
+      <a class="rail-item" href="#">Settings</a>
+      <a class="rail-item" href="#">My plan</a>
+      <a class="rail-item" href="#">Get help</a>
+    </div>
+    <div class="rail-account"><span class="ra-dot">e</span><span class="ra-mail">emre@idealoopcore.com</span></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="tp-room">the desk</span>
+      <span class="tp-status">beta · free — <b>2 runs</b> this week · refills thu</span>
+    </div>
+
+    <main class="room" data-register="neutral">
+      <div class="room-inner">
+        <span class="room-eyebrow">the desk</span>
+        <h1 class="room-title">Every idea, still in the loop.</h1>
+        <p class="room-lede">Four families, one waiting on your move. Memory lives here —
+          thinking happens on a thread.</p>
+
+        <!-- continue + needs your move -->
+        <div class="desk-top">
+          <div class="card resume">
+            <span class="c-eyebrow">continue where you left off</span>
+            <h3>Invoice hand-off for solo bookkeepers</h3>
+            <div class="threadbar">
+              <span class="tb-stop is-done"><span class="tb-dot"></span>captured</span>
+              <span class="tb-line is-done"></span>
+              <span class="tb-stop is-done"><span class="tb-dot"></span>explored</span>
+              <span class="tb-line is-open"></span>
+              <span class="tb-stop is-open"><span class="tb-dot"></span>deep</span>
+              <span class="tb-line is-open"></span>
+              <span class="tb-stop is-open"><span class="tb-dot"></span>brief</span>
+            </div>
+            <p>Explored six days ago. Three angles open — the email-native one carries the
+              sharpest disconfirmer. None taken forward yet.</p>
+            <div class="c-actions">
+              <a class="btn btn-primary" href="04-explore.html">Pick up the thread</a>
+              <a class="btn btn-quiet" href="08-lineage.html" style="font-size:13px;">See the braid</a>
+            </div>
+          </div>
+
+          <div class="card signal">
+            <span class="c-eyebrow">needs your move · evidence watch</span>
+            <h3 style="font-size:17px;">The landscape moved</h3>
+            <p class="sg-what">Two new actors appeared near the wedge of <em>Receipt inbox</em> —
+              one may affect monetization. The idea text is unchanged; only the world moved.</p>
+            <div class="sg-actions">
+              <button class="btn">Re-read on new evidence</button>
+              <button class="btn btn-quiet">Keep the old read</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- start -->
+        <div class="sect">
+          <span class="room-eyebrow">start with how you want to think</span>
+          <div class="doors">
+            <a class="door door-air" href="04-explore.html">
+              <span class="d-tag">explore · widen</span>
+              <h4>What could this become?</h4>
+              <p>A rough idea fans into angles. No score, no rank, no verdict — the aperture opens.</p>
+              <div class="d-hint">1 run · ~2 min</div>
+            </a>
+            <a class="door door-press" href="05-deep.html">
+              <span class="d-tag">deep · pressure</span>
+              <h4>Does this hold?</h4>
+              <p>One serious version, held against real market, monetization, and originality evidence.</p>
+              <div class="d-hint">1 run · ~4 min</div>
+            </a>
+          </div>
+        </div>
+
+        <!-- the board -->
+        <div class="sect">
+          <span class="room-eyebrow">the board · 4 families</span>
+          <div class="board">
+            <table>
+              <thead>
+                <tr><th>Idea</th><th>State</th><th>Read</th><th>Binding constraint</th><th>Watch</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="b-name">Receipt inbox<span class="bn-fam">⑂ 3 versions · lead v3</span></td>
+                  <td class="b-state">⌖ deep · jul 22</td>
+                  <td class="b-read"><span class="score-pill"><span class="sp-band mid"></span>5.2</span></td>
+                  <td class="b-note">Distribution — the wedge is open but unreached</td>
+                  <td class="b-state">quarterly</td>
+                </tr>
+                <tr>
+                  <td class="b-name">Invoice hand-off for solo bookkeepers<span class="bn-fam">root · 3 angles open</span></td>
+                  <td class="b-state">◎ explored · jul 22</td>
+                  <td class="b-read"><span class="b-dash">—</span></td>
+                  <td class="b-note">Exploration doesn't score — no verdict to bind</td>
+                  <td class="b-state">off</td>
+                </tr>
+                <tr>
+                  <td class="b-name">Contractor punch-list voice notes<span class="bn-fam">rough · captured jul 20</span></td>
+                  <td class="b-state">✎ rough</td>
+                  <td class="b-read"><span class="b-dash">—</span></td>
+                  <td class="b-note">Two doors open</td>
+                  <td class="b-state">—</td>
+                </tr>
+                <tr class="is-dim">
+                  <td class="b-name">Meal-plan hand-me-downs<span class="bn-fam">parked jun 30 · evidence kept</span></td>
+                  <td class="b-state">⌖ deep · jun 12</td>
+                  <td class="b-read"><span class="score-pill"><span class="sp-band low"></span>3.9</span></td>
+                  <td class="b-note">Trust — consumer habit unproven</td>
+                  <td class="b-state">off</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- activity ledger -->
+        <div class="sect">
+          <span class="room-eyebrow">the ledger · what happened</span>
+          <div class="ledger">
+            <div class="lg-row"><span class="lg-when">jul 26</span><span class="lg-verb">judged</span><span class="lg-what">Receipt inbox v3 — re-read on new evidence · 5.2, was 5.8</span></div>
+            <div class="lg-row"><span class="lg-when">jul 22</span><span class="lg-verb">explored</span><span class="lg-what">Invoice hand-off for solo bookkeepers — 3 angles</span></div>
+            <div class="lg-row"><span class="lg-when">jul 20</span><span class="lg-verb">captured</span><span class="lg-what">Contractor punch-list voice notes</span></div>
+            <div class="lg-row"><span class="lg-when">jul 18</span><span class="lg-verb">compared</span><span class="lg-what">Receipt inbox v3 × Meal-plan hand-me-downs</span></div>
+            <div class="lg-row"><span class="lg-when">jun 30</span><span class="lg-verb">parked</span><span class="lg-what">Meal-plan hand-me-downs — evidence kept, loop open</span></div>
+          </div>
+        </div>
+
+        <div class="room-foot">
+          <p>ILC reads evidence; it doesn't decide. Closure is yours. · <a href="#">privacy</a> · <a href="#">terms</a> · <a href="#">disclaimer</a></p>
+          <p>room 2 of 9 · neutral register</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</body>
+</html>

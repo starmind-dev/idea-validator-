@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ILC · Room 5 — Deep, the Pressure Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="room.css">
+<style>
+  .press-card { background: rgba(252,251,247,0.78); border: 1px solid rgba(74,67,53,0.18); border-radius: var(--r-3); }
+
+  /* masthead: the read before the number */
+  .verdict-head { font-family: var(--font-author); font-weight: 500; font-size: 27px; line-height: 1.35; color: #2A2519; max-width: 56ch; margin-top: 10px; }
+  .verdict-body { font-size: var(--fs-15); color: var(--press-ink); line-height: 1.7; max-width: var(--measure); margin-top: 14px; }
+  .score-row { display: flex; align-items: center; gap: 14px; margin-top: 20px; flex-wrap: wrap; }
+  .provenance { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.08em; color: #7A6F58; margin-top: 16px; text-transform: uppercase; }
+  .provenance a { color: #6B5A3E; }
+
+  /* metric card */
+  .metric { padding: 24px 28px; margin-bottom: 16px; }
+  .m-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+  .m-dim { font-family: var(--font-author); font-weight: 600; font-size: 19px; color: #2A2519; }
+  .m-dim .md-sys { font-family: var(--font-instrument); font-size: 10px; font-weight: 500; color: #7A6F58; letter-spacing: 0.1em; margin-left: 8px; }
+  .m-grounding { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A6F58; }
+
+  /* the ladder — evidence produces the number */
+  .ladder { display: flex; gap: 3px; margin: 18px 0 6px; }
+  .ladder .rung { flex: 1; height: 24px; border: 1px solid rgba(74,67,53,0.35); border-radius: 2px; background: transparent; position: relative; }
+  .ladder .rung.is-reached { background: rgba(74,67,53,0.16); }
+  .ladder .rung.is-current { background: #4A4335; border-color: #4A4335; }
+  .ladder .rung.is-capped {
+    background: repeating-linear-gradient(135deg, rgba(74,67,53,0.16) 0 4px, transparent 4px 8px);
+    border-style: dashed;
+  }
+  .ladder-legend { display: flex; justify-content: space-between; font-family: var(--font-instrument); font-size: 10px; color: #7A6F58; letter-spacing: 0.05em; margin-bottom: 14px; }
+  .ladder-legend .ll-next { color: var(--ink-2); }
+
+  /* question gates: claim bright, qualification dimmed */
+  .gate { display: grid; grid-template-columns: 16px 1fr; gap: 10px; padding: 9px 0; border-top: 1px solid rgba(74,67,53,0.14); }
+  .gate .g-mark { font-family: var(--font-instrument); font-size: 12px; color: #4A4335; }
+  .gate .g-claim { font-size: var(--fs-14); color: var(--ink); line-height: 1.6; }
+  .gate .g-qual { font-size: var(--fs-12); color: #8A8272; margin-top: 2px; line-height: 1.55; }
+
+  /* receipts */
+  .rests { margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(74,67,53,0.14); }
+  .rests .r-h { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #7A6F58; margin-bottom: 8px; }
+  .rests .r-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* gap panel — absence is load-bearing, always open */
+  .gap { border: 1px dashed rgba(74,67,53,0.4); border-radius: var(--r-3); padding: 14px 18px; margin-top: 16px; }
+  .gap .g-h { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #6B5A3E; margin-bottom: 6px; }
+  .gap p { font-size: var(--fs-14); color: var(--press-ink); }
+
+  /* condensed metric row */
+  .metric-thin { padding: 18px 28px; margin-bottom: 16px; }
+  .metric-thin .m-head { margin-bottom: 8px; }
+  .metric-thin p { font-size: var(--fs-14); color: var(--press-ink); line-height: 1.65; max-width: 66ch; }
+  .cap-note { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.08em; color: #6B5A3E; text-transform: uppercase; margin-top: 10px; }
+
+  /* TC equation */
+  .tc-eq { display: flex; align-items: stretch; gap: 0; margin-top: 16px; border: 1px solid rgba(74,67,53,0.2); border-radius: var(--r-3); overflow: hidden; }
+  .tc-term { flex: 1; padding: 18px 20px; text-align: center; background: rgba(252,251,247,0.7); }
+  .tc-term + .tc-term { border-left: 1px solid rgba(74,67,53,0.16); }
+  .tc-term .t-num { font-family: var(--font-instrument); font-size: 24px; font-weight: 600; color: #2A2519; }
+  .tc-term .t-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A6F58; margin-top: 4px; }
+  .tc-term .t-v { font-size: var(--fs-12); color: var(--press-ink); margin-top: 2px; }
+  .tc-op { display: flex; align-items: center; padding: 0 6px; font-family: var(--font-instrument); font-size: 20px; color: #7A6F58; background: rgba(252,251,247,0.7); }
+
+  /* the field */
+  .actor { display: grid; grid-template-columns: 130px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid rgba(74,67,53,0.14); }
+  .actor:last-of-type { border-bottom: 1px solid rgba(74,67,53,0.14); }
+  .actor .ac-class { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #7A6F58; padding-top: 3px; }
+  .actor .ac-body { font-size: var(--fs-14); color: var(--press-ink); line-height: 1.65; }
+
+  /* build beats */
+  .beat { display: grid; grid-template-columns: 26px 1fr; gap: 14px; padding: 12px 0; }
+  .beat .b-n { font-family: var(--font-instrument); font-size: 12px; color: #7A6F58; padding-top: 2px; }
+  .beat .b-body { font-size: var(--fs-14); color: var(--press-ink); line-height: 1.65; }
+  .beat .b-body b { color: var(--ink); font-weight: 600; }
+
+  /* the hinge */
+  .hinge-fact { font-family: var(--font-author); font-size: 19px; line-height: 1.55; color: #2A2519; max-width: 58ch; }
+  .hinge-doors { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+  .hdoor { padding: 16px 20px; }
+  .hdoor .hd-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #7A6F58; }
+  .hdoor p { font-size: var(--fs-14); color: var(--press-ink); margin-top: 6px; line-height: 1.6; }
+  .hclose { font-family: var(--font-author); font-style: italic; font-size: 19px; color: #2A2519; margin-top: 28px; }
+
+  /* from here */
+  .fromhere { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px; }
+  .fh { padding: 18px 20px; text-align: left; cursor: pointer; font: inherit; border: 1px solid rgba(74,67,53,0.2); background: rgba(252,251,247,0.78); border-radius: var(--r-3); text-decoration: none; display: block; transition: border-color var(--t-fast) var(--ease); }
+  .fh:hover { border-color: rgba(74,67,53,0.45); }
+  .fh .fh-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #7A6F58; }
+  .fh h5 { font-family: var(--font-author); font-size: 16px; font-weight: 600; color: #2A2519; margin: 6px 0 3px; }
+  .fh p { font-size: var(--fs-12); color: var(--press-ink); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+  <aside class="rail">
+    <div class="rail-brand">
+      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#C2492F" stroke-width="7" stroke-linecap="round"/></svg>
+      <span class="rb-name">IdeaLoop</span>
+    </div>
+    <nav class="rail-nav">
+      <a class="rail-item" href="02-desk.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 10.5 H13.5 M3 10.5 V13 M12 10.5 V13 M4.5 10.5 V6.5 A3 3 0 0 1 10.5 6.5 V10.5"/></svg>
+        The Desk
+      </a>
+      <a class="rail-item" href="03-shelves.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 5 H13.5 M1.5 10.5 H13.5 M4 5 V2.5 M8 5 V3.5 M6 10.5 V8 M11 10.5 V8.5"/></svg>
+        The Shelves
+      </a>
+    </nav>
+    <div class="rail-spacer"></div>
+    <div class="rail-util">
+      <a class="rail-item" href="#">Settings</a>
+      <a class="rail-item" href="#">My plan</a>
+      <a class="rail-item" href="#">Get help</a>
+    </div>
+    <div class="rail-account"><span class="ra-dot">e</span><span class="ra-mail">emre@idealoopcore.com</span></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="tp-room">deep · the pressure room</span>
+      <span class="tp-status">beta · free — <b>1 run</b> this week · refills thu</span>
+    </div>
+
+    <div class="threadctx">
+      <div class="threadctx-inner">
+        <div class="tc-title">
+          <div class="tt-name">Forward-to-file: no app at all</div>
+          <div class="tt-meta">branch of invoice hand-off · v2 · read jul 26</div>
+        </div>
+        <div class="threadbar">
+          <span class="tb-stop is-done"><span class="tb-dot"></span>captured</span>
+          <span class="tb-line is-done"></span>
+          <a class="tb-stop is-done" href="04-explore.html" style="text-decoration:none;"><span class="tb-dot"></span>explored</a>
+          <span class="tb-line is-done"></span>
+          <span class="tb-stop is-here"><span class="tb-dot"></span>deep</span>
+          <span class="tb-line is-open"></span>
+          <a class="tb-stop is-open" href="06-evolve.html" style="text-decoration:none;"><span class="tb-dot"></span>evolve</a>
+          <span class="tb-line is-open"></span>
+          <a class="tb-stop is-open" href="09-brief.html" style="text-decoration:none;"><span class="tb-dot"></span>brief</a>
+        </div>
+        <a class="btn btn-quiet tc-close" href="02-desk.html" style="font-size:12px;">put down ⟶ desk</a>
+      </div>
+    </div>
+
+    <main class="room" data-register="press">
+      <div class="room-inner">
+        <span class="room-eyebrow">deep · harsh · fair · traceable</span>
+        <h1 class="room-title">Does this hold?</h1>
+        <p class="room-lede">Five movements on one spine. Deep judges the evidence shape,
+          not the underlying phenomenon — and the number never appears before the read.</p>
+
+        <div class="spined" style="margin-top:44px;">
+
+          <!-- Ⅰ · THE READ -->
+          <section class="sp-sec is-here">
+            <div class="sp-label">Ⅰ · the read</div>
+            <h2 class="verdict-head">The friction is real and the build is cheap — which is
+              exactly why the bet lands on distribution, where the evidence is thinnest.</h2>
+            <p class="verdict-body">Email-native intake removes the adoption step every retrieved
+              competitor stumbles on, and the parsing itself is commodity. What the evidence
+              cannot yet show is a repeatable path to the bookkeeper's desk: no named channel, no
+              priced precedent for intake alone, and a do-nothing baseline that costs nothing.
+              What stands is the wedge; what has to be true is that someone will pay for it
+              before trust exists.</p>
+            <div class="score-row">
+              <span class="score-pill" style="font-size:14px; padding:4px 12px;"><span class="sp-band mid"></span>5.8&nbsp;overall</span>
+              <span class="handle">what would move it: a named repeat buyer in the wedge ↗ · TC sits outside this number — it's yours, not the idea's</span>
+            </div>
+            <div class="provenance">what this rests on · 14 sources — github 3 · serper 6 · tavily 3 · exa 2 · read jul 26 · <a href="#">copy for audit</a> · previous read: jul 22</div>
+          </section>
+
+          <!-- Ⅱ · FINDINGS -->
+          <section class="sp-sec">
+            <div class="sp-label">Ⅱ · findings</div>
+
+            <!-- DEMAND, drawn in full -->
+            <article class="metric press-card">
+              <div class="m-head">
+                <span class="m-dim">Demand<span class="md-sys">MD</span></span>
+                <span class="m-grounding">grounding: high · 8 receipts</span>
+              </div>
+              <div class="ladder">
+                <div class="rung is-reached"></div>
+                <div class="rung is-reached"></div>
+                <div class="rung is-reached"></div>
+                <div class="rung is-current"></div>
+                <div class="rung"></div>
+                <div class="rung"></div>
+                <div class="rung"></div>
+              </div>
+              <div class="ladder-legend">
+                <span>rung 4 of 7 · documented friction, unpriced</span>
+                <span class="ll-next">next rung ↗ a named buyer paying for intake alone</span>
+              </div>
+              <div class="gate">
+                <span class="g-mark">✓</span>
+                <div>
+                  <div class="g-claim">The pain is documented where the buyer talks.</div>
+                  <div class="g-qual">41 retrieved threads name intake as the month's worst day — none name a tool that solved it.</div>
+                </div>
+              </div>
+              <div class="gate">
+                <span class="g-mark">✓</span>
+                <div>
+                  <div class="g-claim">The friction survives the free workaround.</div>
+                  <div class="g-qual">Chase-by-email persists in every thread despite costing hours — the workaround is the complaint.</div>
+                </div>
+              </div>
+              <div class="gate">
+                <span class="g-mark">·</span>
+                <div>
+                  <div class="g-claim">Repeat purchase is asserted, not evidenced.</div>
+                  <div class="g-qual">Monthly recurrence is structural to bookkeeping, but no retrieved source shows anyone paying twice.</div>
+                </div>
+              </div>
+              <div class="rests">
+                <div class="r-h">what this rests on</div>
+                <div class="r-chips">
+                  <span class="evidence-chip">r/bookkeeping · 41 threads</span>
+                  <span class="evidence-chip">serper · "receipt intake bookkeeper" · 9 of 22 qualified</span>
+                  <span class="evidence-chip">docparser · github 4.1k ★</span>
+                  <span class="evidence-chip">exa · 2 practitioner posts</span>
+                </div>
+              </div>
+              <div class="gap">
+                <div class="g-h">what would change this read</div>
+                <p>A named bookkeeper paying for intake separately from ledger software.
+                  <span class="absence-chip" style="border-color:rgba(74,67,53,0.4); color:#6B5A3E;">not in the evidence</span>
+                  &nbsp;The read is what new evidence changes — not the score.</p>
+              </div>
+            </article>
+
+            <!-- PAYMENT, condensed -->
+            <article class="metric-thin press-card">
+              <div class="m-head">
+                <span class="m-dim">Payment<span class="md-sys">MO</span></span>
+                <span class="row" style="gap:10px;"><span class="score-pill"><span class="sp-band mid"></span>5.5</span><span class="m-grounding">grounding: medium</span></span>
+              </div>
+              <p>First-dollar realism holds at the professional, not the client — bookkeepers
+                already pay for <span class="evidence-link">Dext</span> at $25+/mo, which prices
+                the category. What's unpriced is intake alone; the ladder stops where bundling
+                begins.</p>
+            </article>
+
+            <!-- POSITIONING, capped -->
+            <article class="metric-thin press-card">
+              <div class="m-head">
+                <span class="m-dim">Positioning<span class="md-sys">OR</span></span>
+                <span class="row" style="gap:10px;"><span class="score-pill"><span class="sp-band weak"></span>2.5</span><span class="m-grounding">grounding: high</span></span>
+              </div>
+              <div class="ladder" style="margin-top:14px;">
+                <div class="rung is-reached"></div>
+                <div class="rung is-current"></div>
+                <div class="rung is-capped"></div>
+                <div class="rung is-capped"></div>
+                <div class="rung is-capped"></div>
+                <div class="rung is-capped"></div>
+              </div>
+              <div class="ladder-legend"><span>rung 2 of 6 · capped — rungs 3–6 unreachable</span></div>
+              <p>This ladder admits on six defensibility components — named here: <b>0 of 6</b>.
+                Email-native is a wedge, not a moat: every capability is reproducible by the
+                incumbents inside a quarter. The cap is the finding.</p>
+              <span class="cap-note">▨ capped · structural, not a penalty</span>
+            </article>
+
+            <!-- TC equation -->
+            <article class="metric-thin press-card">
+              <div class="m-head">
+                <span class="m-dim">The build — for you<span class="md-sys">TC · outside the overall</span></span>
+                <span class="m-grounding">the only metric that reads your profile</span>
+              </div>
+              <div class="tc-eq">
+                <div class="tc-term">
+                  <div class="t-num">7.5</div>
+                  <div class="t-k">the idea</div>
+                  <div class="t-v">for anyone: moderate — parsing, mail infra, exports</div>
+                </div>
+                <div class="tc-op">−</div>
+                <div class="tc-term">
+                  <div class="t-num">1.0</div>
+                  <div class="t-k">your background</div>
+                  <div class="t-v">takes off: shipped two parsing-adjacent tools</div>
+                </div>
+                <div class="tc-op">=</div>
+                <div class="tc-term">
+                  <div class="t-num">6.5</div>
+                  <div class="t-k">for you</div>
+                  <div class="t-v">a weather report, not a verdict</div>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <!-- Ⅲ · THE FIELD -->
+          <section class="sp-sec">
+            <div class="sp-label">Ⅲ · the field</div>
+            <p style="font-size:var(--fs-14); color:var(--press-ink); margin:8px 0 10px; max-width:64ch;">
+              Who already stands on this ground. Every actor is retrieved, named, and linked —
+              never invented.</p>
+            <div class="actor">
+              <span class="ac-class">direct</span>
+              <div class="ac-body"><span class="evidence-link">docparser</span>
+                <span class="evidence-chip">github · 4.1k ★</span> — parsing-first, dashboard-first;
+                sells to the ops team, not the bookkeeper. Holds the developer wedge.</div>
+            </div>
+            <div class="actor">
+              <span class="ac-class">adjacent</span>
+              <div class="ac-body"><span class="evidence-link">Dext</span> ·
+                <span class="evidence-link">Hubdoc</span> — capture bundled into ledger suites.
+                Their client-side intake exists and goes unused; the tell this idea rests on.</div>
+            </div>
+            <div class="actor">
+              <span class="ac-class">baseline</span>
+              <div class="ac-body">The shoebox, the spreadsheet, the email chase. Free and
+                familiar — the true competitor below ~50 receipts a month.</div>
+            </div>
+          </section>
+
+          <!-- Ⅳ · THE BUILD -->
+          <section class="sp-sec">
+            <div class="sp-label">Ⅳ · the build</div>
+            <div class="press-card" style="padding:20px 26px; margin-top:10px;">
+              <div class="beat"><span class="b-n">01</span><div class="b-body"><b>The mail spine first.</b> Receiving, parsing, and returning a filed artifact — the whole product promise in one loop, provable in a week.</div></div>
+              <div class="beat" style="border-top:1px solid rgba(74,67,53,0.14);"><span class="b-n">02</span><div class="b-body"><b>Exports before dashboards.</b> The bookkeeper's deliverable is a clean CSV into her existing ledger — not another place to look.</div></div>
+              <div class="beat" style="border-top:1px solid rgba(74,67,53,0.14);"><span class="b-n">03</span><div class="b-body"><b>Trust surface last.</b> Retention policy, processing note, and a visible delete — the sale needs them before the software does.</div></div>
+            </div>
+          </section>
+
+          <!-- Ⅴ · THE HINGE -->
+          <section class="sp-sec" style="padding-bottom:8px;">
+            <div class="sp-label">Ⅴ · the hinge</div>
+            <p class="hinge-fact" style="margin-top:10px;">Two findings wait on the same fact:
+              whether a bookkeeper will route client paper through a third party's address.</p>
+            <div class="hinge-doors">
+              <div class="hdoor press-card">
+                <span class="hd-k">demand's next rung opens on it</span>
+                <p>A named buyer proves the friction is worth money — rung 5 needs exactly this.</p>
+              </div>
+              <div class="hdoor press-card">
+                <span class="hd-k">the bottleneck resolves on it</span>
+                <p>Distribution stops being the binding constraint the day one firm forwards its
+                   first live inbox.</p>
+              </div>
+            </div>
+            <p class="hclose">The read stops here. The facts are checkable — and the next move
+              is yours to make.</p>
+          </section>
+        </div>
+
+        <!-- from here -->
+        <div style="margin-top:34px;">
+          <span class="room-eyebrow" style="font-size:10px;">from here</span>
+          <div class="fromhere">
+            <a class="fh" href="09-brief.html">
+              <span class="fh-k">the handoff</span>
+              <h5>Execution brief</h5>
+              <p>The bet, what to prove next, and the order — in your hands.</p>
+            </a>
+            <a class="fh" href="06-evolve.html">
+              <span class="fh-k">the return</span>
+              <h5>Evolve the idea</h5>
+              <p>Change what the read pressured; the thread doubles back.</p>
+            </a>
+            <a class="fh" href="07-compare.html">
+              <span class="fh-k">the seam</span>
+              <h5>Add to compare</h5>
+              <p>Hold it against another deep read. Always free.</p>
+            </a>
+          </div>
+        </div>
+
+        <div class="room-foot">
+          <p>Deep pressures. Explore widens. Same loop. · <a href="#">how to read your scores</a></p>
+          <p>room 5 of 9 · pressure register</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</body>
+</html>
