@@ -1,0 +1,402 @@
+/* ============================================================
+   ILC DESIGN SYSTEM — INK & FIELD
+   tokens.css — the single source of truth.
+   One field. One thread. Two apertures. Nine rooms.
+   ============================================================ */
+
+:root {
+  /* ---------- THE FIELD (paper) ---------- */
+  --paper:       #F6F4EE;   /* the ground — every room stands on this */
+  --paper-high:  #FCFBF7;   /* raised sheet (cards, panels)           */
+  --paper-low:   #EFECE3;   /* recessed (wells, inputs, code)         */
+  --paper-deep:  #E7E3D7;   /* deepest layer (rails, footers)         */
+
+  /* ---------- INK ---------- */
+  --ink:         #1C1B17;   /* primary text, structure                */
+  --ink-2:       #524E44;   /* secondary text                         */
+  --ink-3:       #7E7A6D;   /* muted labels, metadata                 */
+  --ink-4:       #ACA795;   /* faint — placeholder, disabled          */
+  --rule:        rgba(28, 27, 23, 0.14);  /* hairline                 */
+  --rule-strong: rgba(28, 27, 23, 0.28);  /* emphasized rule          */
+
+  /* ---------- THE RED THREAD ----------
+     Reserved EXCLUSIVELY for the thread motif:
+     spine markers, thread bar, the mark, lineage edges,
+     "you are here". Never on scores, warnings, judgments. */
+  --thread:      #C2492F;
+  --thread-ink:  #A03A24;   /* thread on hover / pressed              */
+  --thread-soft: rgba(194, 73, 47, 0.12);
+  --thread-hair: rgba(194, 73, 47, 0.38);
+
+  /* ---------- REGISTERS (aperture, not branding) ----------
+     Explore = Open Air — cool, light, wide.
+     Deep    = Pressure — warm graphite, dense, tight.
+     Neutral rooms sit on plain paper.                        */
+  --air-tint:    #F2F4F2;   /* Explore page ground                    */
+  --air-ink:     #44586A;   /* Explore's cool secondary ink           */
+  --air-accent:  #4E7291;   /* Explore interactive ink                */
+  --air-soft:    rgba(78, 114, 145, 0.10);
+
+  --press-tint:  #F3EFE6;   /* Deep page ground                       */
+  --press-ink:   #4A4335;   /* Deep's warm secondary ink              */
+  --press-accent:#6B5A3E;   /* Deep interactive ink                   */
+  --press-soft:  rgba(107, 90, 62, 0.10);
+
+  /* ---------- SEMANTICS (doctrine-bound) ---------- */
+  --evidence:    #38715A;   /* receipts, entity chips, verified links */
+  --evidence-soft: rgba(56, 113, 90, 0.10);
+  --absence:     #7E7A6D;   /* gaps — always with dashed rule, never amber */
+
+  /* Score bands — the pill ONLY. Band color never bleeds
+     into sections, prose, or motion.                          */
+  --band-high:   #38715A;
+  --band-mid:    #46678F;
+  --band-low:    #A9772B;
+  --band-weak:   #A2402E;
+  --band-none:   #7E7A6D;   /* verdict-or-dash: the dash              */
+
+  /* ---------- TYPE — THREE VOICES ----------
+     Author     = Literata        (the analyst speaks)
+     Interface  = IBM Plex Sans   (the product speaks)
+     Instrument = IBM Plex Mono   (the machine speaks)         */
+  --font-author:     'Literata', Georgia, 'Times New Roman', serif;
+  --font-interface:  'IBM Plex Sans', -apple-system, 'Segoe UI', sans-serif;
+  --font-instrument: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+
+  /* Scale — 4px baseline, 10px floor. */
+  --fs-10: 10px;   /* the floor — instrument ticks only      */
+  --fs-11: 11px;   /* instrument labels, eyebrows            */
+  --fs-12: 12.5px; /* instrument body, metadata              */
+  --fs-14: 14px;   /* interface small                        */
+  --fs-15: 15px;   /* interface body        lh 1.7           */
+  --fs-17: 17px;   /* author body / lead    lh 1.65          */
+  --fs-21: 21px;   /* h3 / card titles                       */
+  --fs-26: 26px;   /* h2 / section          lh 1.3           */
+  --fs-34: 34px;   /* h1 / room title       lh 1.2           */
+  --fs-44: 44px;   /* display (landing)     lh 1.12          */
+
+  --track-eyebrow: 0.14em;  /* uppercase instrument eyebrows  */
+  --measure: 68ch;
+
+  /* ---------- SHAPE — print, not glass ---------- */
+  --r-1: 2px;    /* chips, pills                             */
+  --r-2: 4px;    /* buttons, inputs                          */
+  --r-3: 6px;    /* cards, sheets — the maximum              */
+  /* No glow. No blur. Depth = rules + paper layering.
+     One shadow permitted, for true overlays only:           */
+  --overlay-shadow: 0 2px 16px rgba(28, 27, 23, 0.10);
+
+  /* ---------- MOTION — orientation, never judgment ----------
+     One motion per navigation. Direction is invariant:
+       along-thread  = horizontal slide
+       widen         = bloom outward
+       pressure      = settle inward
+       compare       = seam split
+       lineage       = zoom out
+     Identical for every idea regardless of its numbers.     */
+  --t-fast: 160ms;   /* hovers, focus, small state           */
+  --t-move: 200ms;   /* room-to-room                         */
+  --t-slow: 240ms;   /* seam split / zoom (the ceiling)      */
+  --ease:   cubic-bezier(0.2, 0, 0, 1);
+
+  /* ---------- STRUCTURE ---------- */
+  --rail-w: 208px;
+  --rail-w-min: 56px;
+  --threadbar-h: 44px;
+  --spine-x: 28px;   /* the spine's offset from content edge */
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { background: var(--paper); }
+
+body {
+  font-family: var(--font-interface);
+  font-size: var(--fs-15);
+  line-height: 1.7;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection { background: var(--thread-soft); }
+
+a { color: inherit; }
+
+/* ---------- TYPE VOICES ---------- */
+.v-author {
+  font-family: var(--font-author);
+  font-weight: 400;
+  line-height: 1.55;
+}
+.v-author-italic {
+  font-family: var(--font-author);
+  font-style: italic;
+  font-weight: 400;
+}
+.v-instrument {
+  font-family: var(--font-instrument);
+  font-size: var(--fs-12);
+  line-height: 1.6;
+}
+.eyebrow {
+  font-family: var(--font-instrument);
+  font-size: var(--fs-11);
+  letter-spacing: var(--track-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 500;
+}
+
+/* ---------- THE SPINE ----------
+   A thin rule down the content, connecting a page's
+   movements. Sections tick off it. The reader's position
+   is the thread-colored segment.                            */
+.spine-page {
+  position: relative;
+  padding-left: calc(var(--spine-x) + 24px);
+}
+.spine-page::before {
+  content: "";
+  position: absolute;
+  left: var(--spine-x);
+  top: 0; bottom: 0;
+  width: 1px;
+  background: var(--rule);
+}
+.spine-tick {
+  position: absolute;
+  left: calc(-24px - 4.5px);
+  top: 0.55em;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1.5px solid var(--rule-strong);
+}
+.spine-tick.is-here {
+  border-color: var(--thread);
+  background: var(--thread);
+}
+
+/* ---------- THE THREAD BAR ----------
+   An idea's own loop, laid on one line. Primary navigation
+   within an idea. Stops are real; future stops are faint.   */
+.threadbar {
+  display: flex;
+  align-items: center;
+  height: var(--threadbar-h);
+  gap: 0;
+  font-family: var(--font-instrument);
+  font-size: var(--fs-11);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.threadbar .tb-stop {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink-3);
+  background: none;
+  border: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  padding: 4px 2px;
+}
+.threadbar .tb-stop .tb-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-4);
+  background: var(--paper);
+  flex: none;
+}
+.threadbar .tb-stop.is-done { color: var(--ink-2); }
+.threadbar .tb-stop.is-done .tb-dot {
+  border-color: var(--ink-2);
+  background: var(--ink-2);
+}
+.threadbar .tb-stop.is-here { color: var(--ink); font-weight: 600; }
+.threadbar .tb-stop.is-here .tb-dot {
+  border-color: var(--thread);
+  background: var(--thread);
+}
+.threadbar .tb-stop.is-open { color: var(--ink-4); }
+.threadbar .tb-line {
+  flex: 1;
+  min-width: 18px;
+  height: 1px;
+  background: var(--rule-strong);
+}
+.threadbar .tb-line.is-done { background: var(--thread); height: 1.5px; }
+.threadbar .tb-line.is-open {
+  background: none;
+  border-top: 1px dashed var(--rule-strong);
+}
+
+/* ---------- SHEETS & RULES ---------- */
+.sheet {
+  background: var(--paper-high);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-3);
+}
+.well {
+  background: var(--paper-low);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-3);
+}
+.rule-h { border: none; border-top: 1px solid var(--rule); }
+
+/* ---------- SCORE PILL ----------
+   The ONLY place band color exists. Always with its handle
+   (direction / what-would-move-it) beside it. Never naked.  */
+.score-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-instrument);
+  font-size: var(--fs-12);
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: var(--r-1);
+  border: 1px solid var(--rule);
+  background: var(--paper-high);
+  color: var(--ink);
+}
+.score-pill .sp-band {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  align-self: center;
+  flex: none;
+}
+.sp-band.high { background: var(--band-high); }
+.sp-band.mid  { background: var(--band-mid); }
+.sp-band.low  { background: var(--band-low); }
+.sp-band.weak { background: var(--band-weak); }
+
+/* ---------- EVIDENCE ----------
+   A claim's receipt is part of the claim.                   */
+.evidence-link {
+  color: var(--evidence);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(56, 113, 90, 0.5);
+  cursor: pointer;
+}
+.evidence-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-instrument);
+  font-size: var(--fs-10);
+  letter-spacing: 0.04em;
+  color: var(--evidence);
+  background: var(--evidence-soft);
+  border-radius: var(--r-1);
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+
+/* ---------- ABSENCE ----------
+   What the evidence does NOT contain is load-bearing.
+   Absence is dashed graphite — never a warning color.       */
+.absence-panel {
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--r-3);
+  background: transparent;
+  color: var(--ink-2);
+}
+.absence-chip {
+  display: inline-flex;
+  font-family: var(--font-instrument);
+  font-size: var(--fs-10);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--absence);
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--r-1);
+  padding: 1px 7px;
+}
+
+/* ---------- CONTROLS ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-interface);
+  font-size: var(--fs-14);
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: var(--r-2);
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-high);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease);
+}
+.btn:hover { background: var(--paper-low); }
+.btn-primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper-high);
+}
+.btn-primary:hover { background: #33312A; border-color: #33312A; }
+.btn-quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-2);
+}
+.btn-quiet:hover { background: var(--paper-low); color: var(--ink); }
+
+input[type="text"], textarea {
+  font-family: var(--font-interface);
+  font-size: var(--fs-15);
+  color: var(--ink);
+  background: var(--paper-low);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  padding: 10px 14px;
+  width: 100%;
+  outline: none;
+  transition: border-color var(--t-fast) var(--ease);
+}
+input[type="text"]:focus, textarea:focus { border-color: var(--rule-strong); }
+::placeholder { color: var(--ink-4); }
+
+/* ---------- MOTION GRAMMAR ----------
+   The five motions. One per navigation. Reduced motion
+   collapses everything to a crossfade.                      */
+@media (prefers-reduced-motion: no-preference) {
+  .m-along-fwd  { animation: mAlongFwd  var(--t-move) var(--ease) both; }
+  .m-along-back { animation: mAlongBack var(--t-move) var(--ease) both; }
+  .m-widen      { animation: mWiden     var(--t-move) var(--ease) both; }
+  .m-pressure   { animation: mPressure  var(--t-move) var(--ease) both; }
+  .m-zoom-out   { animation: mZoomOut   var(--t-slow) var(--ease) both; }
+  .m-pickup     { animation: mPickup    var(--t-move) var(--ease) both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-along-fwd, .m-along-back, .m-widen,
+  .m-pressure, .m-zoom-out, .m-pickup {
+    animation: mFade var(--t-fast) linear both;
+  }
+}
+@keyframes mAlongFwd  { from { opacity: 0; transform: translateX(22px); }
+                        to   { opacity: 1; transform: none; } }
+@keyframes mAlongBack { from { opacity: 0; transform: translateX(-22px); }
+                        to   { opacity: 1; transform: none; } }
+@keyframes mWiden     { from { opacity: 0; transform: scale(0.985); }
+                        to   { opacity: 1; transform: none; } }
+@keyframes mPressure  { from { opacity: 0; transform: scale(1.012) translateY(-4px); }
+                        to   { opacity: 1; transform: none; } }
+@keyframes mZoomOut   { from { opacity: 0; transform: scale(1.04); }
+                        to   { opacity: 1; transform: none; } }
+@keyframes mPickup    { from { opacity: 0; transform: translateY(10px); }
+                        to   { opacity: 1; transform: none; } }
+@keyframes mFade      { from { opacity: 0; } to { opacity: 1; } }
