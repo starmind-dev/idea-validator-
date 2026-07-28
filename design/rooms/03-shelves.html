@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ILC · Room 3 — The Shelves</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="room.css">
+<style>
+  .toolrow { display: flex; align-items: center; gap: 12px; margin-top: 30px; }
+  .toolrow input { max-width: 320px; font-size: var(--fs-14); padding: 8px 12px; }
+  .chip-row { display: flex; gap: 6px; }
+  .fchip {
+    font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.06em;
+    padding: 4px 12px; border-radius: var(--r-1); border: 1px solid var(--rule);
+    background: var(--paper-high); color: var(--ink-2); cursor: pointer;
+  }
+  .fchip.is-on { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+  .toolrow .cmp-hint { margin-left: auto; font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.06em; color: var(--ink-3); }
+
+  .shelf { margin-top: 44px; }
+  .shelf-head { display: flex; align-items: baseline; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--rule-strong); }
+  .shelf-head h2 { font-family: var(--font-author); font-weight: 500; font-size: var(--fs-21); }
+  .shelf-head .sh-count { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.1em; color: var(--ink-3); text-transform: uppercase; }
+  .shelf-head .sh-note { margin-left: auto; font-size: var(--fs-12); color: var(--ink-3); }
+
+  .fam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+
+  .fam { position: relative; padding: 20px 22px; }
+  .fam .f-stamp { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); display: flex; align-items: center; gap: 8px; }
+  .fam h3 { font-family: var(--font-author); font-weight: 500; font-size: 18px; margin: 9px 0 6px; }
+  .fam .f-body { font-size: var(--fs-14); color: var(--ink-2); line-height: 1.6; }
+  .fam .f-meta { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .fam .f-versions { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.05em; color: var(--ink-3); border: 1px solid var(--rule); border-radius: var(--r-1); padding: 2px 8px; text-decoration: none; }
+  .fam .f-versions:hover { color: var(--ink); border-color: var(--rule-strong); }
+  .fam .f-open { position: absolute; right: 18px; top: 18px; font-family: var(--font-instrument); font-size: 10px; color: var(--ink-4); }
+  .fam:hover .f-open { color: var(--ink-2); }
+  .fam.is-dim { opacity: 0.6; }
+
+  /* rough card: raw text + the two doors inline */
+  .rough .r-text { font-family: var(--font-author); font-style: italic; font-size: 15px; color: var(--ink-2); line-height: 1.6; }
+  .rough .r-doors { display: flex; gap: 8px; margin-top: 14px; }
+  .rough .btn { font-size: var(--fs-12); padding: 5px 12px; }
+</style>
+</head>
+<body>
+
+  <aside class="rail">
+    <div class="rail-brand">
+      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#C2492F" stroke-width="7" stroke-linecap="round"/></svg>
+      <span class="rb-name">IdeaLoop</span>
+    </div>
+    <nav class="rail-nav">
+      <a class="rail-item" href="02-desk.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 10.5 H13.5 M3 10.5 V13 M12 10.5 V13 M4.5 10.5 V6.5 A3 3 0 0 1 10.5 6.5 V10.5"/></svg>
+        The Desk
+      </a>
+      <a class="rail-item is-active" href="03-shelves.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 5 H13.5 M1.5 10.5 H13.5 M4 5 V2.5 M8 5 V3.5 M6 10.5 V8 M11 10.5 V8.5"/></svg>
+        The Shelves
+      </a>
+    </nav>
+    <div class="rail-spacer"></div>
+    <div class="rail-util">
+      <a class="rail-item" href="#">Settings</a>
+      <a class="rail-item" href="#">My plan</a>
+      <a class="rail-item" href="#">Get help</a>
+    </div>
+    <div class="rail-account"><span class="ra-dot">e</span><span class="ra-mail">emre@idealoopcore.com</span></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="tp-room">the shelves</span>
+      <span class="tp-status">beta · free — <b>2 runs</b> this week · refills thu</span>
+    </div>
+
+    <main class="room" data-register="neutral">
+      <div class="room-inner">
+        <span class="room-eyebrow">the shelves</span>
+        <h1 class="room-title">All your threads</h1>
+        <p class="room-lede">Two shelves. One card per family, pinned to its root — a family's
+          identity never moves, however far its branches go.</p>
+
+        <div class="toolrow">
+          <input type="text" placeholder="Search your ideas…">
+          <div class="chip-row">
+            <button class="fchip is-on">all</button>
+            <button class="fchip">explored</button>
+            <button class="fchip">deep</button>
+            <button class="fchip">parked</button>
+          </div>
+          <span class="cmp-hint">compare: pick two deep reads</span>
+        </div>
+
+        <!-- shelf 1: rough -->
+        <section class="shelf">
+          <div class="shelf-head">
+            <h2>Rough ideas</h2><span class="sh-count">2 waiting</span>
+            <span class="sh-note">Captured, not yet read — each opens into its two doors.</span>
+          </div>
+          <div class="fam-grid">
+            <article class="fam rough card">
+              <div class="f-stamp">✎ rough · captured jul 20</div>
+              <h3>Contractor punch-list voice notes</h3>
+              <p class="r-text">"Site leads narrate the day's punch list into their phone driving
+                home — someone should turn that into the actual list."</p>
+              <div class="r-doors">
+                <a class="btn" href="04-explore.html">Explore it →</a>
+                <a class="btn" href="05-deep.html">Take it to deep →</a>
+              </div>
+            </article>
+            <article class="fam rough card">
+              <div class="f-stamp">✎ rough · captured jul 14</div>
+              <h3>Warranty expiry ledger</h3>
+              <p class="r-text">"Everything I own has a warranty I forget about the day I need
+                it. One inbox for receipts, one nudge before expiry."</p>
+              <div class="r-doors">
+                <a class="btn" href="04-explore.html">Explore it →</a>
+                <a class="btn" href="05-deep.html">Take it to deep →</a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- shelf 2: ideas -->
+        <section class="shelf">
+          <div class="shelf-head">
+            <h2>Ideas</h2><span class="sh-count">3 families</span>
+            <span class="sh-note">Evaluated at least once — the loop stays open on all of them.</span>
+          </div>
+          <div class="fam-grid">
+            <article class="fam card">
+              <span class="f-open">open →</span>
+              <div class="f-stamp">⌖ deep · read jul 26</div>
+              <h3>Invoice hand-off for solo bookkeepers</h3>
+              <p class="f-body">Email-native intake for the professional who receives the mess.
+                Distribution is the binding constraint.</p>
+              <div class="f-meta">
+                <span class="score-pill"><span class="sp-band mid"></span>5.8</span>
+                <span class="handle" style="font-size:11.5px;">a named repeat buyer would move it ↗</span>
+              </div>
+              <div class="f-meta">
+                <a class="f-versions" href="08-lineage.html">⑂ 3 versions · lineage</a>
+                <span class="f-versions" style="border-style:dashed;">watch · quarterly</span>
+              </div>
+            </article>
+
+            <article class="fam card">
+              <span class="f-open">open →</span>
+              <div class="f-stamp">◎ explored · jul 22</div>
+              <h3>Receipt inbox</h3>
+              <p class="f-body">Widened into three angles — the consumer lane read as crowded;
+                the practitioner lane still open. No verdict: exploration doesn't score.</p>
+              <div class="f-meta">
+                <span class="score-pill"><span class="sp-band" style="background:var(--band-none)"></span>—</span>
+                <span class="handle" style="font-size:11.5px;">two angles not yet taken forward</span>
+              </div>
+              <div class="f-meta"><a class="f-versions" href="08-lineage.html">⑂ 2 versions · lineage</a></div>
+            </article>
+
+            <article class="fam card is-dim">
+              <span class="f-open">open →</span>
+              <div class="f-stamp">⌖ deep · parked jun 30</div>
+              <h3>Meal-plan hand-me-downs</h3>
+              <p class="f-body">Parked, not deleted — the read and its evidence stay. The loop
+                reopens the day you do.</p>
+              <div class="f-meta">
+                <span class="score-pill"><span class="sp-band low"></span>3.9</span>
+                <span class="handle" style="font-size:11.5px;">trust — consumer habit unproven</span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <div class="room-foot">
+          <p>A family card always shows its root. The lead is a marker inside the braid, never the card. · <a href="#">what the stamps mean</a></p>
+          <p>room 3 of 9 · neutral register</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</body>
+</html>

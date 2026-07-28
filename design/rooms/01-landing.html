@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IdeaLoop Core — every serious idea moves in a loop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  body { display: block; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 40px; }
+
+  /* nav */
+  .nav { display: flex; align-items: center; gap: 14px; padding: 26px 0; }
+  .nav .n-name { font-family: var(--font-author); font-weight: 500; font-size: 19px; }
+  .nav .n-core { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.3em; color: var(--ink-3); text-transform: uppercase; }
+  .nav .n-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+  .nav .n-login { font-size: var(--fs-14); color: var(--ink-2); text-decoration: none; padding: 8px 12px; }
+
+  /* hero */
+  .hero { padding: 84px 0 40px; }
+  .hero h1 { font-family: var(--font-author); font-weight: 500; font-size: 46px; line-height: 1.18; letter-spacing: -0.01em; max-width: 21ch; }
+  .hero .h-sub { font-size: 18px; color: var(--ink-2); line-height: 1.7; max-width: 56ch; margin-top: 22px; }
+  .hero .h-cta { display: flex; align-items: center; gap: 16px; margin-top: 34px; }
+  .hero .h-cta .btn-primary { font-size: 15px; padding: 11px 24px; }
+  .hero .h-cta .h-note { font-family: var(--font-instrument); font-size: var(--fs-11); color: var(--ink-3); letter-spacing: 0.04em; }
+
+  /* the hero thread */
+  .herothread { padding: 46px 0 10px; }
+  .herothread svg { display: block; width: 100%; height: 150px; }
+  .herothread text { font-family: var(--font-instrument); font-size: 10.5px; letter-spacing: 0.14em; fill: var(--ink-3); text-transform: uppercase; }
+
+  .sect { padding: 74px 0; border-top: 1px solid var(--rule); }
+  .sect .s-eyebrow { font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+  .sect h2 { font-family: var(--font-author); font-weight: 500; font-size: 30px; line-height: 1.3; margin: 12px 0 14px; max-width: 30ch; }
+  .sect .s-lede { font-size: var(--fs-15); color: var(--ink-2); line-height: 1.75; max-width: var(--measure); }
+
+  /* the problem — his tuesday */
+  .tuesday { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 34px; }
+  .tu { background: var(--paper-high); border: 1px solid var(--rule); border-radius: var(--r-3); padding: 20px 22px; }
+  .tu .t-where { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+  .tu p { font-family: var(--font-author); font-style: italic; font-size: 15.5px; color: var(--ink-2); line-height: 1.6; margin-top: 8px; }
+  .tuesday-close { font-size: var(--fs-15); color: var(--ink); margin-top: 26px; max-width: 60ch; line-height: 1.7; }
+
+  /* the loop walked */
+  .loopwalk { margin-top: 40px; }
+  .loopwalk svg { display: block; width: 100%; height: 120px; }
+  .loopwalk text { font-family: var(--font-instrument); font-size: 10.5px; letter-spacing: 0.12em; fill: var(--ink-2); text-transform: uppercase; }
+  .loopwalk .lw-note { font-family: var(--font-instrument); font-size: 10.5px; letter-spacing: 0.1em; color: var(--ink-3); text-align: center; margin-top: 10px; text-transform: uppercase; }
+
+  /* two rooms */
+  .rooms2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 34px; }
+  .r2 { border: 1px solid var(--rule); border-radius: var(--r-3); padding: 28px 30px 30px; }
+  .r2 .r-tag { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; }
+  .r2 h3 { font-family: var(--font-author); font-size: 22px; margin: 12px 0 8px; }
+  .r2 p { font-size: var(--fs-14); line-height: 1.7; }
+  .r2.air { background: var(--air-tint); }
+  .r2.air .r-tag { color: #5E7284; }
+  .r2.air h3 { font-weight: 400; color: #2E3E4E; }
+  .r2.air p { color: var(--air-ink); }
+  .r2.press { background: var(--press-tint); }
+  .r2.press .r-tag { color: #7A6F58; }
+  .r2.press h3 { font-weight: 600; color: #2A2519; }
+  .r2.press p { color: var(--press-ink); }
+  .rooms2-note { font-size: var(--fs-14); color: var(--ink-2); margin-top: 20px; max-width: 60ch; line-height: 1.7; }
+
+  /* receipts demo */
+  .receipt-demo { background: var(--paper-high); border: 1px solid var(--rule); border-radius: var(--r-3); padding: 26px 30px; margin-top: 32px; max-width: 720px; }
+  .receipt-demo .rd-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px; }
+  .receipt-demo p { font-size: var(--fs-15); color: var(--ink); line-height: 1.8; max-width: 58ch; }
+  .receipt-demo .gap-line { border-top: 1px dashed var(--rule-strong); margin-top: 16px; padding-top: 12px; font-size: var(--fs-14); color: var(--ink-2); }
+
+  /* why not chatgpt */
+  .versus { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 34px; }
+  .vs { border-radius: var(--r-3); padding: 24px 26px; }
+  .vs .v-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 12px; }
+  .vs.them { border: 1px solid var(--rule); background: var(--paper-low); }
+  .vs.them .v-k { color: var(--ink-3); }
+  .vs.them p { font-family: var(--font-author); font-style: italic; font-size: 15.5px; color: var(--ink-3); line-height: 1.7; }
+  .vs.us { border: 1px solid var(--rule-strong); background: var(--paper-high); }
+  .vs.us .v-k { color: var(--ink-2); }
+  .vs.us p { font-size: var(--fs-14); color: var(--ink); line-height: 1.7; }
+  .audit-note { margin-top: 22px; padding: 18px 22px; border: 1px dashed var(--rule-strong); border-radius: var(--r-3); max-width: 720px; }
+  .audit-note p { font-size: var(--fs-14); color: var(--ink-2); line-height: 1.7; }
+  .audit-note b { color: var(--ink); font-weight: 600; }
+
+  /* pricing */
+  .price { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 34px; max-width: 720px; }
+  .pr { background: var(--paper-high); border: 1px solid var(--rule); border-radius: var(--r-3); padding: 24px 26px; }
+  .pr .p-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
+  .pr .p-big { font-family: var(--font-author); font-size: 24px; font-weight: 500; margin: 10px 0 6px; }
+  .pr p { font-size: var(--fs-13, 13px); color: var(--ink-2); line-height: 1.6; font-size: 13px; }
+
+  /* the one warm beat */
+  .warm { padding: 84px 0; border-top: 1px solid var(--rule); text-align: left; }
+  .warm .w-line { font-family: var(--font-author); font-style: italic; font-size: 24px; color: var(--ink); max-width: 44ch; line-height: 1.6; }
+  .warm .w-who { font-family: var(--font-instrument); font-size: var(--fs-11); color: var(--ink-3); letter-spacing: 0.08em; margin-top: 14px; }
+
+  /* final cta + footer */
+  .final { padding: 70px 0 90px; border-top: 1px solid var(--rule); }
+  .final h2 { font-family: var(--font-author); font-weight: 500; font-size: 30px; max-width: 26ch; }
+  .final .f-cta { display: flex; align-items: center; gap: 16px; margin-top: 26px; }
+  .footer { border-top: 1px solid var(--rule); padding: 26px 0 46px; display: flex; justify-content: space-between; gap: 20px; }
+  .footer p { font-family: var(--font-instrument); font-size: var(--fs-10); color: var(--ink-4); letter-spacing: 0.06em; }
+  .footer a { color: var(--ink-3); }
+</style>
+</head>
+<body>
+
+  <div class="wrap">
+    <!-- nav -->
+    <nav class="nav">
+      <svg width="40" height="18" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#C2492F" stroke-width="6" stroke-linecap="round"/></svg>
+      <span class="n-name">IdeaLoop</span><span class="n-core">Core</span>
+      <div class="n-right">
+        <a class="n-login" href="#">Log in</a>
+        <a class="btn btn-primary" href="02-desk.html">Start an idea loop</a>
+      </div>
+    </nav>
+
+    <!-- hero: recognition first -->
+    <header class="hero">
+      <h1>Every serious idea moves in a loop. Until now, that loop lived in your head.</h1>
+      <p class="h-sub">The ten open tabs. Getting serious about one version. Killing it,
+        circling back, trying the angle you dismissed in March. ILC is where that motion
+        lives — read against real evidence, kept across every pass, never flattered.</p>
+      <div class="h-cta">
+        <a class="btn btn-primary" href="02-desk.html">Start an idea loop</a>
+        <span class="h-note">one free run · no sign-up · your idea stays yours</span>
+      </div>
+    </header>
+
+    <!-- the thread, drawn once -->
+    <div class="herothread">
+      <svg viewBox="0 0 900 150" preserveAspectRatio="none" fill="none">
+        <!-- seed -->
+        <path d="M10 96 L150 96" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round"/>
+        <!-- the fan -->
+        <path d="M150 96 C 210 96 225 40 290 36 L 360 36" stroke="rgba(28,27,23,0.3)" stroke-width="1.2"/>
+        <path d="M150 96 C 215 96 235 130 300 132 L 360 132" stroke="rgba(28,27,23,0.3)" stroke-width="1.2"/>
+        <path d="M150 96 C 210 96 230 78 295 76 L 360 76" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round"/>
+        <!-- pulled taut into pressure -->
+        <path d="M360 76 L 520 76" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round"/>
+        <!-- the loop -->
+        <path d="M520 76 C 560 76 572 34 550 30 C 528 26 528 66 570 76 C 600 83 620 76 660 76" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round"/>
+        <!-- handed over -->
+        <path d="M660 76 L 900 76" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1 8"/>
+        <!-- beats -->
+        <text x="10" y="122">spark</text>
+        <text x="285" y="20">widen</text>
+        <text x="420" y="102">pressure</text>
+        <text x="524" y="122">loop back</text>
+        <text x="700" y="102">yours</text>
+      </svg>
+    </div>
+
+    <!-- the problem: his tuesday -->
+    <section class="sect">
+      <span class="s-eyebrow">the problem</span>
+      <h2>Your idea is scattered across everything except a place built for it.</h2>
+      <div class="tuesday">
+        <div class="tu">
+          <span class="t-where">chatgpt · tab 14 of 40</span>
+          <p>"That's a brilliant idea with real potential…" — the same sentence it gave the
+            last nine ideas.</p>
+        </div>
+        <div class="tu">
+          <span class="t-where">notes app · three of them</span>
+          <p>"v2 — but what if bookkeepers instead??" Undated. No idea which version this
+            answers.</p>
+        </div>
+        <div class="tu">
+          <span class="t-where">voice memo · 0:47</span>
+          <p>The version you killed in March. You no longer remember why — and it might have
+            been the good one.</p>
+        </div>
+      </div>
+      <p class="tuesday-close">The thinking was real. The record of it is gone. Ideas
+        shouldn't die in chat threads.</p>
+    </section>
+
+    <!-- the loop -->
+    <section class="sect">
+      <span class="s-eyebrow">the shape of it</span>
+      <h2>One idea. One loop. Every pass kept.</h2>
+      <p class="s-lede">Capture the spark. Widen it into angles. Put one under pressure.
+        Change what the read pressured, and read again. Compare the survivors. Hand the
+        winner to yourself with a first move — and the loop stays open behind you, watching
+        the evidence for as long as the idea lives.</p>
+      <div class="loopwalk">
+        <svg viewBox="0 0 900 120" fill="none" preserveAspectRatio="none">
+          <path d="M20 60 L 130 60" stroke="#C2492F" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="130" cy="60" r="5" fill="#C2492F"/>
+          <path d="M130 60 L 280 60" stroke="#C2492F" stroke-width="1.6"/>
+          <circle cx="280" cy="60" r="5" fill="#C2492F"/>
+          <path d="M280 60 L 430 60" stroke="#C2492F" stroke-width="1.6"/>
+          <circle cx="430" cy="60" r="5" fill="#C2492F"/>
+          <path d="M430 60 L 580 60" stroke="#C2492F" stroke-width="1.6"/>
+          <circle cx="580" cy="60" r="5" fill="#C2492F"/>
+          <path d="M580 60 L 730 60" stroke="#C2492F" stroke-width="1.6"/>
+          <circle cx="730" cy="60" r="5" fill="#C2492F"/>
+          <path d="M730 60 L 880 60" stroke="#C2492F" stroke-width="1.6" stroke-dasharray="1 7"/>
+          <!-- the return arc, dotted -->
+          <path d="M730 60 C 700 14 460 6 430 52" stroke="rgba(28,27,23,0.35)" stroke-width="1.2" stroke-dasharray="2 6"/>
+          <text x="96" y="88">capture</text>
+          <text x="252" y="88">explore</text>
+          <text x="410" y="88">deep</text>
+          <text x="548" y="88">re-evaluate</text>
+          <text x="702" y="88">compare</text>
+          <text x="826" y="88">decide</text>
+        </svg>
+        <div class="lw-note">↻ the return is part of the shape — the loop never closes while the idea lives</div>
+      </div>
+    </section>
+
+    <!-- two rooms -->
+    <section class="sect">
+      <span class="s-eyebrow">two rooms, two jobs</span>
+      <h2>The telescope and the microscope.</h2>
+      <div class="rooms2">
+        <div class="r2 air">
+          <span class="r-tag">explore · the telescope</span>
+          <h3>"I don't know what this could become."</h3>
+          <p>Explore widens a rough idea into angles — each one pointing at a named piece of
+            evidence. No score, no rank, no verdict. A fan has no first place.</p>
+        </div>
+        <div class="r2 press">
+          <span class="r-tag">deep · the microscope</span>
+          <h3>"I have a serious version. Pressure it."</h3>
+          <p>Deep holds one version against real market, monetization, and originality
+            evidence — then credits what stands. Harsh, fair, traceable.</p>
+        </div>
+      </div>
+      <p class="rooms2-note">They're different jobs, not a short version and a long one. Some
+        days they disagree. That disagreement is the product working — the same evidence
+        answering two different questions.</p>
+    </section>
+
+    <!-- receipts -->
+    <section class="sect">
+      <span class="s-eyebrow">how it earns the read</span>
+      <h2>Every claim carries its receipt.</h2>
+      <p class="s-lede">ILC retrieves the real field — GitHub, the open web, the forums where
+        your buyer complains — and the evidence visibly produces the conclusion. Nothing is
+        invented; absence is reported as carefully as presence.</p>
+      <div class="receipt-demo">
+        <div class="rd-k">from a live read</div>
+        <p>The lane is already served: <span class="evidence-link">docparser</span>
+          <span class="evidence-chip">github · 4.1k ★</span> holds the developer wedge, and
+          <span class="evidence-link">Dext</span> prices the category at $25/mo. What no
+          retrieved actor owns is the hand-off itself.</p>
+        <div class="gap-line">What would change this read: a named buyer paying for intake
+          alone. <span class="absence-chip">not in the evidence</span></div>
+      </div>
+    </section>
+
+    <!-- why not chatgpt -->
+    <section class="sect">
+      <span class="s-eyebrow">why not just ask chatgpt</span>
+      <h2>You already did. You remember the feeling.</h2>
+      <div class="versus">
+        <div class="vs them">
+          <span class="v-k">the mirror that flatters</span>
+          <p>"This is a brilliant idea with huge potential. The market is massive and growing.
+            With the right execution, this could really take off…"</p>
+        </div>
+        <div class="vs us">
+          <span class="v-k">the read that holds</span>
+          <p>Demand holds at rung 4 of 7 — documented friction, unpriced. The next rung needs a
+            named repeat buyer, and no retrieved source shows one. The bet lands on
+            distribution, where the evidence is thinnest.</p>
+        </div>
+      </div>
+      <div class="audit-note">
+        <p><b>Check us against the tool you already trust.</b> Every read ships with a copy
+          button: paste the whole evaluation into your own GPT or Claude and ask whether the
+          score follows the evidence. Built to survive cross-checking, not hide from it.</p>
+      </div>
+    </section>
+
+    <!-- pricing -->
+    <section class="sect">
+      <span class="s-eyebrow">pricing</span>
+      <h2>Pay as you think.</h2>
+      <div class="price">
+        <div class="pr">
+          <span class="p-k">now · open beta</span>
+          <div class="p-big">Free</div>
+          <p>Three runs a week — one full loop: explore, deep, re-read. Compare never costs a
+            run. One free run before you even sign up.</p>
+        </div>
+        <div class="pr">
+          <span class="p-k">after beta</span>
+          <div class="p-big">A fair number</div>
+          <p>Priced when it's real, not before. No tier gymnastics, no pay-to-unlock-honesty.
+            The evidence layer stays free for everyone.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- the one warm beat -->
+    <section class="warm">
+      <p class="w-line">ILC scored my own idea for ILC at 3.5. I built it anyway — that's
+        the point. It tells you what you're betting on; the bet stays yours.</p>
+      <p class="w-who">— Emre, who builds this in the open</p>
+    </section>
+
+    <!-- final cta -->
+    <section class="final">
+      <h2>Bring one rough idea. The loop does the rest.</h2>
+      <div class="f-cta">
+        <a class="btn btn-primary" href="02-desk.html">Start an idea loop</a>
+        <span class="h-note" style="font-family:var(--font-instrument); font-size:11px; color:var(--ink-3); letter-spacing:0.04em;">one free run · no sign-up</span>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>ILC reads evidence; it doesn't decide. Outcomes depend on execution, timing, and the
+        world. · <a href="#">privacy</a> · <a href="#">terms</a> · <a href="#">disclaimer</a></p>
+      <p>room 1 of 9 · the argument</p>
+    </footer>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ILC · Room 9 — The Brief, the Handoff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="room.css">
+<style>
+  /* the crossing: idea -> execution, ring never fills */
+  .crossing { display: flex; align-items: center; gap: 12px; margin-top: 30px; font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+  .crossing .cx-line { flex: 1; height: 1px; background: var(--rule-strong); }
+  .crossing .cx-line.dashed { background: none; border-top: 1px dashed var(--rule-strong); }
+  .crossing .cx-ring { width: 16px; height: 16px; border-radius: 50%; border: 1.5px dashed var(--ink-3); flex: none; }
+
+  .blocks { margin-top: 30px; }
+
+  /* author-voice blocks: the bet & the handoff */
+  .b-voice { padding: 30px 36px; margin-bottom: 16px; }
+  .b-voice .bv-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+  .b-voice .bv-text { font-family: var(--font-author); font-style: italic; font-size: 21px; line-height: 1.6; color: var(--ink); margin-top: 12px; max-width: 56ch; }
+
+  /* operational blocks: interface + instrument voices */
+  .b-op { padding: 24px 30px; margin-bottom: 16px; }
+  .b-op .bo-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px; }
+
+  .prove { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .prove .pv-cell .pk { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 5px; }
+  .prove .pv-cell p { font-size: var(--fs-15); color: var(--ink); line-height: 1.65; }
+  .prove .pv-cell p .q { color: var(--ink-2); }
+
+  .step { display: grid; grid-template-columns: 30px 1fr; gap: 16px; padding: 16px 0; border-top: 1px solid var(--rule); }
+  .step:first-of-type { border-top: none; padding-top: 0; }
+  .step .st-n { font-family: var(--font-instrument); font-size: 13px; color: var(--ink-3); padding-top: 2px; }
+  .step .st-act { font-size: var(--fs-15); color: var(--ink); font-weight: 500; }
+  .step .st-sub { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+  .step .st-sub .sk { font-family: var(--font-instrument); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+  .step .st-sub p { font-size: var(--fs-12); color: var(--ink-2); margin-top: 2px; line-height: 1.55; }
+
+  .wont li { list-style: none; font-size: var(--fs-14); color: var(--ink-2); padding: 7px 0 7px 18px; position: relative; border-top: 1px solid var(--rule); line-height: 1.6; }
+  .wont li:first-child { border-top: none; }
+  .wont li::before { content: "—"; position: absolute; left: 0; color: var(--ink-3); }
+
+  .gates { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .gate-cell { border: 1px dashed var(--rule-strong); border-radius: var(--r-3); padding: 16px 20px; }
+  .gate-cell .gk { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 6px; }
+  .gate-cell p { font-size: var(--fs-14); color: var(--ink-2); line-height: 1.6; }
+
+  /* the exit: the thread leaves the frame uncut */
+  .exit { margin-top: 8px; }
+  .exit svg { display: block; width: 100%; height: 46px; }
+  .exit .ex-note { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-4); text-align: right; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+  <aside class="rail">
+    <div class="rail-brand">
+      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#C2492F" stroke-width="7" stroke-linecap="round"/></svg>
+      <span class="rb-name">IdeaLoop</span>
+    </div>
+    <nav class="rail-nav">
+      <a class="rail-item" href="02-desk.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 10.5 H13.5 M3 10.5 V13 M12 10.5 V13 M4.5 10.5 V6.5 A3 3 0 0 1 10.5 6.5 V10.5"/></svg>
+        The Desk
+      </a>
+      <a class="rail-item" href="03-shelves.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 5 H13.5 M1.5 10.5 H13.5 M4 5 V2.5 M8 5 V3.5 M6 10.5 V8 M11 10.5 V8.5"/></svg>
+        The Shelves
+      </a>
+    </nav>
+    <div class="rail-spacer"></div>
+    <div class="rail-util">
+      <a class="rail-item" href="#">Settings</a>
+      <a class="rail-item" href="#">My plan</a>
+      <a class="rail-item" href="#">Get help</a>
+    </div>
+    <div class="rail-account"><span class="ra-dot">e</span><span class="ra-mail">emre@idealoopcore.com</span></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="tp-room">the brief · the handoff</span>
+      <span class="tp-status">beta · free — <b>1 run</b> this week · refills thu</span>
+    </div>
+
+    <div class="threadctx">
+      <div class="threadctx-inner">
+        <div class="tc-title">
+          <div class="tt-name">Forward-to-file: no app at all</div>
+          <div class="tt-meta">v2 · deep 5.8 · brief drawn jul 26</div>
+        </div>
+        <div class="threadbar">
+          <span class="tb-stop is-done"><span class="tb-dot"></span>captured</span>
+          <span class="tb-line is-done"></span>
+          <a class="tb-stop is-done" href="04-explore.html" style="text-decoration:none;"><span class="tb-dot"></span>explored</a>
+          <span class="tb-line is-done"></span>
+          <a class="tb-stop is-done" href="05-deep.html" style="text-decoration:none;"><span class="tb-dot"></span>deep</a>
+          <span class="tb-line is-done"></span>
+          <a class="tb-stop is-done" href="06-evolve.html" style="text-decoration:none;"><span class="tb-dot"></span>evolve</a>
+          <span class="tb-line is-done"></span>
+          <span class="tb-stop is-here"><span class="tb-dot"></span>brief</span>
+        </div>
+        <a class="btn btn-quiet tc-close" href="02-desk.html" style="font-size:12px;">put down ⟶ desk</a>
+      </div>
+    </div>
+
+    <main class="room" data-register="neutral">
+      <div class="room-inner">
+        <span class="room-eyebrow">the brief · where the read stops and your first move begins</span>
+        <h1 class="room-title">The handoff</h1>
+        <p class="room-lede">Six blocks. It opens and closes in the author's voice; everything
+          between is operational. The ring never fills — ILC doesn't cross into execution
+          with you.</p>
+
+        <div class="crossing">
+          <span>the idea</span>
+          <span class="cx-line"></span>
+          <span class="cx-ring"></span>
+          <span class="cx-line dashed"></span>
+          <span>execution — yours</span>
+        </div>
+
+        <div class="blocks">
+
+          <div class="b-voice card">
+            <span class="bv-k">01 · the bet</span>
+            <p class="bv-text">You are betting that a bookkeeper will route client paper through
+              a stranger's address before she'll hire another pair of hands — the friction is
+              real, the trust is unproven, and everything below exists to test that one
+              sentence.</p>
+          </div>
+
+          <div class="b-op card">
+            <span class="bo-k">02 · prove next</span>
+            <div class="prove">
+              <div class="pv-cell">
+                <div class="pk">the evidence to get</div>
+                <p>One bookkeeping firm forwarding a live client inbox for a full monthly close —
+                  <span class="q">not a demo, not a pilot deck.</span></p>
+              </div>
+              <div class="pv-cell">
+                <div class="pk">the bar</div>
+                <p>She does it a second month without being asked. <span class="q">Repeat,
+                  unprompted, is the whole bar.</span></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="b-op card">
+            <span class="bo-k">03 · the order · each step gated by the one before it</span>
+            <div class="step">
+              <span class="st-n">01</span>
+              <div>
+                <div class="st-act">Stand up the mail spine — receive, parse, return filed.</div>
+                <div class="st-sub">
+                  <div><span class="sk">produces</span><p>A working address that answers with a coded CSV.</p></div>
+                  <div><span class="sk">signal to continue</span><p>Your own test inbox survives 100 mixed receipts.</p></div>
+                </div>
+              </div>
+            </div>
+            <div class="step">
+              <span class="st-n">02</span>
+              <div>
+                <div class="st-act">Put it in one bookkeeper's hands — free, for one close.</div>
+                <div class="st-sub">
+                  <div><span class="sk">produces</span><p>The first live hand-off; the trust question answered in practice.</p></div>
+                  <div><span class="sk">signal to continue</span><p>She forwards month two unprompted — the prove-next bar.</p></div>
+                </div>
+              </div>
+            </div>
+            <div class="step">
+              <span class="st-n">03</span>
+              <div>
+                <div class="st-act">Price the second firm before polishing anything.</div>
+                <div class="st-sub">
+                  <div><span class="sk">produces</span><p>A number a stranger agreed to — demand's missing rung.</p></div>
+                  <div><span class="sk">signal to continue</span><p>Paid, not promised. Then the loop re-reads.</p></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="b-op card">
+            <span class="bo-k">04 · what won't count</span>
+            <ul class="wont">
+              <li>Sign-ups, stars, or upvotes — attention is not intake.</li>
+              <li>Founder friends testing it — their trust isn't the trust in question.</li>
+              <li>Parsing accuracy wins — the evidence already says the build isn't the bet.</li>
+            </ul>
+          </div>
+
+          <div class="b-op card">
+            <span class="bo-k">05 · the gates</span>
+            <div class="gates">
+              <div class="gate-cell">
+                <span class="gk">revise if</span>
+                <p>The firm forwards, but only after you chase — the friction was yours, not
+                  hers. Return the target clause to Evolve.</p>
+              </div>
+              <div class="gate-cell">
+                <span class="gk">stop if</span>
+                <p>Three firms decline for the same named reason. That reason becomes evidence —
+                  the loop keeps it either way.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="b-voice card" style="margin-bottom:0;">
+            <span class="bv-k">06 · the handoff</span>
+            <p class="bv-text">Over to you — it's yours now. The read holds until the world
+              moves; the watch is set, and the loop stays open behind you.</p>
+            <div class="exit">
+              <svg viewBox="0 0 880 46" preserveAspectRatio="none">
+                <path d="M0 23 L 620 23" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M620 23 L 880 23" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1 8"/>
+              </svg>
+              <div class="ex-note">the thread leaves the frame uncut</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="room-foot">
+          <p>The brief is a consequence of a settled read — Explore has no verdict to hand off. · <a href="#">what the blocks mean</a></p>
+          <p>room 9 of 9 · author-voice register</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</body>
+</html>

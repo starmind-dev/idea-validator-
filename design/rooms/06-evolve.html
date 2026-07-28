@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ILC · Room 6 — Evolve, the Return</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="room.css">
+<style>
+  /* pressure strip — what the last read established, carried into the return */
+  .pstrip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 34px; background: var(--press-tint); border: 1px solid rgba(74,67,53,0.2); border-radius: var(--r-3); overflow: hidden; }
+  .pcell { padding: 16px 20px; }
+  .pcell + .pcell { border-left: 1px solid rgba(74,67,53,0.16); }
+  .pcell .p-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #7A6F58; }
+  .pcell .p-v { font-size: var(--fs-14); color: var(--press-ink); margin-top: 5px; line-height: 1.55; }
+  .pcell .p-v b { color: var(--ink); font-weight: 600; }
+
+  /* work row: versions rail · the canvas · the x-ray */
+  .workrow { display: grid; grid-template-columns: 200px 1fr 300px; gap: 18px; margin-top: 18px; align-items: start; }
+
+  /* versions rail: the thread doubling back */
+  .vrail { padding: 18px 18px 20px; }
+  .vrail .vr-h { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 14px; }
+  .vline { position: relative; padding-left: 18px; }
+  .vline::before { content: ""; position: absolute; left: 4.5px; top: 6px; bottom: 6px; width: 1px; background: var(--rule-strong); }
+  .vnode { position: relative; padding-bottom: 18px; }
+  .vnode::before { content: ""; position: absolute; left: -18px; top: 5px; width: 9px; height: 9px; border-radius: 50%; background: var(--paper-high); border: 1.5px solid var(--rule-strong); }
+  .vnode.is-here::before { background: var(--thread); border-color: var(--thread); }
+  .vnode .vn-name { font-family: var(--font-instrument); font-size: var(--fs-11); color: var(--ink-2); letter-spacing: 0.04em; }
+  .vnode.is-here .vn-name { color: var(--ink); font-weight: 600; }
+  .vnode .vn-meta { font-family: var(--font-instrument); font-size: 10px; color: var(--ink-4); margin-top: 1px; }
+  .vnode.is-next .vn-name { color: var(--ink-3); }
+  .vnode.is-next::before { border-style: dashed; background: var(--paper-high); border-color: var(--ink-4); }
+
+  /* the canvas: the idea, its load-bearing parts tagged */
+  .canvas { padding: 26px 30px; background: var(--air-tint); border: 1px solid rgba(68,88,106,0.22); border-radius: var(--r-3); }
+  .canvas .cv-h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+  .canvas .cv-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #5E7284; }
+  .canvas .cv-edit { font-family: var(--font-instrument); font-size: 10px; color: var(--ink-3); letter-spacing: 0.05em; }
+  .canvas .cv-text { font-family: var(--font-author); font-size: 18px; line-height: 2.0; color: #24313D; }
+  .part { text-decoration: none; border-bottom: 1px solid rgba(68,88,106,0.45); padding-bottom: 1px; position: relative; cursor: text; }
+  .part .part-tag {
+    font-family: var(--font-instrument); font-size: 8.5px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #5E7284; display: inline-block;
+    vertical-align: super; margin-left: 3px; font-style: normal;
+  }
+  .part.is-changed { border-bottom: 2px solid var(--ink); }
+  .part.is-changed .part-tag::after { content: " · changed"; color: var(--ink); }
+  .canvas .cv-note { font-family: var(--font-instrument); font-size: 10px; color: #5E7284; letter-spacing: 0.05em; margin-top: 16px; }
+
+  /* the x-ray: what the last read pressured, per part */
+  .xray { padding: 18px 20px; }
+  .xray .xr-h { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px; }
+  .xrow { padding: 10px 0; border-top: 1px solid var(--rule); }
+  .xrow .x-part { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; }
+  .xrow p { font-size: var(--fs-12); color: var(--ink-2); line-height: 1.55; margin-top: 3px; }
+  .xrow.is-hot .x-part::after { content: " · the read pressured this"; color: var(--ink-3); font-weight: 400; }
+
+  /* footer action */
+  .rerun { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 18px; padding: 18px 24px; }
+  .rerun p { font-size: var(--fs-14); color: var(--ink-2); max-width: 58ch; }
+  .rerun .btn-primary { flex: none; }
+</style>
+</head>
+<body>
+
+  <aside class="rail">
+    <div class="rail-brand">
+      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#C2492F" stroke-width="7" stroke-linecap="round"/></svg>
+      <span class="rb-name">IdeaLoop</span>
+    </div>
+    <nav class="rail-nav">
+      <a class="rail-item" href="02-desk.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 10.5 H13.5 M3 10.5 V13 M12 10.5 V13 M4.5 10.5 V6.5 A3 3 0 0 1 10.5 6.5 V10.5"/></svg>
+        The Desk
+      </a>
+      <a class="rail-item" href="03-shelves.html">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 5 H13.5 M1.5 10.5 H13.5 M4 5 V2.5 M8 5 V3.5 M6 10.5 V8 M11 10.5 V8.5"/></svg>
+        The Shelves
+      </a>
+    </nav>
+    <div class="rail-spacer"></div>
+    <div class="rail-util">
+      <a class="rail-item" href="#">Settings</a>
+      <a class="rail-item" href="#">My plan</a>
+      <a class="rail-item" href="#">Get help</a>
+    </div>
+    <div class="rail-account"><span class="ra-dot">e</span><span class="ra-mail">emre@idealoopcore.com</span></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="tp-room">evolve · the return</span>
+      <span class="tp-status">beta · free — <b>1 run</b> this week · refills thu</span>
+    </div>
+
+    <div class="threadctx">
+      <div class="threadctx-inner">
+        <div class="tc-title">
+          <div class="tt-name">Forward-to-file: no app at all</div>
+          <div class="tt-meta">v2 · read jul 26 · returning</div>
+        </div>
+        <div class="threadbar">
+          <span class="tb-stop is-done"><span class="tb-dot"></span>captured</span>
+          <span class="tb-line is-done"></span>
+          <a class="tb-stop is-done" href="04-explore.html" style="text-decoration:none;"><span class="tb-dot"></span>explored</a>
+          <span class="tb-line is-done"></span>
+          <a class="tb-stop is-done" href="05-deep.html" style="text-decoration:none;"><span class="tb-dot"></span>deep</a>
+          <span class="tb-line is-done"></span>
+          <span class="tb-stop is-here"><span class="tb-dot"></span>evolve</span>
+          <span class="tb-line is-open"></span>
+          <a class="tb-stop is-open" href="09-brief.html" style="text-decoration:none;"><span class="tb-dot"></span>brief</a>
+        </div>
+        <a class="btn btn-quiet tc-close" href="02-desk.html" style="font-size:12px;">put down ⟶ desk</a>
+      </div>
+    </div>
+
+    <main class="room" data-register="neutral">
+      <div class="room-inner">
+        <span class="room-eyebrow">evolve · the thread doubles back</span>
+        <h1 class="room-title">The idea changed — re-read it.</h1>
+        <p class="room-lede">Returning is re-reading, not rewinding. V2 stays exactly as it was;
+          your edit becomes V3, and the walkthrough will show what moved.</p>
+
+        <!-- what the last read established -->
+        <div class="pstrip">
+          <div class="pcell">
+            <span class="p-k">the verdict, v2</span>
+            <p class="p-v"><b>5.8</b> — the bet lands on distribution, where the evidence is thinnest.</p>
+          </div>
+          <div class="pcell">
+            <span class="p-k">strongest asset</span>
+            <p class="p-v">Email-native intake — removes the adoption step every competitor stumbles on.</p>
+          </div>
+          <div class="pcell">
+            <span class="p-k">binding constraint</span>
+            <p class="p-v">No repeatable path to the bookkeeper's desk. Trust before payment.</p>
+          </div>
+        </div>
+
+        <!-- the work row -->
+        <div class="workrow">
+          <div class="vrail card">
+            <div class="vr-h">the line so far</div>
+            <div class="vline">
+              <div class="vnode">
+                <div class="vn-name">v1 · the seed</div>
+                <div class="vn-meta">captured jul 12</div>
+              </div>
+              <div class="vnode is-here">
+                <div class="vn-name">v2 · email-native</div>
+                <div class="vn-meta">deep 5.8 · jul 26</div>
+              </div>
+              <div class="vnode is-next" style="padding-bottom:0;">
+                <div class="vn-name">v3 · your edit</div>
+                <div class="vn-meta">forks on re-read</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="canvas">
+            <div class="cv-h">
+              <span class="cv-k">the idea · v2 → v3</span>
+              <span class="cv-edit">click any part to edit · six load-bearing parts tagged</span>
+            </div>
+            <p class="cv-text">
+              <span class="part is-changed">Solo bookkeepers with 10–40 clients<span class="part-tag">target</span></span>
+              drown in
+              <span class="part">client receipts that arrive as photos, PDFs, and paper<span class="part-tag">problem</span></span>.
+              The product is
+              <span class="part">a forwarding address that returns everything filed and coded<span class="part-tag">mechanism</span></span>,
+              priced as
+              <span class="part is-changed">a per-client monthly line the bookkeeper re-bills<span class="part-tag">money · changed</span></span>,
+              defensible through
+              <span class="part">the firm's own branded intake address<span class="part-tag">moat</span></span>,
+              and deliberately
+              <span class="part">nothing more than intake — no ledger, no dashboard<span class="part-tag">scope</span></span>.
+            </p>
+            <p class="cv-note">underline = a load-bearing clause · heavy underline = changed since v2 ·
+              verbatim from your idea, or the tag is dropped</p>
+          </div>
+
+          <div class="xray card">
+            <div class="xr-h">x-ray · what v2's read pressured</div>
+            <div class="xrow is-hot">
+              <span class="x-part">money</span>
+              <p>Payment stopped at rung 3 — intake alone was unpriced. Your re-bill framing
+                 answers exactly this clause.</p>
+            </div>
+            <div class="xrow is-hot">
+              <span class="x-part">target</span>
+              <p>Demand's next rung waits on a named buyer — narrowing the target makes that
+                 buyer findable.</p>
+            </div>
+            <div class="xrow">
+              <span class="x-part">mechanism</span>
+              <p>Held at high grounding. Unchanged — the read carries forward.</p>
+            </div>
+            <div class="xrow">
+              <span class="x-part">moat</span>
+              <p>OR capped either way; the cap is structural, not a wording problem.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="rerun card">
+          <p><b style="color:var(--ink);">2 parts changed.</b> The re-read runs on the same
+            rubric — a fresh read, a new fork in the braid. V2 and its evidence stay untouched.</p>
+          <a class="btn btn-primary" href="05-deep.html">Re-read as v3 · 1 run</a>
+        </div>
+
+        <div class="room-foot">
+          <p>Selection, not evolution — versions fork; nothing is overwritten. · <a href="08-lineage.html">see the braid</a></p>
+          <p>room 6 of 9 · return register (pressure → air)</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</body>
+</html>
