@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en" data-dark="aubergine" data-type="sans">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ILC v3 — Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ILC v3 — dark sidebar, premium light content
+   Two open questions are live switches at the top right.
+   ============================================================ */
+
+:root{
+  /* premium light content field */
+  --bg:        #F4F5F7;   /* tinted ground, never pure white */
+  --card:      #FFFFFF;
+  --card-2:    #FAFBFC;
+  --line:      rgba(16,24,40,.08);
+  --line-2:    rgba(16,24,40,.14);
+  --ink:       #101828;
+  --ink-2:     #475467;
+  --ink-3:     #667085;
+  --ink-4:     #98A2B3;
+
+  /* the polish: real, layered shadows */
+  --sh-1: 0 1px 2px rgba(16,24,40,.05);
+  --sh-2: 0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);
+  --sh-3: 0 4px 12px rgba(16,24,40,.07), 0 2px 4px rgba(16,24,40,.04);
+  --sh-4: 0 12px 28px rgba(16,24,40,.10), 0 4px 8px rgba(16,24,40,.05);
+
+  --r-s: 6px; --r-m: 10px; --r-l: 14px;
+
+  --sans:'Inter',-apple-system,'Segoe UI',sans-serif;
+  --serif:'Instrument Serif',Georgia,serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+
+  --t: 160ms cubic-bezier(.2,0,0,1);
+}
+
+/* ---------- the three darks ---------- */
+html[data-dark="aubergine"]{
+  --dk:      #1C1420;   --dk-2: #261A2C;  --dk-line: rgba(255,255,255,.09);
+  --dk-ink:  #EDE7F0;   --dk-ink-2:#A896AE; --dk-ink-3:#7C6C83;
+  --accent:  #7A4E8C;   --accent-soft: rgba(122,78,140,.10); --accent-ink:#6B4079;
+  --accent-on-dark: #C9A9D6;
+}
+html[data-dark="navy"]{
+  --dk:      #0D1524;   --dk-2: #14203A;  --dk-line: rgba(255,255,255,.09);
+  --dk-ink:  #E4E9F2;   --dk-ink-2:#8FA0BC; --dk-ink-3:#65758F;
+  --accent:  #1D4E89;   --accent-soft: rgba(29,78,137,.10); --accent-ink:#173F70;
+  --accent-on-dark: #93B4E0;
+}
+html[data-dark="graphite"]{
+  --dk:      #17181A;   --dk-2: #202225;  --dk-line: rgba(255,255,255,.09);
+  --dk-ink:  #E8E9EA;   --dk-ink-2:#9A9DA2; --dk-ink-3:#71747A;
+  --accent:  #0E7C66;   --accent-soft: rgba(14,124,102,.10); --accent-ink:#0B6353;
+  --accent-on-dark: #6FC8B3;
+}
+
+/* ---------- the three display types ---------- */
+html[data-type="sans"]  { --display: var(--sans);  --display-w:650; --display-ls:-.032em; --display-size:1;    --display-lh:1.12; --display-style:normal; }
+html[data-type="serif"] { --display: var(--serif); --display-w:400; --display-ls:-.012em; --display-size:1.14; --display-lh:1.06; --display-style:normal; }
+html[data-type="mono"]  { --display: var(--mono);  --display-w:600; --display-ls:-.045em; --display-size:.86;  --display-lh:1.18; --display-style:normal; }
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  display:flex; background:var(--bg); color:var(--ink);
+  font-family:var(--sans); font-size:14px; line-height:1.55;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+.display{
+  font-family:var(--display); font-weight:var(--display-w);
+  letter-spacing:var(--display-ls); line-height:var(--display-lh);
+  font-style:var(--display-style);
+}
+.mono{font-family:var(--mono)}
+.lbl{
+  font-family:var(--mono); font-size:10.5px; font-weight:500;
+  letter-spacing:.09em; text-transform:uppercase; color:var(--ink-4);
+}
+
+/* ============ SIDEBAR (the dark anchor) ============ */
+.side{
+  width:236px; flex:none; background:var(--dk); color:var(--dk-ink);
+  display:flex; flex-direction:column; padding:18px 12px 14px;
+  position:relative; z-index:2;
+}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 10px 20px}
+.brand .bmark{width:26px;height:26px;border-radius:7px;background:var(--dk-2);
+  border:1px solid var(--dk-line);display:flex;align-items:center;justify-content:center;flex:none}
+.brand .bname{font-family:var(--display);font-weight:var(--display-w);letter-spacing:-.015em;font-size:15.5px;color:var(--dk-ink)}
+.brand .bsub{font-family:var(--mono);font-size:8.5px;letter-spacing:.22em;color:var(--dk-ink-3);text-transform:uppercase;display:block;margin-top:1px}
+
+.capture{
+  margin:0 4px 18px; display:flex; align-items:center; gap:8px;
+  background:var(--dk-2); border:1px solid var(--dk-line); border-radius:var(--r-m);
+  padding:9px 10px; cursor:text; transition:border-color var(--t),background var(--t);
+}
+.capture:hover{border-color:rgba(255,255,255,.18)}
+.capture .cp-txt{font-size:12.5px;color:var(--dk-ink-3);flex:1}
+.capture .cp-key{font-family:var(--mono);font-size:9.5px;color:var(--dk-ink-3);
+  border:1px solid var(--dk-line);border-radius:4px;padding:1px 5px}
+
+.snav{display:flex;flex-direction:column;gap:1px}
+.snav .sgrp{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--dk-ink-3);padding:14px 10px 6px}
+.sitem{
+  display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-s);
+  color:var(--dk-ink-2);font-size:13.5px;font-weight:450;cursor:pointer;
+  border:1px solid transparent; transition:background var(--t),color var(--t);
+}
+.sitem:hover{background:rgba(255,255,255,.05);color:var(--dk-ink)}
+.sitem.on{background:var(--dk-2);color:var(--dk-ink);font-weight:550;border-color:var(--dk-line)}
+.sitem svg{flex:none;opacity:.9}
+.sitem .cnt{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--dk-ink-3)}
+.sspace{flex:1}
+.sfoot{border-top:1px solid var(--dk-line);padding-top:10px;margin-top:8px}
+.suser{display:flex;align-items:center;gap:9px;padding:10px 10px 2px}
+.suser .av{width:26px;height:26px;border-radius:50%;background:var(--dk-2);border:1px solid var(--dk-line);
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dk-ink-2);flex:none}
+.suser .um{font-size:11.5px;color:var(--dk-ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.suser .up{font-family:var(--mono);font-size:9px;color:var(--dk-ink-3)}
+
+/* ============ MAIN ============ */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto}
+
+.top{
+  height:56px;flex:none;display:flex;align-items:center;gap:14px;
+  padding:0 26px;background:rgba(255,255,255,.72);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;
+}
+.top .where{font-size:13px;font-weight:600;color:var(--ink)}
+.top .runs{margin-left:auto;display:flex;align-items:center;gap:7px;
+  font-family:var(--mono);font-size:11px;color:var(--ink-3);
+  background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 11px;box-shadow:var(--sh-1)}
+.top .runs b{color:var(--ink);font-weight:600}
+.pip{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.pip.off{background:var(--ink-4);opacity:.4}
+
+/* the variant switcher — review tool, not part of the design */
+.switch{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);
+  border-radius:999px;padding:3px;box-shadow:var(--sh-1)}
+.switch b{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-4);padding:0 6px 0 8px;font-weight:500}
+.switch button{font-family:var(--mono);font-size:10px;letter-spacing:.04em;border:none;background:none;
+  color:var(--ink-3);padding:4px 9px;border-radius:999px;cursor:pointer;transition:all var(--t)}
+.switch button.on{background:var(--ink);color:#fff}
+
+.wrap{padding:28px 26px 80px;max-width:1180px;width:100%}
+
+/* ---------- resume: it greets you with the unfinished thing ---------- */
+.resume{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);
+  box-shadow:var(--sh-3);padding:22px 24px;display:flex;gap:26px;align-items:flex-start;
+  position:relative;overflow:hidden;
+}
+.resume::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.resume .rz-l{flex:1;min-width:0}
+.resume .rz-eye{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.resume h1{font-size:calc(25px * var(--display-size));color:var(--ink);margin-bottom:7px}
+.resume .rz-say{font-size:14px;color:var(--ink-2);max-width:62ch}
+.resume .rz-say b{color:var(--ink);font-weight:600}
+.resume .rz-act{display:flex;gap:9px;margin-top:16px}
+.resume .rz-r{width:210px;flex:none;border-left:1px solid var(--line);padding-left:24px}
+.resume .rz-meta{display:flex;flex-direction:column;gap:11px}
+.resume .rz-meta .mrow{display:flex;flex-direction:column;gap:2px}
+.resume .rz-meta .mval{font-size:12.5px;color:var(--ink);font-weight:500}
+
+.btn{
+  font-family:var(--sans);font-size:13px;font-weight:550;padding:8px 15px;border-radius:var(--r-s);
+  border:1px solid var(--line-2);background:var(--card);color:var(--ink);cursor:pointer;
+  box-shadow:var(--sh-1);transition:all var(--t);display:inline-flex;align-items:center;gap:7px;
+}
+.btn:hover{background:var(--card-2);box-shadow:var(--sh-2)}
+.btn-p{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn-p:hover{background:#1D2939;border-color:#1D2939}
+.btn-g{border-color:transparent;background:transparent;box-shadow:none;color:var(--ink-2)}
+.btn-g:hover{background:rgba(16,24,40,.04);color:var(--ink)}
+.btn-s{font-size:12px;padding:5px 11px}
+
+/* ---------- section heads ---------- */
+.sec{margin-top:30px}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.sec-h h2{font-size:calc(15px * var(--display-size));color:var(--ink);font-weight:600;
+  font-family:var(--display);letter-spacing:var(--display-ls)}
+html[data-type="serif"] .sec-h h2{font-weight:400;font-size:calc(18px * var(--display-size))}
+.sec-h .sh-n{font-family:var(--mono);font-size:10.5px;color:var(--ink-4)}
+.sec-h .sh-a{margin-left:auto}
+
+/* ---------- the grid of ideas: one state each, never all ---------- */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.idea{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);
+  box-shadow:var(--sh-2);padding:16px 17px 15px;cursor:pointer;
+  transition:box-shadow var(--t),transform var(--t),border-color var(--t);
+  display:flex;flex-direction:column;min-height:172px;
+}
+.idea:hover{box-shadow:var(--sh-4);transform:translateY(-2px);border-color:var(--line-2)}
+.idea .i-top{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.state{
+  display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.08em;text-transform:uppercase;font-weight:500;
+  border-radius:999px;padding:3px 9px 3px 7px;border:1px solid var(--line-2);color:var(--ink-2);
+  background:var(--card-2);
+}
+.state .sd{width:5px;height:5px;border-radius:50%;background:var(--ink-4)}
+.state.deep{border-color:var(--accent);color:var(--accent-ink);background:var(--accent-soft)}
+.state.deep .sd{background:var(--accent)}
+.state.expl .sd{background:var(--ink-3)}
+.idea .i-age{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-4)}
+.idea h3{font-family:var(--display);font-weight:var(--display-w);letter-spacing:var(--display-ls);
+  font-size:calc(16.5px * var(--display-size));line-height:1.25;color:var(--ink);margin-bottom:7px}
+.idea .i-say{font-size:12.5px;color:var(--ink-3);line-height:1.55;flex:1}
+.idea .i-foot{display:flex;align-items:center;gap:9px;margin-top:12px;padding-top:11px;border-top:1px solid var(--line)}
+.score{display:inline-flex;align-items:baseline;gap:5px;font-family:var(--mono);font-size:12.5px;
+  font-weight:600;color:var(--ink)}
+.score .s-of{font-size:9.5px;color:var(--ink-4);font-weight:400}
+.dash{font-family:var(--mono);font-size:12.5px;color:var(--ink-4)}
+.idea .i-hint{font-size:11px;color:var(--ink-4);margin-left:auto;font-family:var(--mono)}
+.lin{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10px;
+  color:var(--ink-3);border:1px solid var(--line);border-radius:5px;padding:2px 6px;background:var(--card-2)}
+
+/* new idea tile */
+.newidea{
+  border:1px dashed var(--line-2);border-radius:var(--r-l);background:transparent;box-shadow:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  color:var(--ink-3);cursor:pointer;min-height:172px;transition:all var(--t);
+}
+.newidea:hover{border-color:var(--accent);color:var(--accent-ink);background:var(--accent-soft)}
+.newidea .ni-t{font-size:13px;font-weight:550}
+.newidea .ni-s{font-size:11px;color:var(--ink-4)}
+
+/* ---------- two-column lower ---------- */
+.low{display:grid;grid-template-columns:1.35fr 1fr;gap:14px;margin-top:30px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--sh-2);overflow:hidden}
+.panel .p-h{display:flex;align-items:center;gap:9px;padding:13px 17px;border-bottom:1px solid var(--line);background:var(--card-2)}
+.panel .p-h h3{font-size:13px;font-weight:600;color:var(--ink)}
+.panel .p-h .p-n{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-4)}
+
+/* signals */
+.sig{display:flex;gap:12px;padding:14px 17px;border-bottom:1px solid var(--line);align-items:flex-start}
+.sig:last-child{border-bottom:none}
+.sig .sg-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:6px;flex:none;
+  box-shadow:0 0 0 3px var(--accent-soft)}
+.sig .sg-b{flex:1;min-width:0}
+.sig .sg-t{font-size:13px;color:var(--ink);font-weight:550;margin-bottom:2px}
+.sig .sg-s{font-size:12px;color:var(--ink-3);line-height:1.5}
+.sig .sg-a{flex:none}
+
+/* trail */
+.trail{padding:6px 0}
+.tr{display:flex;align-items:baseline;gap:11px;padding:7px 17px;font-size:12.5px}
+.tr .tr-w{font-family:var(--mono);font-size:10px;color:var(--ink-4);width:42px;flex:none}
+.tr .tr-v{font-family:var(--mono);font-size:10.5px;color:var(--ink-2);font-weight:500;width:62px;flex:none}
+.tr .tr-t{color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* scratch */
+.scratch{padding:13px 17px;border-bottom:1px solid var(--line)}
+.scratch:last-child{border-bottom:none}
+.scratch .sc-t{font-size:12.5px;color:var(--ink-2);font-style:italic;line-height:1.5}
+.scratch .sc-m{display:flex;align-items:center;gap:8px;margin-top:7px}
+.scratch .sc-d{font-family:var(--mono);font-size:9.5px;color:var(--ink-4)}
+
+.note{margin-top:34px;padding:14px 17px;border:1px dashed var(--line-2);border-radius:var(--r-m);
+  font-size:12px;color:var(--ink-3);line-height:1.6;background:transparent}
+.note b{color:var(--ink-2);font-weight:600}
+
+@media(max-width:1080px){.grid{grid-template-columns:repeat(2,1fr)}.low{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ================= SIDEBAR ================= -->
+<aside class="side">
+  <div class="brand">
+    <span class="bmark">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+        <path d="M2 17 C7 17 9 17 11 17 C16 17 18 7 14.5 7 C11 7 12.5 17 19 17 C21 17 22 17 22 17"
+              stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="color:var(--accent-on-dark)"/>
+      </svg>
+    </span>
+    <span>
+      <span class="bname">IdeaLoop</span>
+      <span class="bsub">core</span>
+    </span>
+  </div>
+
+  <!-- one-key capture for the half-thought -->
+  <div class="capture">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="color:var(--dk-ink-3)">
+      <path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+    </svg>
+    <span class="cp-txt">Catch a thought…</span>
+    <span class="cp-key">C</span>
+  </div>
+
+  <nav class="snav">
+    <div class="sitem on">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/>
+        <rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+      Control
+    </div>
+    <div class="sitem">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h7" stroke-linecap="round"/></svg>
+      My ideas <span class="cnt">7</span>
+    </div>
+
+    <div class="sgrp">analysis</div>
+    <div class="sitem">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <circle cx="8" cy="8" r="5.5"/><path d="M10.2 5.8 6.9 7.1 5.8 10.2 9.1 8.9z" stroke-linejoin="round"/></svg>
+      Explore
+    </div>
+    <div class="sitem">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <circle cx="8" cy="8" r="5.5"/><circle cx="8" cy="8" r="2"/></svg>
+      Deep analysis
+    </div>
+
+    <div class="sgrp">across ideas</div>
+    <div class="sitem">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="2" y="3" width="5" height="10" rx="1"/><rect x="9" y="3" width="5" height="10" rx="1"/></svg>
+      Comparison
+    </div>
+    <div class="sitem">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M3 13V6a3 3 0 0 1 3-3h4" stroke-linecap="round"/><path d="M8.5 1.5 10.8 3 8.5 4.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="3" cy="13" r="1.4"/></svg>
+      Re-evaluation
+    </div>
+
+    <div class="sspace"></div>
+    <div class="sfoot">
+      <div class="sitem" style="font-size:12.5px">Settings</div>
+      <div class="sitem" style="font-size:12.5px">Feedback</div>
+      <div class="suser">
+        <span class="av">E</span>
+        <span>
+          <span class="um">emre@idealoopcore.com</span>
+          <span class="up">beta · free</span>
+        </span>
+      </div>
+    </div>
+  </nav>
+</aside>
+
+<!-- ================= MAIN ================= -->
+<div class="main">
+  <div class="top">
+    <span class="where">Control</span>
+
+    <div class="switch" style="margin-left:20px">
+      <b>dark</b>
+      <button data-dk="aubergine" class="on">aubergine</button>
+      <button data-dk="navy">navy</button>
+      <button data-dk="graphite">graphite</button>
+    </div>
+    <div class="switch">
+      <b>type</b>
+      <button data-tp="sans" class="on">sans</button>
+      <button data-tp="serif">serif</button>
+      <button data-tp="mono">mono</button>
+    </div>
+
+    <div class="runs">
+      <span class="pip"></span><span class="pip"></span><span class="pip off"></span>
+      <b>2</b> runs left · refills thu
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- IT GREETS YOU WITH THE UNFINISHED THING -->
+    <div class="resume">
+      <div class="rz-l">
+        <div class="rz-eye">
+          <span class="lbl">you were in the middle of</span>
+          <span class="lbl" style="color:var(--ink-3)">· 6 days ago</span>
+        </div>
+        <h1 class="display">Invoice hand-off for solo bookkeepers</h1>
+        <p class="rz-say">You explored it and left <b>three angles open</b> — you never took one
+          forward. The email-native angle carried the sharpest disconfirmer.</p>
+        <div class="rz-act">
+          <button class="btn btn-p">Pick it back up</button>
+          <button class="btn">Take an angle to deep</button>
+          <button class="btn btn-g">Not now</button>
+        </div>
+      </div>
+      <div class="rz-r">
+        <div class="rz-meta">
+          <div class="mrow"><span class="lbl">state</span><span class="mval">Explored · not judged</span></div>
+          <div class="mrow"><span class="lbl">family</span><span class="mval">3 versions · root</span></div>
+          <div class="mrow"><span class="lbl">last touched</span><span class="mval">Jul 22, 01:47</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- THE IDEAS: one state each, never the whole journey -->
+    <div class="sec">
+      <div class="sec-h">
+        <h2>In play</h2>
+        <span class="sh-n">4 ideas · 1 waiting on you</span>
+        <button class="btn btn-g btn-s sh-a">See all 7 →</button>
+      </div>
+      <div class="grid">
+
+        <div class="idea">
+          <div class="i-top">
+            <span class="state deep"><span class="sd"></span>deep read</span>
+            <span class="i-age">jul 26</span>
+          </div>
+          <h3>Forward-to-file: no app at all</h3>
+          <p class="i-say">The friction is real and the build is cheap — which is why the bet lands
+            on distribution, where the evidence is thinnest.</p>
+          <div class="i-foot">
+            <span class="score">5.8 <span class="s-of">/10</span></span>
+            <span class="lin">⑂ 3</span>
+            <span class="i-hint">brief ready</span>
+          </div>
+        </div>
+
+        <div class="idea">
+          <div class="i-top">
+            <span class="state expl"><span class="sd"></span>explored</span>
+            <span class="i-age">jul 22</span>
+          </div>
+          <h3>Receipt inbox</h3>
+          <p class="i-say">Widened into three angles. The consumer lane reads crowded; the
+            practitioner lane is still open.</p>
+          <div class="i-foot">
+            <span class="dash">—</span>
+            <span class="lin">⑂ 2</span>
+            <span class="i-hint">no verdict yet</span>
+          </div>
+        </div>
+
+        <div class="idea">
+          <div class="i-top">
+            <span class="state"><span class="sd"></span>rough</span>
+            <span class="i-age">jul 20</span>
+          </div>
+          <h3>Contractor punch-list voice notes</h3>
+          <p class="i-say">"Site leads narrate the punch list driving home — someone should turn
+            that into the actual list."</p>
+          <div class="i-foot">
+            <span class="dash">—</span>
+            <span class="i-hint">explore or deep</span>
+          </div>
+        </div>
+
+        <div class="newidea">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path d="M8 3v10M3 8h10" stroke-linecap="round"/></svg>
+          <span class="ni-t">Bring a new idea</span>
+          <span class="ni-s">rough is fine — that's the point</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- LOWER: what needs you · what you were doing -->
+    <div class="low">
+
+      <div class="panel">
+        <div class="p-h">
+          <h3>Needs your move</h3>
+          <span class="p-n">2</span>
+        </div>
+        <div class="sig">
+          <span class="sg-dot"></span>
+          <div class="sg-b">
+            <div class="sg-t">The landscape moved under <em>Receipt inbox</em></div>
+            <div class="sg-s">Two new actors appeared near the wedge; one may affect monetization.
+              The idea text is unchanged — only the world moved.</div>
+          </div>
+          <div class="sg-a"><button class="btn btn-s">Re-read</button></div>
+        </div>
+        <div class="sig">
+          <span class="sg-dot" style="background:var(--ink-4);box-shadow:0 0 0 3px rgba(16,24,40,.05)"></span>
+          <div class="sg-b">
+            <div class="sg-t">A caught thought is still unattached</div>
+            <div class="sg-s">"warranty expiry ledger — nudge before it lapses" — caught jul 24,
+              not yet turned into an idea.</div>
+          </div>
+          <div class="sg-a"><button class="btn btn-s">Place it</button></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="p-h">
+          <h3>Where you've been</h3>
+          <span class="p-n">tonight</span>
+        </div>
+        <div class="trail">
+          <div class="tr"><span class="tr-w">01:47</span><span class="tr-v">explored</span><span class="tr-t">Invoice hand-off — 3 angles</span></div>
+          <div class="tr"><span class="tr-w">01:31</span><span class="tr-v">caught</span><span class="tr-t">"warranty expiry ledger…"</span></div>
+          <div class="tr"><span class="tr-w">01:12</span><span class="tr-v">compared</span><span class="tr-t">Forward-to-file × Receipt inbox</span></div>
+          <div class="tr"><span class="tr-w">00:54</span><span class="tr-v">judged</span><span class="tr-t">Forward-to-file · 5.8</span></div>
+          <div class="tr"><span class="tr-w">00:38</span><span class="tr-v">opened</span><span class="tr-t">Receipt inbox lineage</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="note">
+      <b>Two switches at the top are for you, not the product.</b> Toggle the sidebar dark
+      (aubergine / navy / graphite) and the headline type (sans / serif / mono) and tell me which
+      combination is ILC. Everything else here is the real design: one state per idea, never the
+      whole journey; it greets you with what you left unfinished; a one-key place to catch a
+      thought before it's gone.
+    </div>
+
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('[data-dk]').forEach(b=>b.addEventListener('click',()=>{
+    document.documentElement.dataset.dark=b.dataset.dk;
+    document.querySelectorAll('[data-dk]').forEach(x=>x.classList.toggle('on',x===b));
+  }));
+  document.querySelectorAll('[data-tp]').forEach(b=>b.addEventListener('click',()=>{
+    document.documentElement.dataset.type=b.dataset.tp;
+    document.querySelectorAll('[data-tp]').forEach(x=>x.classList.toggle('on',x===b));
+  }));
+</script>
+</body>
+</html>
