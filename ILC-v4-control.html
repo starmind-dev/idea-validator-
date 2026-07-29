@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ILC v4 — Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ILC v4 — Control
+   Signature: STATE IS THE AXIS  +  PULL TO SPLIT
+   Familiar bones (sidebar, cards, panels) so nothing is hard.
+   Unique spine: the app is organised by the state of your
+   thinking, and you can hold two things by pulling one in.
+   Nothing dominates. Date is present but never the axis.
+   ============================================================ */
+
+:root{
+  /* premium navy — from the reference */
+  --navy:      #191C4A;
+  --navy-2:    #14173D;
+  --navy-lift: #232764;
+  --navy-line: rgba(255,255,255,.10);
+  --navy-ink:  #EEEFF7;
+  --navy-ink2: #A2A6C9;
+  --navy-ink3: #6F7499;
+
+  --accent:    #3742A8;
+  --accent-2:  #4B57C8;
+  --accent-soft:rgba(55,66,168,.09);
+  --accent-line:rgba(55,66,168,.22);
+  --on-navy:   #8E97E8;
+
+  /* light field */
+  --bg:      #F4F5F8;
+  --card:    #FFFFFF;
+  --card-2:  #FAFAFC;
+  --line:    rgba(16,24,40,.085);
+  --line-2:  rgba(16,24,40,.15);
+  --ink:     #12141C;
+  --ink-2:   #464B5C;
+  --ink-3:   #6B7185;
+  --ink-4:   #9AA0B2;
+
+  --sh-1: 0 1px 2px rgba(16,24,40,.05);
+  --sh-2: 0 1px 3px rgba(16,24,40,.07), 0 1px 2px rgba(16,24,40,.04);
+  --sh-3: 0 6px 16px rgba(16,24,40,.08), 0 2px 5px rgba(16,24,40,.04);
+  --sh-4: 0 18px 40px rgba(16,24,40,.14), 0 6px 12px rgba(16,24,40,.06);
+
+  --r-s:6px; --r-m:9px; --r-l:13px;
+  --sans:'Inter',-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --t:160ms cubic-bezier(.2,0,0,1);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{display:flex;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow:hidden}
+.mono{font-family:var(--mono)}
+.lbl{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-4)}
+
+/* ================= SIDEBAR ================= */
+.side{width:228px;flex:none;color:var(--navy-ink);display:flex;flex-direction:column;
+  padding:18px 12px 14px;background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%)}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 10px 18px}
+.brand .bm{width:27px;height:27px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,var(--navy-lift),rgba(255,255,255,.04));border:1px solid var(--navy-line)}
+.brand .bn{font-size:15.5px;font-weight:600;letter-spacing:-.015em;line-height:1.15}
+.brand .bs{font-family:var(--mono);font-size:8px;letter-spacing:.24em;color:var(--navy-ink3);text-transform:uppercase}
+
+.catch{margin:0 4px 16px;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.055);
+  border:1px solid var(--navy-line);border-radius:var(--r-m);padding:9px 10px;cursor:text;transition:all var(--t)}
+.catch:hover{background:rgba(255,255,255,.09)}
+.catch span{font-size:12.5px;color:var(--navy-ink3);flex:1}
+.catch kbd{font-family:var(--mono);font-size:9.5px;color:var(--navy-ink3);border:1px solid var(--navy-line);
+  border-radius:4px;padding:1px 5px}
+
+.nav{display:flex;flex-direction:column;gap:1px}
+.ngrp{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--navy-ink3);padding:14px 10px 6px}
+.nit{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-s);color:var(--navy-ink2);
+  font-size:13.5px;cursor:pointer;border:1px solid transparent;transition:all var(--t)}
+.nit:hover{background:rgba(255,255,255,.05);color:var(--navy-ink)}
+.nit.on{background:var(--navy-lift);color:#fff;font-weight:550;border-color:var(--navy-line)}
+.nit .n{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--navy-ink3)}
+.nsp{flex:1}
+.nfoot{border-top:1px solid var(--navy-line);padding-top:9px;margin-top:8px}
+.usr{display:flex;align-items:center;gap:9px;padding:10px 10px 2px}
+.usr .av{width:26px;height:26px;border-radius:50%;background:var(--navy-lift);border:1px solid var(--navy-line);
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--navy-ink2);flex:none}
+.usr .m{font-size:11.5px;color:var(--navy-ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.usr .p{font-family:var(--mono);font-size:9px;color:var(--navy-ink3)}
+
+/* ================= MAIN ================= */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{height:54px;flex:none;display:flex;align-items:center;gap:12px;padding:0 22px;
+  background:rgba(255,255,255,.75);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top h1{font-size:14px;font-weight:600}
+.top .dt{font-family:var(--mono);font-size:11px;color:var(--ink-4)}
+.top .rt{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;
+  color:var(--ink-3);background:var(--card);border:1px solid var(--line);border-radius:999px;
+  padding:4px 11px;box-shadow:var(--sh-1)}
+.top .rt b{color:var(--ink);font-weight:600}
+.pip{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.pip.off{background:var(--ink-4);opacity:.35}
+
+.body{flex:1;display:flex;min-height:0}
+.scroll{flex:1;overflow-y:auto;padding:18px 22px 40px;min-width:0}
+
+/* ---- resume: a slim band, not a hero (nothing dominates) ---- */
+.resume{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:var(--r-m);padding:11px 15px;box-shadow:var(--sh-2)}
+.resume .rl{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-4);flex:none}
+.resume .rt2{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.resume .rs{font-size:12.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.resume .ra{display:flex;gap:7px;flex:none}
+
+/* ---- THE BOARD: state is the axis ---- */
+.board{margin-top:18px}
+.bh{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.bh h2{font-size:14px;font-weight:600}
+.bh .bs2{font-size:12px;color:var(--ink-3)}
+.bh .bhint{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-4)}
+
+.cols{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start;
+  transition:grid-template-columns 200ms cubic-bezier(.2,0,0,1)}
+/* the board reflows when you hold something — it never gets squeezed */
+body.holding  .cols{grid-template-columns:repeat(2,1fr)}
+body.holding  .low{grid-template-columns:1fr}
+body.holding2 .cols{grid-template-columns:1fr}
+body.holding2 .colh{padding-top:8px}
+body.holding2 .col{gap:6px}
+.col{display:flex;flex-direction:column;gap:8px;min-height:120px;border-radius:var(--r-l);padding:2px;transition:background var(--t)}
+.col.dragover{background:var(--accent-soft)}
+.colh{display:flex;align-items:center;gap:7px;padding:3px 4px 5px}
+.colh .cdot{width:7px;height:7px;border-radius:50%;flex:none}
+.colh .cn{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-2);font-weight:500}
+.colh .cc{font-family:var(--mono);font-size:9.5px;color:var(--ink-4);margin-left:auto}
+.colh .csub{font-size:10.5px;color:var(--ink-4)}
+
+/* state colors — quiet, one family, never a traffic light */
+.s-rough  .cdot{background:#B9BECD}
+.s-expl   .cdot{background:#7C86D8}
+.s-deep   .cdot{background:var(--accent)}
+.s-closed .cdot{background:#8A90A3;opacity:.6}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-m);padding:11px 12px 10px;
+  box-shadow:var(--sh-1);cursor:grab;transition:box-shadow var(--t),transform var(--t),border-color var(--t)}
+.card:hover{box-shadow:var(--sh-3);transform:translateY(-1px);border-color:var(--line-2)}
+.card:active{cursor:grabbing}
+.card.dragging{opacity:.4}
+.card h3{font-size:13px;font-weight:600;line-height:1.3;margin-bottom:5px}
+.card p{font-size:11.5px;color:var(--ink-3);line-height:1.5;margin-bottom:8px}
+.card .cf{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9.5px;color:var(--ink-4)}
+.card .cf .sc{color:var(--ink);font-weight:600;font-size:11px}
+.card .cf .dash{color:var(--ink-4)}
+.card .cf .dt{margin-left:auto}
+.card .fk{border:1px solid var(--line);border-radius:4px;padding:0 4px;color:var(--ink-3)}
+
+.colnew{border:1px dashed var(--line-2);border-radius:var(--r-m);padding:12px;display:flex;align-items:center;
+  justify-content:center;gap:6px;color:var(--ink-4);font-size:12px;cursor:pointer;transition:all var(--t);background:transparent}
+.colnew:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+
+/* ---- lower panels ---- */
+.low{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--sh-2);overflow:hidden}
+.ph{display:flex;align-items:center;gap:8px;padding:11px 15px;border-bottom:1px solid var(--line);background:var(--card-2)}
+.ph h3{font-size:12.5px;font-weight:600}
+.ph .pn{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--ink-4)}
+.row{display:flex;gap:10px;padding:11px 15px;border-bottom:1px solid var(--line);align-items:flex-start}
+.row:last-child{border-bottom:none}
+.row .rd{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:6px;flex:none;
+  box-shadow:0 0 0 3px var(--accent-soft)}
+.row .rb{flex:1;min-width:0}
+.row .rt3{font-size:12.5px;font-weight:550;margin-bottom:1px}
+.row .rs2{font-size:11.5px;color:var(--ink-3);line-height:1.45}
+.tr{display:flex;align-items:baseline;gap:10px;padding:6px 15px;font-size:12px}
+.tr .w{font-family:var(--mono);font-size:9.5px;color:var(--ink-4);width:38px;flex:none}
+.tr .v{font-family:var(--mono);font-size:10px;color:var(--ink-2);font-weight:500;width:56px;flex:none}
+.tr .t{color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ================= THE SPLIT (pull to hold two) ================= */
+.hold{width:0;flex:none;background:var(--card);border-left:1px solid var(--line);
+  display:flex;flex-direction:column;overflow:hidden;transition:width 200ms cubic-bezier(.2,0,0,1);box-shadow:-8px 0 24px rgba(16,24,40,.05)}
+.hold.open{width:520px}
+.hold.two{width:760px}
+.holdh{height:38px;flex:none;display:flex;align-items:center;gap:9px;padding:0 13px;border-bottom:1px solid var(--line);
+  background:var(--card-2)}
+.holdh .hl{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-4)}
+.holdh .x{margin-left:auto;cursor:pointer;color:var(--ink-4);font-size:15px;line-height:1;padding:2px 5px;border-radius:4px}
+.holdh .x:hover{background:rgba(16,24,40,.06);color:var(--ink)}
+.panes{flex:1;display:flex;min-height:0}
+.pane{flex:1;min-width:0;overflow-y:auto;padding:16px 17px;border-right:1px solid var(--line)}
+.pane:last-child{border-right:none}
+.pane .pstate{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;
+  letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line-2);border-radius:999px;
+  padding:2px 8px;color:var(--ink-2);background:var(--card-2);margin-bottom:9px}
+.pane .pstate i{width:5px;height:5px;border-radius:50%;background:var(--accent);font-style:normal}
+.pane h4{font-size:16px;font-weight:600;line-height:1.28;margin-bottom:8px}
+.pane .praw{font-size:12.5px;color:var(--ink-2);line-height:1.6;padding:10px 12px;background:var(--card-2);
+  border:1px solid var(--line);border-radius:var(--r-s);margin-bottom:12px}
+.pane .prow{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:12px}
+.pane .prow .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-4);width:74px;flex:none;padding-top:2px}
+.pane .prow .v{color:var(--ink-2);flex:1}
+.pane .pacts{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap}
+.dropzone{margin:10px;border:1px dashed var(--line-2);border-radius:var(--r-m);flex:1;display:flex;
+  align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--ink-4);font-size:12px;
+  transition:all var(--t)}
+.dropzone.dragover{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+
+.btn{font-family:var(--sans);font-size:12.5px;font-weight:550;padding:6px 12px;border-radius:var(--r-s);
+  border:1px solid var(--line-2);background:var(--card);color:var(--ink);cursor:pointer;box-shadow:var(--sh-1);
+  transition:all var(--t)}
+.btn:hover{background:var(--card-2);box-shadow:var(--sh-2)}
+.btn-p{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 1px 2px rgba(55,66,168,.25)}
+.btn-p:hover{background:var(--accent-2);border-color:var(--accent-2)}
+.btn-g{border-color:transparent;background:transparent;box-shadow:none;color:var(--ink-3)}
+.btn-g:hover{background:rgba(16,24,40,.05);color:var(--ink)}
+
+.note{margin-top:22px;padding:12px 15px;border:1px dashed var(--line-2);border-radius:var(--r-m);
+  font-size:11.5px;color:var(--ink-3);line-height:1.6}
+.note b{color:var(--ink-2)}
+</style>
+</head>
+<body>
+
+<aside class="side">
+  <div class="brand">
+    <span class="bm">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+        <path d="M2 17c5 0 7 0 9 0 5 0 7-10 3.5-10S12.5 17 19 17c2 0 3 0 3 0"
+              stroke="#8E97E8" stroke-width="1.9" stroke-linecap="round"/></svg>
+    </span>
+    <span><span class="bn">IdeaLoop</span><br><span class="bs">core</span></span>
+  </div>
+
+  <div class="catch"><span>Catch a thought…</span><kbd>C</kbd></div>
+
+  <nav class="nav">
+    <div class="nit on">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/>
+        <rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Control</div>
+    <div class="nit">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h7" stroke-linecap="round"/></svg>My ideas<span class="n">7</span></div>
+    <div class="ngrp">analysis</div>
+    <div class="nit">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <circle cx="8" cy="8" r="5.5"/><path d="M10.2 5.8 6.9 7.1 5.8 10.2 9.1 8.9z" stroke-linejoin="round"/></svg>Explore</div>
+    <div class="nit">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <circle cx="8" cy="8" r="5.5"/><circle cx="8" cy="8" r="2"/></svg>Deep analysis</div>
+    <div class="ngrp">across ideas</div>
+    <div class="nit">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="2" y="3" width="5" height="10" rx="1"/><rect x="9" y="3" width="5" height="10" rx="1"/></svg>Comparison</div>
+    <div class="nit">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M3 13V6a3 3 0 0 1 3-3h4" stroke-linecap="round"/>
+        <path d="M8.5 1.5 10.8 3 8.5 4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="3" cy="13" r="1.4"/></svg>Re-evaluation</div>
+    <div class="nsp"></div>
+    <div class="nfoot">
+      <div class="nit" style="font-size:12.5px">Settings</div>
+      <div class="nit" style="font-size:12.5px">Feedback</div>
+      <div class="usr"><span class="av">E</span>
+        <span><span class="m">emre@idealoopcore.com</span><br><span class="p">beta · free</span></span></div>
+    </div>
+  </nav>
+</aside>
+
+<div class="main">
+  <div class="top">
+    <h1>Control</h1>
+    <span class="dt">wed 29 jul · 02:14</span>
+    <span class="rt"><span class="pip"></span><span class="pip"></span><span class="pip off"></span>
+      <b>2</b> runs · refills thu</span>
+  </div>
+
+  <div class="body">
+    <div class="scroll">
+
+      <!-- slim resume band — present, not dominant -->
+      <div class="resume">
+        <span class="rl">left unfinished</span>
+        <span class="rt2">Invoice hand-off for solo bookkeepers</span>
+        <span class="rs">— three angles open, none taken forward · 6 days ago</span>
+        <span class="ra">
+          <button class="btn btn-p">Pick it up</button>
+          <button class="btn btn-g">Dismiss</button>
+        </span>
+      </div>
+
+      <!-- THE BOARD: the axis is the state of your thinking -->
+      <div class="board">
+        <div class="bh">
+          <h2>Your thinking</h2>
+          <span class="bs2">7 ideas · by how far each one got</span>
+          <span class="bhint">drag any idea right to hold it →</span>
+        </div>
+
+        <div class="cols">
+
+          <div class="col s-rough" data-state="rough">
+            <div class="colh"><span class="cdot"></span><span class="cn">rough</span><span class="cc">2</span></div>
+            <div class="card" draggable="true" data-id="punch">
+              <h3>Contractor punch-list voice notes</h3>
+              <p>Site leads narrate the punch list driving home — someone should turn that into the list.</p>
+              <div class="cf"><span class="dash">—</span><span class="dt">jul 20</span></div>
+            </div>
+            <div class="card" draggable="true" data-id="warranty">
+              <h3>Warranty expiry ledger</h3>
+              <p>One inbox for receipts, one nudge before the warranty lapses.</p>
+              <div class="cf"><span class="dash">—</span><span class="dt">jul 14</span></div>
+            </div>
+            <div class="colnew">+ new idea</div>
+          </div>
+
+          <div class="col s-expl" data-state="explored">
+            <div class="colh"><span class="cdot"></span><span class="cn">widened</span><span class="cc">2</span></div>
+            <div class="card" draggable="true" data-id="invoice">
+              <h3>Invoice hand-off for solo bookkeepers</h3>
+              <p>Three angles open. The email-native one carries the sharpest disconfirmer.</p>
+              <div class="cf"><span class="dash">—</span><span class="fk">⑂3</span><span class="dt">jul 22</span></div>
+            </div>
+            <div class="card" draggable="true" data-id="receipt">
+              <h3>Receipt inbox</h3>
+              <p>Consumer lane reads crowded; the practitioner lane is still open.</p>
+              <div class="cf"><span class="dash">—</span><span class="fk">⑂2</span><span class="dt">jul 22</span></div>
+            </div>
+          </div>
+
+          <div class="col s-deep" data-state="deep">
+            <div class="colh"><span class="cdot"></span><span class="cn">pressured</span><span class="cc">2</span></div>
+            <div class="card" draggable="true" data-id="fwd">
+              <h3>Forward-to-file: no app at all</h3>
+              <p>The friction is real and the build is cheap — so the bet lands on distribution.</p>
+              <div class="cf"><span class="sc">5.8</span><span class="fk">⑂3</span><span class="dt">jul 26</span></div>
+            </div>
+            <div class="card" draggable="true" data-id="glove">
+              <h3>Trades first: the glove-box ledger</h3>
+              <p>Loudest pain, thinnest paper trail. No named buyer in the evidence.</p>
+              <div class="cf"><span class="sc">4.2</span><span class="dt">jul 19</span></div>
+            </div>
+          </div>
+
+          <div class="col s-closed" data-state="closed">
+            <div class="colh"><span class="cdot"></span><span class="cn">put down</span><span class="cc">1</span>
+            </div>
+            <div class="card" draggable="true" data-id="meal" style="opacity:.72">
+              <h3>Meal-plan hand-me-downs</h3>
+              <p>Parked — consumer habit unproven. The read and its evidence are kept.</p>
+              <div class="cf"><span class="sc">3.9</span><span class="dt">jun 30</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="low">
+        <div class="panel">
+          <div class="ph"><h3>Needs your move</h3><span class="pn">2</span></div>
+          <div class="row"><span class="rd"></span><div class="rb">
+            <div class="rt3">The landscape moved under <em>Receipt inbox</em></div>
+            <div class="rs2">Two new actors near the wedge; one may affect monetization. The idea is unchanged — the world moved.</div>
+          </div><button class="btn" style="font-size:11.5px;padding:4px 9px">Re-read</button></div>
+          <div class="row"><span class="rd" style="background:var(--ink-4);box-shadow:0 0 0 3px rgba(16,24,40,.05)"></span><div class="rb">
+            <div class="rt3">A caught thought is still unattached</div>
+            <div class="rs2">"warranty expiry ledger — nudge before it lapses" · caught jul 24</div>
+          </div><button class="btn" style="font-size:11.5px;padding:4px 9px">Place it</button></div>
+        </div>
+
+        <div class="panel">
+          <div class="ph"><h3>Where you've been</h3><span class="pn">tonight</span></div>
+          <div style="padding:5px 0">
+            <div class="tr"><span class="w">01:47</span><span class="v">widened</span><span class="t">Invoice hand-off — 3 angles</span></div>
+            <div class="tr"><span class="w">01:31</span><span class="v">caught</span><span class="t">"warranty expiry ledger…"</span></div>
+            <div class="tr"><span class="w">01:12</span><span class="v">compared</span><span class="t">Forward-to-file × Receipt inbox</span></div>
+            <div class="tr"><span class="w">00:54</span><span class="v">pressured</span><span class="t">Forward-to-file · 5.8</span></div>
+            <div class="tr"><span class="w">00:38</span><span class="v">opened</span><span class="t">Receipt inbox lineage</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Two things here are ILC and nothing else.</b> The board's axis is the <b>state of your thinking</b> —
+        rough, widened, pressured, put down — not dates or folders; dates are there, just never the spine.
+        And you can <b>pull any idea to the right</b> to hold it open while you keep working; pull a second one in
+        and the panel splits so you're holding two thoughts at once. Try dragging a card to the right edge.
+      </div>
+
+    </div>
+
+    <!-- THE HOLD: pull one in to focus, pull a second to split -->
+    <div class="hold" id="hold">
+      <div class="holdh">
+        <span class="hl" id="holdlbl">holding</span>
+        <span class="x" id="holdx">×</span>
+      </div>
+      <div class="panes" id="panes"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const IDEAS = {
+  punch:{t:"Contractor punch-list voice notes",st:"rough",raw:"Site leads narrate the day's punch list into their phone driving home — someone should turn that into the actual list.",date:"jul 20",rows:[["state","Rough — captured, not yet read"],["next","Explore it, or take it straight to deep"]]},
+  warranty:{t:"Warranty expiry ledger",st:"rough",raw:"Everything I own has a warranty I forget about the day I need it. One inbox for receipts, one nudge before expiry.",date:"jul 14",rows:[["state","Rough — captured, not yet read"],["next","Explore it, or take it straight to deep"]]},
+  invoice:{t:"Invoice hand-off for solo bookkeepers",st:"widened",raw:"Solo bookkeepers drown in client receipts that arrive as photos, PDFs and paper. Give the professional a branded drop-box instead of chasing clients by email.",date:"jul 22",rows:[["read","A hand-off problem, not a scanning problem — the pain is at the moment the shoebox becomes someone else's job."],["angles","3 open · positioning · mechanism · target"],["open","Who pays — the bookkeeper who suffers, or the client who causes it?"]]},
+  receipt:{t:"Receipt inbox",st:"widened",raw:"Forward every receipt to one address and get it filed, coded and export-ready.",date:"jul 22",rows:[["read","Broad pain, noisy evidence. The consumer lane is crowded; the practitioner lane is still unclaimed."],["angles","2 open"],["open","Does anyone pay for filing alone?"]]},
+  fwd:{t:"Forward-to-file: no app at all",st:"pressured",raw:"The entire product is an email address. Anything forwarded comes back filed, coded and export-ready. No dashboard, nothing to install.",date:"jul 26",rows:[["the read","The friction is real and the build is cheap — which is exactly why the bet lands on distribution, where the evidence is thinnest."],["demand","6.0 · rung 4 of 7 — documented friction, unpriced"],["payment","5.5 · the professional already pays Dext-tier prices"],["positioning","2.5 · capped — a wedge, not a moat"],["what would move it","A named repeat buyer in the wedge"]]},
+  glove:{t:"Trades first: the glove-box ledger",st:"pressured",raw:"Narrow to trade contractors — plumbers, electricians — whose receipts live in vehicles until quarter's end.",date:"jul 19",rows:[["the read","Loudest pain in the retrieved threads, thinnest paper trail behind it."],["demand","4.5 · rung 2 — pain named, no buyer named"],["not in the evidence","A named buyer, or a live competitor in the wedge"]]},
+  meal:{t:"Meal-plan hand-me-downs",st:"put down",raw:"Pass your finished meal plans to someone starting where you started.",date:"jun 30",rows:[["the read","Trust — consumer habit unproven."],["status","Parked jun 30. Read and evidence kept; the loop reopens when you do."]]}
+};
+
+const hold=document.getElementById('hold'), panes=document.getElementById('panes'),
+      lbl=document.getElementById('holdlbl'), scroll=document.querySelector('.scroll');
+let held=[];
+
+function paneHTML(id){
+  const d=IDEAS[id];
+  return `<div class="pane" data-pane="${id}">
+    <span class="pstate"><i></i>${d.st}</span>
+    <h4>${d.t}</h4>
+    <div class="praw">${d.raw}</div>
+    ${d.rows.map(r=>`<div class="prow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')}
+    <div class="pacts">
+      <button class="btn btn-p">Open</button>
+      <button class="btn">Compare</button>
+      <button class="btn btn-g" data-drop="${id}">Let go</button>
+    </div></div>`;
+}
+function render(){
+  hold.classList.toggle('open',held.length>0);
+  hold.classList.toggle('two',held.length>1);
+  document.body.classList.toggle('holding',held.length===1);
+  document.body.classList.toggle('holding2',held.length>1);
+  lbl.textContent = held.length>1 ? 'holding two' : 'holding';
+  panes.innerHTML = held.map(paneHTML).join('') +
+    (held.length===1 ? `<div class="dropzone" id="dz">pull a second idea in<br>to hold them side by side</div>` : '');
+  panes.querySelectorAll('[data-drop]').forEach(b=>b.onclick=()=>{held=held.filter(x=>x!==b.dataset.drop);render();});
+  wireDrop();
+}
+function add(id){
+  if(held.includes(id)) return;
+  if(held.length>=2) held.shift();
+  held.push(id); render();
+}
+document.getElementById('holdx').onclick=()=>{held=[];render();};
+
+document.querySelectorAll('.card[draggable]').forEach(c=>{
+  c.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',c.dataset.id);c.classList.add('dragging');});
+  c.addEventListener('dragend',()=>c.classList.remove('dragging'));
+  c.addEventListener('click',()=>add(c.dataset.id));
+});
+function wireDrop(){
+  const zones=[hold, document.getElementById('dz')].filter(Boolean);
+  zones.forEach(z=>{
+    z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('dragover');});
+    z.addEventListener('dragleave',()=>z.classList.remove('dragover'));
+    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('dragover');
+      const id=e.dataTransfer.getData('text/plain'); if(IDEAS[id]) add(id);});
+  });
+}
+// right edge of the scroll area also accepts a pull
+scroll.addEventListener('dragover',e=>{ if(e.clientX > window.innerWidth-90) e.preventDefault(); });
+scroll.addEventListener('drop',e=>{ if(e.clientX > window.innerWidth-90){e.preventDefault();
+  const id=e.dataTransfer.getData('text/plain'); if(IDEAS[id]) add(id);} });
+wireDrop();
+</script>
+</body>
+</html>
