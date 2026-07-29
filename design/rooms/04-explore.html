@@ -5,57 +5,57 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ILC · Room 4 — Explore, the Widening</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../tokens.css">
 <link rel="stylesheet" href="room.css">
 <style>
   /* ---------- open-air specifics ---------- */
-  .air-card { background: rgba(252,251,247,0.8); border: 1px solid rgba(68,88,106,0.2); border-radius: var(--r-3); }
+  .air-card { background: rgba(255,255,255,0.8); border: 1px solid rgba(70,85,122,0.2); border-radius: var(--r-3); }
 
   /* our read */
-  .read-reflection { font-family: var(--font-author); font-size: 20px; line-height: 1.6; color: #2E3E4E; font-weight: 400; max-width: 60ch; margin-top: 10px; }
+  .read-reflection { font-family: var(--font-author); font-size: 20px; line-height: 1.6; color: #22304E; font-weight: 400; max-width: 60ch; margin-top: 10px; }
   .read-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 22px; }
   .read-col { padding: 18px 20px; }
-  .read-col .rc-h { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.14em; text-transform: uppercase; color: #5E7284; margin-bottom: 10px; }
+  .read-col .rc-h { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.14em; text-transform: uppercase; color: #5A6B94; margin-bottom: 10px; }
   .read-col li { font-size: var(--fs-14); color: var(--air-ink); line-height: 1.75; list-style: none; padding-left: 16px; position: relative; margin-bottom: 6px; }
-  .read-col.clear li::before  { content: "—"; position: absolute; left: 0; color: #5E7284; }
-  .read-col.open li::before   { content: "?"; position: absolute; left: 0; color: #5E7284; font-family: var(--font-instrument); font-size: 12px; }
-  .branchability { display: flex; align-items: baseline; gap: 12px; margin-top: 18px; padding: 12px 20px; border-top: 1px dashed rgba(68,88,106,0.3); }
-  .branchability .bb-k { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.14em; text-transform: uppercase; color: #5E7284; flex: none; }
+  .read-col.clear li::before  { content: "—"; position: absolute; left: 0; color: #5A6B94; }
+  .read-col.open li::before   { content: "?"; position: absolute; left: 0; color: #5A6B94; font-family: var(--font-instrument); font-size: 12px; }
+  .branchability { display: flex; align-items: baseline; gap: 12px; margin-top: 18px; padding: 12px 20px; border-top: 1px dashed rgba(70,85,122,0.3); }
+  .branchability .bb-k { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.14em; text-transform: uppercase; color: #5A6B94; flex: none; }
   .branchability p { font-size: var(--fs-14); color: var(--air-ink); }
 
   /* the fan */
   .fan-svg { display: block; width: 100%; height: 130px; }
-  .fan-svg path { fill: none; stroke: rgba(68,88,106,0.42); stroke-width: 1.2; }
-  .fan-svg .seed-line { stroke: rgba(68,88,106,0.6); stroke-width: 1.4; }
-  .fan-svg .seed-label { font-family: var(--font-instrument); font-size: 10px; fill: #5E7284; letter-spacing: 0.08em; }
-  .fan-note { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.12em; text-transform: uppercase; color: #5E7284; text-align: center; margin: 2px 0 14px; }
+  .fan-svg path { fill: none; stroke: rgba(70,85,122,0.42); stroke-width: 1.2; }
+  .fan-svg .seed-line { stroke: rgba(70,85,122,0.6); stroke-width: 1.4; }
+  .fan-svg .seed-label { font-family: var(--font-instrument); font-size: 10px; fill: #5A6B94; letter-spacing: 0.08em; }
+  .fan-note { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.12em; text-transform: uppercase; color: #5A6B94; text-align: center; margin: 2px 0 14px; }
 
   .angle { padding: 22px 24px; margin-bottom: 14px; }
   .angle .a-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
-  .angle .a-basis { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.14em; text-transform: uppercase; color: #5E7284; }
+  .angle .a-basis { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.14em; text-transform: uppercase; color: #5A6B94; }
   .angle .a-slot { font-family: var(--font-instrument); font-size: var(--fs-10); color: rgba(94,114,132,0.7); letter-spacing: 0.08em; }
-  .angle h4 { font-family: var(--font-author); font-weight: 400; font-size: 21px; color: #2E3E4E; margin: 10px 0 6px; }
+  .angle h4 { font-family: var(--font-author); font-weight: 400; font-size: 21px; color: #22304E; margin: 10px 0 6px; }
   .angle .a-concept { font-size: var(--fs-14); color: var(--air-ink); line-height: 1.8; max-width: 64ch; }
   .angle .a-block { margin-top: 14px; display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: baseline; }
-  .angle .a-k { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.12em; text-transform: uppercase; color: #5E7284; }
+  .angle .a-k { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.12em; text-transform: uppercase; color: #5A6B94; }
   .angle .a-v { font-size: var(--fs-14); color: var(--air-ink); line-height: 1.7; }
-  .angle .a-v .trust { font-family: var(--font-instrument); font-size: 10px; color: #5E7284; letter-spacing: 0.06em; }
+  .angle .a-v .trust { font-family: var(--font-instrument); font-size: 10px; color: #5A6B94; letter-spacing: 0.06em; }
   .angle .a-actions { display: flex; gap: 10px; margin-top: 18px; }
   .angle .btn { font-size: var(--fs-12); padding: 6px 14px; }
   .angle .a-done { font-family: var(--font-instrument); font-size: 11px; color: var(--evidence); letter-spacing: 0.04em; }
 
   /* terrain lanes */
-  .lane { display: grid; grid-template-columns: 200px 1fr; gap: 18px; padding: 16px 0; border-top: 1px solid rgba(68,88,106,0.18); }
-  .lane:last-child { border-bottom: 1px solid rgba(68,88,106,0.18); }
-  .lane .ln-name { font-family: var(--font-author); font-size: 16px; color: #2E3E4E; }
-  .lane .ln-density { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #5E7284; margin-top: 3px; }
+  .lane { display: grid; grid-template-columns: 200px 1fr; gap: 18px; padding: 16px 0; border-top: 1px solid rgba(70,85,122,0.18); }
+  .lane:last-child { border-bottom: 1px solid rgba(70,85,122,0.18); }
+  .lane .ln-name { font-family: var(--font-author); font-size: 16px; color: #22304E; }
+  .lane .ln-density { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #5A6B94; margin-top: 3px; }
   .lane .ln-body { font-size: var(--fs-14); color: var(--air-ink); line-height: 1.75; }
-  .lane .ln-q { font-family: var(--font-author); font-style: italic; color: #3D5165; margin-top: 6px; font-size: 15px; }
+  .lane .ln-q { font-family: var(--font-author); font-style: italic; color: #35426B; margin-top: 6px; font-size: 15px; }
 
   /* next move */
   .nextmove { padding: 24px 28px; }
-  .nextmove .nm-uncert { font-family: var(--font-author); font-size: 19px; color: #2E3E4E; line-height: 1.55; max-width: 56ch; }
+  .nextmove .nm-uncert { font-family: var(--font-author); font-size: 19px; color: #22304E; line-height: 1.55; max-width: 56ch; }
   .nextmove .nm-rec { font-size: var(--fs-14); color: var(--air-ink); margin-top: 12px; max-width: 64ch; line-height: 1.8; }
   .nextmove .nm-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
 </style>
@@ -64,7 +64,7 @@
 
   <aside class="rail">
     <div class="rail-brand">
-      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#C2492F" stroke-width="7" stroke-linecap="round"/></svg>
+      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#4F46E5" stroke-width="7" stroke-linecap="round"/></svg>
       <span class="rb-name">IdeaLoop</span>
     </div>
     <nav class="rail-nav">
@@ -99,17 +99,15 @@
           <div class="tt-name">Invoice hand-off for solo bookkeepers</div>
           <div class="tt-meta">family of 3 · root · read jul 22</div>
         </div>
-        <div class="threadbar">
-          <span class="tb-stop is-done"><span class="tb-dot"></span>captured</span>
-          <span class="tb-line is-done"></span>
-          <span class="tb-stop is-here"><span class="tb-dot"></span>explored</span>
-          <span class="tb-line is-open"></span>
-          <a class="tb-stop is-open" href="05-deep.html" style="text-decoration:none;"><span class="tb-dot"></span>deep</a>
-          <span class="tb-line is-open"></span>
-          <a class="tb-stop is-open" href="07-compare.html" style="text-decoration:none;"><span class="tb-dot"></span>compare</a>
-          <span class="tb-line is-open"></span>
-          <a class="tb-stop is-open" href="09-brief.html" style="text-decoration:none;"><span class="tb-dot"></span>brief</a>
+        <div class="statelens st-explore">
+          <span class="sl-dot past" title="captured"></span>
+          <span class="sl-here"><span class="sl-core"></span><span class="sl-label">explored</span></span>
+          <a class="sl-dot open" href="05-deep.html" title="deep"></a>
+          <a class="sl-dot open" href="06-evolve.html" title="evolve"></a>
+          <a class="sl-dot open" href="07-compare.html" title="compare"></a>
+          <a class="sl-dot open" href="09-brief.html" title="brief"></a>
         </div>
+        <span class="tc-journey">one state in focus · <a href="08-lineage.html">the journey lives in lineage</a></span>
         <a class="btn btn-quiet tc-close" href="02-desk.html" style="font-size:12px;">put down ⟶ desk</a>
       </div>
     </div>

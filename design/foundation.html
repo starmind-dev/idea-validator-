@@ -3,16 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ILC · Ink &amp; Field — Foundation</title>
+<title>ILC · Cold Light — Foundation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
 <style>
   .page { max-width: 1080px; margin: 0 auto; padding: 72px 40px 120px; }
 
-  /* header */
   .masthead { border-bottom: 1px solid var(--rule-strong); padding-bottom: 36px; margin-bottom: 64px; }
-  .masthead h1 { font-family: var(--font-author); font-weight: 500; font-size: var(--fs-44); line-height: 1.12; letter-spacing: -0.01em; margin: 18px 0 14px; }
+  .masthead h1 { font-family: var(--font-author); font-weight: 500; font-size: var(--fs-44); line-height: 1.1; letter-spacing: -0.01em; margin: 18px 0 14px; }
   .masthead p  { font-size: var(--fs-17); color: var(--ink-2); max-width: var(--measure); }
 
   .section { margin-bottom: 88px; }
@@ -24,7 +23,7 @@
   .mark-row { display: flex; align-items: center; gap: 48px; flex-wrap: wrap; }
   .mark-tile { background: var(--paper-high); border: 1px solid var(--rule); border-radius: var(--r-3); padding: 40px 56px; }
   .wordmark { display: flex; align-items: baseline; gap: 14px; margin-top: 18px; }
-  .wordmark .wm-name { font-family: var(--font-author); font-weight: 500; font-size: 27px; letter-spacing: -0.005em; }
+  .wordmark .wm-name { font-family: var(--font-author); font-weight: 500; font-size: 27px; }
   .wordmark .wm-core { font-family: var(--font-instrument); font-size: 12px; letter-spacing: 0.30em; color: var(--ink-3); text-transform: uppercase; }
 
   /* palette */
@@ -34,52 +33,59 @@
   .swatch .sw-meta { padding: 9px 12px 10px; }
   .swatch .sw-name { font-size: var(--fs-14); font-weight: 500; line-height: 1.35; }
   .swatch .sw-hex  { font-family: var(--font-instrument); font-size: var(--fs-10); color: var(--ink-3); letter-spacing: 0.04em; }
-  .sw-note { font-size: var(--fs-14); color: var(--ink-3); margin-top: 14px; max-width: var(--measure); }
+
+  /* the spectrum strip */
+  .spectrum { display: flex; align-items: center; gap: 0; margin-top: 26px; border: 1px solid var(--rule); border-radius: var(--r-3); background: var(--paper-high); padding: 26px 30px; }
+  .spectrum .sp-state { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .spectrum .sp-swatch { width: 16px; height: 16px; border-radius: 50%; }
+  .spectrum .sp-name { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
 
   /* voices */
   .voice-row { display: grid; grid-template-columns: 190px 1fr; gap: 28px; padding: 26px 0; border-top: 1px solid var(--rule); align-items: baseline; }
   .voice-row:last-child { border-bottom: 1px solid var(--rule); }
-  .voice-who { }
   .voice-who .vw-name { font-weight: 600; font-size: var(--fs-14); }
   .voice-who .vw-face { font-family: var(--font-instrument); font-size: var(--fs-11); color: var(--ink-3); letter-spacing: 0.04em; margin-top: 2px; }
   .voice-who .vw-role { font-size: var(--fs-12); color: var(--ink-3); margin-top: 6px; line-height: 1.5; }
-  .spec-author { font-family: var(--font-author); font-size: 23px; line-height: 1.5; font-weight: 400; }
+  .spec-author { font-family: var(--font-author); font-size: 24px; line-height: 1.5; font-weight: 400; }
   .spec-interface { font-size: var(--fs-15); line-height: 1.7; max-width: var(--measure); }
   .spec-instrument { font-family: var(--font-instrument); font-size: var(--fs-12); line-height: 1.8; color: var(--ink-2); }
 
-  /* thread scales */
-  .thread-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  /* the fiber figure */
+  .fiber-tile { background: var(--paper-high); border: 1px solid var(--rule); border-radius: var(--r-3); padding: 20px 26px 6px; }
+  .fiber-tile svg { display: block; width: 100%; height: 170px; }
+  .fiber-tile .ht-label { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; fill: var(--ink-3); text-transform: uppercase; }
+
+  /* lens + spine demo cards */
+  .thread-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
   .thread-card { background: var(--paper-high); border: 1px solid var(--rule); border-radius: var(--r-3); padding: 28px 30px; }
-  .thread-card.full { grid-column: 1 / -1; }
   .thread-card h3 { font-size: var(--fs-14); font-weight: 600; margin: 4px 0 4px; }
   .thread-card .tc-note { font-size: var(--fs-12); color: var(--ink-3); line-height: 1.55; margin-bottom: 22px; max-width: 58ch; }
 
-  /* spine demo */
   .spine-demo { position: relative; padding-left: 46px; }
   .spine-demo::before { content: ""; position: absolute; left: 18px; top: 4px; bottom: 4px; width: 1px; background: var(--rule-strong); }
   .spine-demo .sd-sec { position: relative; padding: 10px 0 22px; }
   .spine-demo .sd-sec::before { content: ""; position: absolute; left: -32.5px; top: 16px; width: 10px; height: 10px; border-radius: 50%; background: var(--paper-high); border: 1.5px solid var(--rule-strong); }
-  .spine-demo .sd-sec.is-here::before { background: var(--thread); border-color: var(--thread); }
-  .spine-demo .sd-sec .sd-label { font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
+  .spine-demo .sd-sec.is-here::before { background: var(--st-deep); border-color: var(--st-deep); box-shadow: 0 0 0 3px rgba(79,70,229,0.13), 0 0 12px rgba(79,70,229,0.5); }
+  .spine-demo .sd-label { font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
   .spine-demo .sd-sec.is-here .sd-label { color: var(--ink); font-weight: 600; }
-  .spine-demo .sd-sec .sd-body { font-size: var(--fs-14); color: var(--ink-2); margin-top: 3px; }
+  .spine-demo .sd-body { font-size: var(--fs-14); color: var(--ink-2); margin-top: 3px; }
 
   /* registers */
   .reg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .reg-card { border: 1px solid var(--rule); border-radius: var(--r-3); padding: 26px 26px 30px; min-height: 300px; }
+  .reg-card { border: 1px solid var(--rule); border-radius: var(--r-3); padding: 26px 26px 30px; min-height: 290px; }
   .reg-card .rc-tag { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
   .reg-card h3 { font-family: var(--font-author); font-weight: 500; font-size: var(--fs-21); margin: 10px 0 8px; }
   .reg-card p { font-size: var(--fs-14); color: var(--ink-2); }
   .reg-neutral { background: var(--paper-high); }
   .reg-air { background: var(--air-tint); }
-  .reg-air h3 { color: #2E3E4E; font-weight: 400; letter-spacing: 0.002em; }
+  .reg-air .rc-tag { color: var(--air-label); }
+  .reg-air h3 { color: var(--air-head); font-weight: 400; }
   .reg-air p  { color: var(--air-ink); line-height: 1.85; }
   .reg-press { background: var(--press-tint); }
-  .reg-press h3 { color: #2E2921; font-weight: 600; }
-  .reg-press p  { color: var(--press-ink); line-height: 1.55; font-size: var(--fs-14); }
+  .reg-press .rc-tag { color: var(--press-label); }
+  .reg-press h3 { color: var(--press-head); font-weight: 600; }
+  .reg-press p  { color: var(--press-ink); line-height: 1.55; }
   .reg-card .rc-rule { border: none; border-top: 1px solid var(--rule); margin: 14px 0; }
-  .reg-air .rc-rule { border-top-color: rgba(68, 88, 106, 0.18); }
-  .reg-press .rc-rule { border-top-color: rgba(74, 67, 53, 0.22); }
 
   /* semantics */
   .sem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -104,7 +110,6 @@
   .lab-sheet p { font-size: var(--fs-14); color: var(--ink-2); max-width: 46ch; }
   .lab-note { grid-column: 1 / -1; font-size: var(--fs-12); color: var(--ink-3); max-width: var(--measure); }
 
-  /* seam demo */
   .lab-stage .seam-l, .lab-stage .seam-r { position: absolute; top: 26px; bottom: 26px; width: calc(50% - 36px); background: var(--paper-high); border: 1px solid var(--rule); border-radius: var(--r-3); padding: 20px 22px; }
   .lab-stage .seam-l { left: 26px; }
   .lab-stage .seam-r { right: 26px; }
@@ -137,26 +142,25 @@
 
   <!-- ================= MASTHEAD ================= -->
   <header class="masthead">
-    <span class="eyebrow">ILC design system · foundation · v1.0</span>
-    <h1>Ink &amp; Field</h1>
-    <p>One field. One thread. Two apertures. Nine rooms.
-       The UI's subject is not the answer — it is the motion of thought around an idea.
-       Paper and ink, because ILC is an analyst's dossier, not a machine dashboard.
-       The page is written, not generated.</p>
+    <span class="eyebrow">ILC design system · foundation · v2 — cold light</span>
+    <h1>Cold Light</h1>
+    <p>One field. One fiber of light. Two apertures. Nine rooms.
+       ILC is a serious workspace — white, cool, exact. One persistent idea holds many
+       states of thought without losing its identity or its history; the interface shows
+       one state at a time, and the light marks where thinking is happening now.</p>
   </header>
 
   <!-- ================= THE MARK ================= -->
   <section class="section">
     <span class="eyebrow">01 · the mark</span>
     <h2>A line that loops once, and continues</h2>
-    <p class="lede">The thread enters, loops, and leaves the frame uncut. Never a closed
-       circle — the loop never closes. This is the only place besides the spine and the
-       thread bar where the red thread exists.</p>
+    <p class="lede">The fiber enters, loops, and leaves the frame uncut — the loop never
+       closes. Indigo light on white; the same line at every scale.</p>
     <div class="mark-row">
       <div class="mark-tile">
         <svg width="150" height="54" viewBox="0 0 150 54" fill="none" aria-label="ILC mark">
           <path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36"
-                stroke="#C2492F" stroke-width="2.4" stroke-linecap="round"/>
+                stroke="#4F46E5" stroke-width="2.4" stroke-linecap="round"/>
         </svg>
         <div class="wordmark">
           <span class="wm-name">IdeaLoop</span>
@@ -166,11 +170,11 @@
       <div class="mark-tile" style="background: var(--ink); border-color: var(--ink);">
         <svg width="150" height="54" viewBox="0 0 150 54" fill="none" aria-label="ILC mark, inverse">
           <path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36"
-                stroke="#E58A73" stroke-width="2.4" stroke-linecap="round"/>
+                stroke="#8B8AF0" stroke-width="2.4" stroke-linecap="round"/>
         </svg>
         <div class="wordmark">
           <span class="wm-name" style="color: var(--paper-high);">IdeaLoop</span>
-          <span class="wm-core" style="color: #9C978A;">Core</span>
+          <span class="wm-core" style="color: #8A90A0;">Core</span>
         </div>
       </div>
     </div>
@@ -179,27 +183,33 @@
   <!-- ================= PALETTE ================= -->
   <section class="section">
     <span class="eyebrow">02 · the field</span>
-    <h2>Paper, ink, and one red thread</h2>
-    <p class="lede">Flat paper, warm ink, hairline rules. Depth comes from layering sheets,
-       never from glow or blur. The vermilion is structural — it marks the thread and
-       nothing else. It never touches a score, a warning, or a judgment.</p>
+    <h2>Ice, ink, and one fiber of light</h2>
+    <p class="lede">Cool white ground, cool near-black ink, hairline rules. Flat everywhere —
+       the only luminous thing in the product is the thread itself, and it glows only where
+       it is the content.</p>
     <div class="swatches">
-      <div class="swatch"><div class="sw-chip" style="background:#F6F4EE; border-bottom:1px solid var(--rule);"></div><div class="sw-meta"><div class="sw-name">Paper</div><div class="sw-hex">#F6F4EE · ground</div></div></div>
-      <div class="swatch"><div class="sw-chip" style="background:#FCFBF7; border-bottom:1px solid var(--rule);"></div><div class="sw-meta"><div class="sw-name">Paper · high</div><div class="sw-hex">#FCFBF7 · sheets</div></div></div>
-      <div class="swatch"><div class="sw-chip" style="background:#EFECE3;"></div><div class="sw-meta"><div class="sw-name">Paper · low</div><div class="sw-hex">#EFECE3 · wells</div></div></div>
-      <div class="swatch"><div class="sw-chip" style="background:#E7E3D7;"></div><div class="sw-meta"><div class="sw-name">Paper · deep</div><div class="sw-hex">#E7E3D7 · rails</div></div></div>
-      <div class="swatch"><div class="sw-chip" style="background:#1C1B17;"></div><div class="sw-meta"><div class="sw-name">Ink</div><div class="sw-hex">#1C1B17 · voice</div></div></div>
-      <div class="swatch"><div class="sw-chip" style="background:#524E44;"></div><div class="sw-meta"><div class="sw-name">Ink 2</div><div class="sw-hex">#524E44 · secondary</div></div></div>
-      <div class="swatch"><div class="sw-chip" style="background:#7E7A6D;"></div><div class="sw-meta"><div class="sw-name">Ink 3</div><div class="sw-hex">#7E7A6D · muted</div></div></div>
-      <div class="swatch"><div class="sw-chip" style="background:#C2492F;"></div><div class="sw-meta"><div class="sw-name">The red thread</div><div class="sw-hex">#C2492F · structure only</div></div></div>
-      <div class="swatch"><div class="sw-chip" style="background:#F2F4F2;"></div><div class="sw-meta"><div class="sw-name">Open Air</div><div class="sw-hex">#F2F4F2 · explore tint</div></div></div>
-      <div class="swatch"><div class="sw-chip" style="background:#F3EFE6;"></div><div class="sw-meta"><div class="sw-name">Pressure</div><div class="sw-hex">#F3EFE6 · deep tint</div></div></div>
-      <div class="swatch"><div class="sw-chip" style="background:#38715A;"></div><div class="sw-meta"><div class="sw-name">Evidence</div><div class="sw-hex">#38715A · receipts</div></div></div>
-      <div class="swatch"><div class="sw-chip" style="background:repeating-linear-gradient(90deg,#7E7A6D 0 6px,transparent 6px 12px); background-color:#F6F4EE;"></div><div class="sw-meta"><div class="sw-name">Absence</div><div class="sw-hex">dashed graphite · gaps</div></div></div>
+      <div class="swatch"><div class="sw-chip" style="background:#FBFCFE; border-bottom:1px solid var(--rule);"></div><div class="sw-meta"><div class="sw-name">Field</div><div class="sw-hex">#FBFCFE · ground</div></div></div>
+      <div class="swatch"><div class="sw-chip" style="background:#FFFFFF; border-bottom:1px solid var(--rule);"></div><div class="sw-meta"><div class="sw-name">Sheet</div><div class="sw-hex">#FFFFFF · cards</div></div></div>
+      <div class="swatch"><div class="sw-chip" style="background:#F1F3F8;"></div><div class="sw-meta"><div class="sw-name">Well</div><div class="sw-hex">#F1F3F8 · inputs</div></div></div>
+      <div class="swatch"><div class="sw-chip" style="background:#F3F5F9;"></div><div class="sw-meta"><div class="sw-name">Rail</div><div class="sw-hex">#F3F5F9 · chrome</div></div></div>
+      <div class="swatch"><div class="sw-chip" style="background:#16181D;"></div><div class="sw-meta"><div class="sw-name">Ink</div><div class="sw-hex">#16181D · voice</div></div></div>
+      <div class="swatch"><div class="sw-chip" style="background:#4A4F5A;"></div><div class="sw-meta"><div class="sw-name">Ink 2</div><div class="sw-hex">#4A4F5A · secondary</div></div></div>
+      <div class="swatch"><div class="sw-chip" style="background:#7C828F;"></div><div class="sw-meta"><div class="sw-name">Ink 3</div><div class="sw-hex">#7C828F · muted</div></div></div>
+      <div class="swatch"><div class="sw-chip" style="background:#F3F7FE;"></div><div class="sw-meta"><div class="sw-name">Open Air</div><div class="sw-hex">#F3F7FE · explore wash</div></div></div>
+      <div class="swatch"><div class="sw-chip" style="background:#F4F3FA;"></div><div class="sw-meta"><div class="sw-name">Pressure</div><div class="sw-hex">#F4F3FA · deep wash</div></div></div>
+      <div class="swatch"><div class="sw-chip" style="background:#2E7D5B;"></div><div class="sw-meta"><div class="sw-name">Evidence</div><div class="sw-hex">#2E7D5B · receipts</div></div></div>
+      <div class="swatch"><div class="sw-chip" style="background:repeating-linear-gradient(90deg,#7C828F 0 6px,transparent 6px 12px); background-color:#FBFCFE;"></div><div class="sw-meta"><div class="sw-name">Absence</div><div class="sw-hex">dashed gray · gaps</div></div></div>
+      <div class="swatch"><div class="sw-chip" style="background:linear-gradient(90deg,#A3B4EE,#3D68EE,#4F46E5,#6D5BE8,#7C5CEE,#7C3AED);"></div><div class="sw-meta"><div class="sw-name">The fiber</div><div class="sw-hex">state spectrum</div></div></div>
     </div>
-    <p class="sw-note">Score bands (green / blue / ochre / rust) exist only as 8px dots on the
-       score pill — see 05. They are muted to ink-strength so a page of results reads as a
-       document, not a traffic light.</p>
+
+    <div class="spectrum">
+      <div class="sp-state"><span class="sp-swatch" style="background:#A3B4EE; box-shadow:0 0 10px rgba(163,180,238,0.6);"></span><span class="sp-name">rough</span></div>
+      <div class="sp-state"><span class="sp-swatch" style="background:#3D68EE; box-shadow:0 0 10px rgba(61,104,238,0.5);"></span><span class="sp-name">explore</span></div>
+      <div class="sp-state"><span class="sp-swatch" style="background:#4F46E5; box-shadow:0 0 12px rgba(79,70,229,0.6);"></span><span class="sp-name">deep</span></div>
+      <div class="sp-state"><span class="sp-swatch" style="background:#6D5BE8; box-shadow:0 0 10px rgba(109,91,232,0.5);"></span><span class="sp-name">evolve</span></div>
+      <div class="sp-state"><span class="sp-swatch" style="background:#7C5CEE; box-shadow:0 0 10px rgba(124,92,238,0.5);"></span><span class="sp-name">compare</span></div>
+      <div class="sp-state"><span class="sp-swatch" style="background:#7C3AED; box-shadow:0 0 10px rgba(124,58,237,0.5);"></span><span class="sp-name">brief</span></div>
+    </div>
   </section>
 
   <!-- ================= VOICES ================= -->
@@ -207,14 +217,13 @@
     <span class="eyebrow">03 · the language</span>
     <h2>Three voices</h2>
     <p class="lede">Who is speaking is always legible from the type alone. The analyst writes
-       in serif. The product speaks in sans. The machine reports in mono. No voice borrows
-       another's register.</p>
+       in Fraunces. The product speaks in Plex Sans. The machine reports in Plex Mono.</p>
 
     <div class="voice-row">
       <div class="voice-who">
         <div class="vw-name">Author</div>
-        <div class="vw-face">Literata · 400–600</div>
-        <div class="vw-role">Verdict prose, the bet, the handoff, editorial nudges. The analyst speaks.</div>
+        <div class="vw-face">Fraunces · 400–600</div>
+        <div class="vw-role">Room titles, verdict prose, the bet, the handoff. The analyst speaks.</div>
       </div>
       <div class="spec-author">The evidence doesn't yet support strong demand — and that is a
         statement about evidence you can change, not a verdict on reality.</div>
@@ -235,7 +244,7 @@
       <div class="voice-who">
         <div class="vw-name">Instrument</div>
         <div class="vw-face">IBM Plex Mono · 400–600</div>
-        <div class="vw-role">Receipts, metrics, labels, eyebrows, ledgers. The machine reports.</div>
+        <div class="vw-role">Receipts, metrics, labels, ledgers. The machine reports.</div>
       </div>
       <div class="spec-instrument">WHAT THIS RESTS ON · 14 SOURCES<br>
         github/awesome-selfhosted · 41.2k ★ · retrieved jul 26<br>
@@ -244,59 +253,109 @@
     </div>
   </section>
 
-  <!-- ================= THE THREAD ================= -->
+  <!-- ================= THE FIBER ================= -->
   <section class="section">
     <span class="eyebrow">04 · the main shape</span>
-    <h2>The thread, at its three scales</h2>
-    <p class="lede">One line of thought runs through the whole product. It appears at exactly
-       three scales — the spine, the thread bar, the mark — and nowhere else. Restraint is
-       the style.</p>
+    <h2>One idea, many states — shown one at a time</h2>
+    <p class="lede">The idea is a fiber of light. Diffuse at rough, gathering at explore,
+       focused to a core at deep, interfering at compare, ringed at re-evaluate, sealed at
+       brief. The full spectrum appears together only where it IS the content — here, on the
+       landing, and in lineage. Inside the workspace, the state lens shows one lit state.</p>
+
+    <div class="fiber-tile">
+      <svg viewBox="0 0 900 170" preserveAspectRatio="xMidYMid meet" fill="none">
+        <defs>
+          <linearGradient id="fiber2" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#A3B4EE"/><stop offset="0.22" stop-color="#3D68EE"/>
+            <stop offset="0.44" stop-color="#4F46E5"/><stop offset="0.66" stop-color="#6D5BE8"/>
+            <stop offset="0.82" stop-color="#7C5CEE"/><stop offset="1" stop-color="#7C3AED"/>
+          </linearGradient>
+          <radialGradient id="core2" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.35" stop-color="#7C8CF5"/>
+            <stop offset="1" stop-color="#4F46E5" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="soft2" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4"/></filter>
+          <filter id="haze2" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="9"/></filter>
+        </defs>
+        <text class="ht-label" x="46" y="20">rough</text>
+        <text class="ht-label" x="212" y="20">explore</text>
+        <text class="ht-label" x="424" y="20">deep</text>
+        <text class="ht-label" x="558" y="20">compare</text>
+        <text class="ht-label" x="678" y="20">re-evaluate</text>
+        <text class="ht-label" x="836" y="20">brief</text>
+        <path d="M28 96 C 120 96 170 94 240 90 C 330 84 380 90 444 90 C 520 90 540 90 590 90 C 650 90 680 90 722 90 C 780 90 812 90 850 90"
+              stroke="url(#fiber2)" stroke-width="6" opacity="0.35" filter="url(#soft2)"/>
+        <path d="M28 96 C 120 96 170 94 240 90 C 330 84 380 90 444 90 C 520 90 540 90 590 90 C 650 90 680 90 722 90 C 780 90 812 90 850 90"
+              stroke="url(#fiber2)" stroke-width="1.8" stroke-linecap="round"/>
+        <g>
+          <circle cx="52" cy="86" r="18" fill="#A3B4EE" opacity="0.18" filter="url(#haze2)"/>
+          <circle cx="70" cy="104" r="12" fill="#A3B4EE" opacity="0.2" filter="url(#haze2)"/>
+          <path d="M36 84 C 52 72 74 76 82 90 M44 110 C 60 118 78 112 88 100" stroke="#A3B4EE" stroke-width="1" opacity="0.55"/>
+          <circle cx="48" cy="92" r="1.6" fill="#8FA4EA"/><circle cx="66" cy="80" r="1.3" fill="#8FA4EA"/><circle cx="78" cy="102" r="1.6" fill="#8FA4EA"/>
+        </g>
+        <g stroke="#3D68EE" fill="none">
+          <path d="M150 96 C 190 96 200 64 244 60 C 290 56 310 76 340 84" stroke-width="1" opacity="0.5"/>
+          <path d="M150 96 C 195 96 210 122 252 124 C 296 126 320 106 348 94" stroke-width="1" opacity="0.4"/>
+          <path d="M150 96 C 200 94 230 82 268 78 C 310 74 340 84 368 88" stroke-width="1.3" opacity="0.7"/>
+        </g>
+        <g>
+          <circle cx="444" cy="90" r="30" fill="url(#core2)" opacity="0.5" filter="url(#haze2)"/>
+          <circle cx="444" cy="90" r="18" fill="url(#core2)" opacity="0.9"/>
+          <circle cx="444" cy="90" r="4.5" fill="#FFFFFF"/>
+          <circle cx="444" cy="90" r="24" stroke="#4F46E5" stroke-width="0.8" opacity="0.35"/>
+        </g>
+        <g stroke-width="1.1" fill="none">
+          <path d="M520 90 C 540 76 560 76 580 90 C 600 104 620 104 640 90" stroke="#6D5BE8" opacity="0.7"/>
+          <path d="M520 90 C 540 104 560 104 580 90 C 600 76 620 76 640 90" stroke="#7C5CEE" opacity="0.55"/>
+        </g>
+        <g>
+          <circle cx="722" cy="90" r="15" stroke="#8B5CF6" stroke-width="1" opacity="0.55"/>
+          <circle cx="722" cy="90" r="8" stroke="#8B5CF6" stroke-width="1" opacity="0.8"/>
+          <circle cx="722" cy="90" r="2.5" fill="#8B5CF6"/>
+        </g>
+        <g>
+          <circle cx="850" cy="90" r="10" stroke="#7C3AED" stroke-width="1" opacity="0.4"/>
+          <circle cx="850" cy="90" r="5" fill="#7C3AED"/>
+          <path d="M861 90 L 898 90" stroke="#7C3AED" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="1 7"/>
+        </g>
+      </svg>
+    </div>
 
     <div class="thread-grid">
-      <div class="thread-card full">
-        <span class="eyebrow">scale 1 · the thread bar</span>
-        <h3>An idea's own loop, on one line</h3>
-        <p class="tc-note">Lives at the top of every room while inside an idea. Every filled stop
-          is real and clickable; dashed segments are the idea's open future. Moving between rooms
-          is moving along this line — the line never breaks.</p>
-        <div class="threadbar">
-          <span class="tb-stop is-done"><span class="tb-dot"></span>captured</span>
-          <span class="tb-line is-done"></span>
-          <span class="tb-stop is-done"><span class="tb-dot"></span>explored</span>
-          <span class="tb-line is-done"></span>
-          <span class="tb-stop is-here"><span class="tb-dot"></span>deep</span>
-          <span class="tb-line is-open"></span>
-          <span class="tb-stop is-open"><span class="tb-dot"></span>evolve</span>
-          <span class="tb-line is-open"></span>
-          <span class="tb-stop is-open"><span class="tb-dot"></span>compare</span>
-          <span class="tb-line is-open"></span>
-          <span class="tb-stop is-open"><span class="tb-dot"></span>brief</span>
+      <div class="thread-card">
+        <span class="eyebrow">the state lens</span>
+        <h3>One state in focus</h3>
+        <p class="tc-note">Inside the workspace, an idea shows exactly one lit state — its
+          label the only word. Past states are filled ghost dots, future states hollow; all
+          clickable, none unrolled. The full journey lives in lineage.</p>
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          <div class="statelens st-explore">
+            <span class="sl-dot past"></span>
+            <span class="sl-here"><span class="sl-core"></span><span class="sl-label">explored</span></span>
+            <span class="sl-dot open"></span><span class="sl-dot open"></span><span class="sl-dot open"></span><span class="sl-dot open"></span>
+          </div>
+          <div class="statelens st-deep">
+            <span class="sl-dot past"></span><span class="sl-dot past"></span>
+            <span class="sl-here"><span class="sl-core"></span><span class="sl-label">deep</span></span>
+            <span class="sl-dot open"></span><span class="sl-dot open"></span><span class="sl-dot open"></span>
+          </div>
+          <div class="statelens st-brief">
+            <span class="sl-dot past"></span><span class="sl-dot past"></span><span class="sl-dot past"></span>
+            <span class="sl-dot past"></span><span class="sl-dot past"></span>
+            <span class="sl-here"><span class="sl-core"></span><span class="sl-label">brief</span></span>
+          </div>
         </div>
       </div>
-
       <div class="thread-card">
-        <span class="eyebrow">scale 2 · the spine</span>
-        <h3>The page's margin rule</h3>
-        <p class="tc-note">Every content page hangs its movements off one hairline. Your reading
-          position is the single red tick.</p>
+        <span class="eyebrow">the spine</span>
+        <h3>The page's one lit position</h3>
+        <p class="tc-note">Every content page hangs its movements off one hairline. The
+          reading position is the single lit tick — the thread inside the room.</p>
         <div class="spine-demo">
           <div class="sd-sec"><div class="sd-label">Ⅰ · The read</div><div class="sd-body">Where the evidence puts this idea.</div></div>
           <div class="sd-sec is-here"><div class="sd-label">Ⅱ · Findings</div><div class="sd-body">Four metrics, each with its receipts.</div></div>
           <div class="sd-sec"><div class="sd-label">Ⅲ · The field</div><div class="sd-body">Who already stands on this ground.</div></div>
           <div class="sd-sec"><div class="sd-label">Ⅳ · The build</div><div class="sd-body">What this takes — for you.</div></div>
-        </div>
-      </div>
-
-      <div class="thread-card">
-        <span class="eyebrow">scale 3 · the mark</span>
-        <h3>The loop that never closes</h3>
-        <p class="tc-note">The same line, entering and leaving the frame. Favicon, rail, wordmark.
-          It is drawn, not rendered — a written line, like everything else on the page.</p>
-        <div style="padding: 26px 0 8px;">
-          <svg width="210" height="66" viewBox="0 0 150 54" fill="none">
-            <path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36"
-                  stroke="#C2492F" stroke-width="2" stroke-linecap="round"/>
-          </svg>
         </div>
       </div>
     </div>
@@ -306,30 +365,29 @@
   <section class="section">
     <span class="eyebrow">05 · the apertures</span>
     <h2>One field, two registers</h2>
-    <p class="lede">Explore and Deep are not two brands — they are the same attention at two
-       apertures. The ground barely shifts temperature; what changes is density: type weight,
-       leading, whitespace. Widening breathes. Pressure condenses.</p>
+    <p class="lede">Explore and Deep are the same attention at two apertures. On white the
+       shift is a wash and a density: Open Air breathes; Pressure condenses.</p>
     <div class="reg-grid">
       <div class="reg-card reg-air">
         <span class="rc-tag">open air · explore</span>
         <h3>What could this become?</h3>
         <hr class="rc-rule">
-        <p>Cool ink. Lighter weight. Wide leading, wide margins — the page opens its
-           aperture. Nothing here is ranked; the fan is drawn in thin, even strands.</p>
+        <p>Blue-washed ice. Lighter weight, wide leading, wide margins — the page opens its
+           aperture. Nothing here is ranked.</p>
       </div>
       <div class="reg-card reg-neutral">
         <span class="rc-tag">neutral · desk, shelves</span>
         <h3>Where was I?</h3>
         <hr class="rc-rule">
-        <p>Plain paper. The resting register — calm, even, unhurried. Memory rooms
-           don't lean toward either aperture.</p>
+        <p>Plain white. The resting register — calm, even, unhurried. Memory rooms lean
+           toward neither aperture.</p>
       </div>
       <div class="reg-card reg-press">
         <span class="rc-tag">pressure · deep</span>
         <h3>Does this hold?</h3>
         <hr class="rc-rule">
-        <p>Warm graphite. Heavier ink, tighter leading, denser columns — the page
-           condenses around one version of the idea. Same paper, aperture closed.</p>
+        <p>Indigo-washed. Heavier ink, tighter leading, denser columns — the page condenses
+           around one version of the idea.</p>
       </div>
     </div>
   </section>
@@ -338,7 +396,6 @@
   <section class="section">
     <span class="eyebrow">06 · standing laws, drawn</span>
     <h2>Scores with handles, claims with receipts, absence with weight</h2>
-    <p class="lede">The doctrine's non-negotiables, rendered in the new language.</p>
     <div class="sem-grid">
       <div class="sem-card">
         <h3>No naked numbers</h3>
@@ -354,7 +411,7 @@
             <span class="handle"><span class="h-dir">capped · rungs 3–6 unreachable —</span> admits on six components, none named yet</span>
           </div>
           <div style="display:flex; align-items:center; gap:12px;">
-            <span class="score-pill"><span class="sp-band none" style="background:var(--band-none)"></span>—</span>
+            <span class="score-pill"><span class="sp-band" style="background:var(--band-none)"></span>—</span>
             <span class="handle"><span class="h-dir">not yet read —</span> a dash, never a fabricated 0.0</span>
           </div>
         </div>
@@ -382,9 +439,9 @@
   <section class="section">
     <span class="eyebrow">07 · the grammar</span>
     <h2>Motion is orientation, never judgment</h2>
-    <p class="lede">One motion per navigation. Direction is invariant — widening always opens,
-       pressure always settles, the thread always slides horizontally, lineage always zooms.
-       Identical for every idea, whatever its numbers. Click to replay.</p>
+    <p class="lede">One motion per navigation, direction invariant — widening opens, pressure
+       settles, the thread slides, compare splits, lineage zooms. Identical for every idea,
+       whatever its numbers. Click to replay.</p>
     <div class="lab">
       <div class="lab-controls">
         <button class="btn" data-motion="m-pickup">pick up a thread</button>
@@ -405,7 +462,7 @@
         </div>
       </div>
       <div class="lab-note">Rules: 160–240ms, one motion per navigation, no choreography chains.
-        Something always survives the cut — the thread bar inside an idea, the rail between
+        Something always survives the cut — the state lens inside an idea, the rail between
         global rooms, the idea's title everywhere. Zero-context hard cuts are forbidden.</div>
     </div>
   </section>
@@ -415,19 +472,18 @@
     <span class="eyebrow">08 · the refusals</span>
     <h2>What this system will not be</h2>
     <div class="not-list">
-      <div class="not-card"><div class="nc-no">not</div><div class="nc-what">AI-gradient shelf</div><div class="nc-why">Purple glows and dark dashboards are flood-camouflage. ILC leaves the shelf.</div></div>
-      <div class="not-card"><div class="nc-no">not</div><div class="nc-what">Notion-white minimalism</div><div class="nc-why">This is a dossier with a spine, not an empty page with blocks.</div></div>
-      <div class="not-card"><div class="nc-no">not</div><div class="nc-what">Terminal-hacker</div><div class="nc-why">Mono is the machine's voice, not a costume for the whole product.</div></div>
+      <div class="not-card"><div class="nc-no">not</div><div class="nc-what">Warm</div><div class="nc-why">ILC is a serious workspace. The only warmth it allows is accuracy.</div></div>
+      <div class="not-card"><div class="nc-no">not</div><div class="nc-what">Dark-mode AI shelf</div><div class="nc-why">Navy dashboards and neon glows are flood-camouflage. ILC is daylight.</div></div>
+      <div class="not-card"><div class="nc-no">not</div><div class="nc-what">Glow as decoration</div><div class="nc-why">Light appears only where the thread is the content. Everywhere else: flat.</div></div>
+      <div class="not-card"><div class="nc-no">not</div><div class="nc-what">The unrolled journey</div><div class="nc-why">All states in one strip on every page is chaos. One state in focus; lineage holds the rest.</div></div>
       <div class="not-card"><div class="nc-no">not</div><div class="nc-what">Traffic-light scoring</div><div class="nc-why">Band color is an 8px dot on a pill. A page of reads is a document, not a signal wall.</div></div>
-      <div class="not-card"><div class="nc-no">not</div><div class="nc-what">Celebration &amp; alarm</div><div class="nc-why">Motion and color never perform. No confetti, no red panic. Accuracy that happens to be kind.</div></div>
-      <div class="not-card"><div class="nc-no">not</div><div class="nc-what">Decoration</div><div class="nc-why">More premium = subtract. The thread at three scales; beyond that, ink and paper.</div></div>
+      <div class="not-card"><div class="nc-no">not</div><div class="nc-what">Celebration &amp; alarm</div><div class="nc-why">Motion and color never perform. Accuracy that happens to be kind.</div></div>
     </div>
   </section>
 
 </div>
 
 <script>
-  // Motion lab: replay one motion at a time on the stage.
   const stage = document.getElementById('stage');
   const buttons = document.querySelectorAll('[data-motion]');
   const sheetHTML = stage.innerHTML;
@@ -441,11 +497,11 @@
       if (m === 'seam') {
         stage.classList.remove('seam-run');
         stage.innerHTML =
-          '<div class="seam-l"><span class="ls-eyebrow" style="font-family:var(--font-instrument);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)">idea a</span>' +
+          '<div class="seam-l"><span style="font-family:var(--font-instrument);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)">idea a</span>' +
           '<h4 style="font-family:var(--font-author);font-weight:500;font-size:19px;margin:8px 0 6px;">Invoice hand-off</h4>' +
           '<p style="font-size:13px;color:var(--ink-2)">Two spines run parallel. Rungs connect the same dimension on each side.</p></div>' +
           '<div class="seam-line"></div>' +
-          '<div class="seam-r"><span class="ls-eyebrow" style="font-family:var(--font-instrument);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)">idea b</span>' +
+          '<div class="seam-r"><span style="font-family:var(--font-instrument);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)">idea b</span>' +
           '<h4 style="font-family:var(--font-author);font-weight:500;font-size:19px;margin:8px 0 6px;">Receipt inbox</h4>' +
           '<p style="font-size:13px;color:var(--ink-2)">The connector explains the weight of a difference — never a cause.</p></div>';
         requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.add('seam-run')));

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ILC · Room 8 — Lineage, the Braid</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../tokens.css">
 <link rel="stylesheet" href="room.css">
 <style>
@@ -17,6 +17,21 @@
   .braid-canvas { background: var(--paper-high); border: 1px solid var(--rule); border-radius: var(--r-3); padding: 26px 20px 18px; overflow-x: auto; }
   .braid-canvas svg { display: block; min-width: 700px; }
   .braid-canvas text { font-family: var(--font-instrument); font-size: 10.5px; fill: var(--ink-2); letter-spacing: 0.03em; }
+  /* the live line is lit — the braid is a key moment */
+  .braid-canvas svg path[stroke="#4F46E5"] { filter: drop-shadow(0 0 3px rgba(79,70,229,0.5)); }
+  .braid-canvas svg circle[fill="#4F46E5"] { filter: drop-shadow(0 0 6px rgba(79,70,229,0.65)); }
+
+  /* the timeline — scrub the family through time */
+  .timeline { display: flex; align-items: center; gap: 16px; margin-top: 14px; padding: 12px 18px; }
+  .timeline .tl-play { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--rule-strong); background: var(--paper-high); color: var(--ink-2); font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: none; }
+  .timeline .tl-track { flex: 1; display: flex; align-items: center; gap: 0; }
+  .timeline .tl-day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; }
+  .timeline .tl-day::before { content: ""; position: absolute; top: 3.5px; left: 0; right: 0; height: 1px; background: var(--rule); }
+  .timeline .tl-mark { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-4); position: relative; z-index: 1; }
+  .timeline .tl-day.has-fork .tl-mark { background: var(--st-evolve); }
+  .timeline .tl-day.is-now .tl-mark { width: 11px; height: 11px; background: var(--st-deep); box-shadow: 0 0 0 3px rgba(79,70,229,0.13), 0 0 12px rgba(79,70,229,0.5); }
+  .timeline .tl-date { font-family: var(--font-instrument); font-size: 9.5px; color: var(--ink-4); letter-spacing: 0.05em; }
+  .timeline .tl-day.is-now .tl-date { color: var(--st-deep); font-weight: 600; }
   .braid-canvas .t-title { font-size: 12px; fill: var(--ink); font-weight: 600; }
   .braid-canvas .t-faint { fill: var(--ink-4); }
   .braid-canvas .t-delta { fill: var(--ink-2); font-weight: 600; }
@@ -44,7 +59,7 @@
 
   <aside class="rail">
     <div class="rail-brand">
-      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#C2492F" stroke-width="7" stroke-linecap="round"/></svg>
+      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#4F46E5" stroke-width="7" stroke-linecap="round"/></svg>
       <span class="rb-name">IdeaLoop</span>
     </div>
     <nav class="rail-nav">
@@ -78,17 +93,7 @@
           <div class="tt-name">Invoice hand-off for solo bookkeepers</div>
           <div class="tt-meta">family of 5 · zoomed out to the whole braid</div>
         </div>
-        <div class="threadbar">
-          <span class="tb-stop is-done"><span class="tb-dot"></span>captured</span>
-          <span class="tb-line is-done"></span>
-          <a class="tb-stop is-done" href="04-explore.html" style="text-decoration:none;"><span class="tb-dot"></span>explored</a>
-          <span class="tb-line is-done"></span>
-          <a class="tb-stop is-done" href="05-deep.html" style="text-decoration:none;"><span class="tb-dot"></span>deep</a>
-          <span class="tb-line is-open"></span>
-          <a class="tb-stop is-open" href="06-evolve.html" style="text-decoration:none;"><span class="tb-dot"></span>evolve</a>
-          <span class="tb-line is-open"></span>
-          <a class="tb-stop is-open" href="09-brief.html" style="text-decoration:none;"><span class="tb-dot"></span>brief</a>
-        </div>
+        <span class="tc-journey" style="margin-left:8px;">the one place the journey unrolls — every state, every fork, nothing erased</span>
         <a class="btn btn-quiet tc-close" href="05-deep.html" style="font-size:12px;">zoom back in ⟶</a>
       </div>
     </div>
@@ -98,7 +103,7 @@
         <span class="room-eyebrow">lineage · selection, not evolution</span>
         <h1 class="room-title">Where this family went</h1>
         <p class="room-lede">A phylogenetic tree, not a progress bar. Live, parked, and killed
-          branches all stay visible — the red thread marks the live line only. Liveness,
+          branches all stay visible — the light marks the live line only. Liveness,
           never merit.</p>
 
         <div class="braid-row">
@@ -110,43 +115,43 @@
               <text class="t-faint" x="470" y="18">GEN 2 · UNDER PRESSURE</text>
 
               <!-- live line: root -> explored -> v2 (selected) -->
-              <path d="M40 150 L250 150" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round"/>
-              <path d="M250 150 C 320 150 330 84 400 80 L 500 80" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round"/>
-              <path d="M500 80 L 720 80" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1 7"/>
+              <path d="M40 150 L250 150" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M250 150 C 320 150 330 84 400 80 L 500 80" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M500 80 L 720 80" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1 7"/>
 
               <!-- saved branch (rough child, alive but unread) -->
-              <path d="M250 150 L 500 150" stroke="#524E44" stroke-width="1.3" stroke-linecap="round"/>
+              <path d="M250 150 L 500 150" stroke="#767C8C" stroke-width="1.3" stroke-linecap="round"/>
 
               <!-- killed branch -->
               <g class="dead">
-                <path d="M250 150 C 315 150 325 222 395 226 L 490 226" stroke="#524E44" stroke-width="1.3" stroke-linecap="round"/>
-                <path d="M484 220 L 496 232 M496 220 L 484 232" stroke="#524E44" stroke-width="1.3" stroke-linecap="round"/>
+                <path d="M250 150 C 315 150 325 222 395 226 L 490 226" stroke="#767C8C" stroke-width="1.3" stroke-linecap="round"/>
+                <path d="M484 220 L 496 232 M496 220 L 484 232" stroke="#767C8C" stroke-width="1.3" stroke-linecap="round"/>
               </g>
 
               <!-- nodes -->
-              <circle cx="40" cy="150" r="6" fill="#F6F4EE" stroke="#524E44" stroke-width="1.5"/>
+              <circle cx="40" cy="150" r="6" fill="#FBFCFE" stroke="#767C8C" stroke-width="1.5"/>
               <text x="24" y="176">✎ root · jul 12</text>
 
-              <circle cx="250" cy="150" r="6" fill="#524E44"/>
+              <circle cx="250" cy="150" r="6" fill="#767C8C"/>
               <text x="222" y="176">◎ explored · jul 22</text>
               <text class="t-faint" x="222" y="190">3 angles fanned</text>
 
               <!-- selected node: v2 -->
-              <circle cx="500" cy="80" r="9" fill="#C2492F"/>
-              <circle cx="500" cy="80" r="14" fill="none" stroke="#C2492F" stroke-width="1" opacity="0.35"/>
+              <circle cx="500" cy="80" r="9" fill="#4F46E5"/>
+              <circle cx="500" cy="80" r="14" fill="none" stroke="#4F46E5" stroke-width="1" opacity="0.35"/>
               <text class="t-title" x="446" y="56">⌖ v2 · forward-to-file</text>
               <text x="522" y="103">5.8 · lead</text>
 
               <!-- edge delta on live edge -->
-              <rect x="316" y="98" width="88" height="18" rx="2" fill="#F6F4EE" stroke="rgba(28,27,23,0.14)"/>
+              <rect x="316" y="98" width="88" height="18" rx="2" fill="#FBFCFE" stroke="rgba(22,24,29,0.14)"/>
               <text class="t-delta" x="324" y="111">graduated ⌖</text>
 
-              <circle cx="500" cy="150" r="6" fill="#F6F4EE" stroke="#524E44" stroke-width="1.5"/>
+              <circle cx="500" cy="150" r="6" fill="#FBFCFE" stroke="#767C8C" stroke-width="1.5"/>
               <text x="474" y="176">✎ trades wedge</text>
               <text class="t-faint" x="474" y="190">saved branch · unread</text>
 
               <g class="dead">
-                <circle cx="490" cy="226" r="6" fill="#F6F4EE" stroke="#524E44" stroke-width="1.5"/>
+                <circle cx="490" cy="226" r="6" fill="#FBFCFE" stroke="#767C8C" stroke-width="1.5"/>
                 <text x="428" y="252">⌖ v1 · scanner app</text>
                 <text x="428" y="266">killed jul 18 — evidence kept</text>
               </g>
@@ -156,6 +161,17 @@
               <button class="fchip">live only</button>
               <button class="fchip">deep reads</button>
               <span class="ct-note">drag to pan · wheel to zoom · click a node to inspect</span>
+            </div>
+            <div class="timeline">
+              <button class="tl-play" title="replay the family">▸</button>
+              <div class="tl-track">
+                <div class="tl-day"><span class="tl-mark"></span><span class="tl-date">jul 12</span></div>
+                <div class="tl-day"><span class="tl-mark"></span><span class="tl-date">jul 14</span></div>
+                <div class="tl-day has-fork"><span class="tl-mark"></span><span class="tl-date">jul 18</span></div>
+                <div class="tl-day has-fork"><span class="tl-mark"></span><span class="tl-date">jul 22</span></div>
+                <div class="tl-day is-now"><span class="tl-mark"></span><span class="tl-date">jul 26</span></div>
+                <div class="tl-day"><span class="tl-mark" style="background:transparent;border:1px solid var(--ink-4);"></span><span class="tl-date">today</span></div>
+              </div>
             </div>
           </div>
 

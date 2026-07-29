@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ILC · Room 9 — The Brief, the Handoff</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../tokens.css">
 <link rel="stylesheet" href="room.css">
 <style>
@@ -58,7 +58,7 @@
 
   <aside class="rail">
     <div class="rail-brand">
-      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#C2492F" stroke-width="7" stroke-linecap="round"/></svg>
+      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#4F46E5" stroke-width="7" stroke-linecap="round"/></svg>
       <span class="rb-name">IdeaLoop</span>
     </div>
     <nav class="rail-nav">
@@ -92,17 +92,15 @@
           <div class="tt-name">Forward-to-file: no app at all</div>
           <div class="tt-meta">v2 · deep 5.8 · brief drawn jul 26</div>
         </div>
-        <div class="threadbar">
-          <span class="tb-stop is-done"><span class="tb-dot"></span>captured</span>
-          <span class="tb-line is-done"></span>
-          <a class="tb-stop is-done" href="04-explore.html" style="text-decoration:none;"><span class="tb-dot"></span>explored</a>
-          <span class="tb-line is-done"></span>
-          <a class="tb-stop is-done" href="05-deep.html" style="text-decoration:none;"><span class="tb-dot"></span>deep</a>
-          <span class="tb-line is-done"></span>
-          <a class="tb-stop is-done" href="06-evolve.html" style="text-decoration:none;"><span class="tb-dot"></span>evolve</a>
-          <span class="tb-line is-done"></span>
-          <span class="tb-stop is-here"><span class="tb-dot"></span>brief</span>
+        <div class="statelens st-brief">
+          <span class="sl-dot past" title="captured"></span>
+          <a class="sl-dot past" href="04-explore.html" title="explored"></a>
+          <a class="sl-dot past" href="05-deep.html" title="deep"></a>
+          <a class="sl-dot past" href="06-evolve.html" title="evolve"></a>
+          <span class="sl-dot past" title="compare"></span>
+          <span class="sl-here"><span class="sl-core"></span><span class="sl-label">brief</span></span>
         </div>
+        <span class="tc-journey">one state in focus · <a href="08-lineage.html">the journey lives in lineage</a></span>
         <a class="btn btn-quiet tc-close" href="02-desk.html" style="font-size:12px;">put down ⟶ desk</a>
       </div>
     </div>
@@ -214,8 +212,8 @@
               moves; the watch is set, and the loop stays open behind you.</p>
             <div class="exit">
               <svg viewBox="0 0 880 46" preserveAspectRatio="none">
-                <path d="M0 23 L 620 23" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round"/>
-                <path d="M620 23 L 880 23" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1 8"/>
+                <path d="M0 23 L 620 23" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M620 23 L 880 23" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1 8"/>
               </svg>
               <div class="ex-note">the thread leaves the frame uncut</div>
             </div>

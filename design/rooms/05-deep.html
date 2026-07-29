@@ -5,95 +5,111 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ILC · Room 5 — Deep, the Pressure Room</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../tokens.css">
 <link rel="stylesheet" href="room.css">
 <style>
-  .press-card { background: rgba(252,251,247,0.78); border: 1px solid rgba(74,67,53,0.18); border-radius: var(--r-3); }
+  .press-card { background: rgba(255,255,255,0.78); border: 1px solid rgba(74,70,120,0.18); border-radius: var(--r-3); }
+
+  /* the movement strip — the thread crossing this room; the current
+     movement is lit (a sanctioned key moment) */
+  .movestrip { display: flex; align-items: center; margin: 38px 0 6px; }
+  .movestrip .ms-seg { flex: 1; height: 1px; background: rgba(74,70,120,0.3); }
+  .movestrip .ms-seg.is-done { background: var(--st-deep); height: 1.5px; }
+  .movestrip .ms-stop { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 0 14px; position: relative; text-decoration: none; }
+  .movestrip .ms-dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid rgba(74,70,120,0.45); background: var(--press-tint); }
+  .movestrip .ms-stop.is-done .ms-dot { background: var(--st-deep); border-color: var(--st-deep); }
+  .movestrip .ms-stop.is-here .ms-dot {
+    width: 12px; height: 12px; background: var(--st-deep); border-color: var(--st-deep);
+    box-shadow: 0 0 0 4px rgba(79,70,229,0.13), 0 0 16px rgba(79,70,229,0.55);
+  }
+  .movestrip .ms-label { font-family: var(--font-instrument); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #6E6A92; position: absolute; top: 18px; white-space: nowrap; }
+  .movestrip .ms-stop.is-here .ms-label { color: var(--st-deep); font-weight: 600; }
+  .movestrip-pad { height: 30px; }
 
   /* masthead: the read before the number */
-  .verdict-head { font-family: var(--font-author); font-weight: 500; font-size: 27px; line-height: 1.35; color: #2A2519; max-width: 56ch; margin-top: 10px; }
+  .verdict-head { font-family: var(--font-author); font-weight: 500; font-size: 27px; line-height: 1.35; color: #221F3A; max-width: 56ch; margin-top: 10px; }
   .verdict-body { font-size: var(--fs-15); color: var(--press-ink); line-height: 1.7; max-width: var(--measure); margin-top: 14px; }
   .score-row { display: flex; align-items: center; gap: 14px; margin-top: 20px; flex-wrap: wrap; }
-  .provenance { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.08em; color: #7A6F58; margin-top: 16px; text-transform: uppercase; }
-  .provenance a { color: #6B5A3E; }
+  .provenance { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.08em; color: #6E6A92; margin-top: 16px; text-transform: uppercase; }
+  .provenance a { color: #5A5390; }
 
   /* metric card */
   .metric { padding: 24px 28px; margin-bottom: 16px; }
   .m-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
-  .m-dim { font-family: var(--font-author); font-weight: 600; font-size: 19px; color: #2A2519; }
-  .m-dim .md-sys { font-family: var(--font-instrument); font-size: 10px; font-weight: 500; color: #7A6F58; letter-spacing: 0.1em; margin-left: 8px; }
-  .m-grounding { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A6F58; }
+  .m-dim { font-family: var(--font-author); font-weight: 600; font-size: 19px; color: #221F3A; }
+  .m-dim .md-sys { font-family: var(--font-instrument); font-size: 10px; font-weight: 500; color: #6E6A92; letter-spacing: 0.1em; margin-left: 8px; }
+  .m-grounding { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #6E6A92; }
 
   /* the ladder — evidence produces the number */
   .ladder { display: flex; gap: 3px; margin: 18px 0 6px; }
-  .ladder .rung { flex: 1; height: 24px; border: 1px solid rgba(74,67,53,0.35); border-radius: 2px; background: transparent; position: relative; }
-  .ladder .rung.is-reached { background: rgba(74,67,53,0.16); }
-  .ladder .rung.is-current { background: #4A4335; border-color: #4A4335; }
+  .ladder .rung { flex: 1; height: 24px; border: 1px solid rgba(74,70,120,0.35); border-radius: 2px; background: transparent; position: relative; }
+  .ladder .rung.is-reached { background: rgba(74,70,120,0.16); }
+  .ladder .rung.is-current { background: #474368; border-color: #474368; }
   .ladder .rung.is-capped {
-    background: repeating-linear-gradient(135deg, rgba(74,67,53,0.16) 0 4px, transparent 4px 8px);
+    background: repeating-linear-gradient(135deg, rgba(74,70,120,0.16) 0 4px, transparent 4px 8px);
     border-style: dashed;
   }
-  .ladder-legend { display: flex; justify-content: space-between; font-family: var(--font-instrument); font-size: 10px; color: #7A6F58; letter-spacing: 0.05em; margin-bottom: 14px; }
+  .ladder-legend { display: flex; justify-content: space-between; font-family: var(--font-instrument); font-size: 10px; color: #6E6A92; letter-spacing: 0.05em; margin-bottom: 14px; }
   .ladder-legend .ll-next { color: var(--ink-2); }
 
   /* question gates: claim bright, qualification dimmed */
-  .gate { display: grid; grid-template-columns: 16px 1fr; gap: 10px; padding: 9px 0; border-top: 1px solid rgba(74,67,53,0.14); }
-  .gate .g-mark { font-family: var(--font-instrument); font-size: 12px; color: #4A4335; }
+  .gate { display: grid; grid-template-columns: 16px 1fr; gap: 10px; padding: 9px 0; border-top: 1px solid rgba(74,70,120,0.14); }
+  .gate .g-mark { font-family: var(--font-instrument); font-size: 12px; color: #474368; }
   .gate .g-claim { font-size: var(--fs-14); color: var(--ink); line-height: 1.6; }
-  .gate .g-qual { font-size: var(--fs-12); color: #8A8272; margin-top: 2px; line-height: 1.55; }
+  .gate .g-qual { font-size: var(--fs-12); color: #7E7A99; margin-top: 2px; line-height: 1.55; }
 
   /* receipts */
-  .rests { margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(74,67,53,0.14); }
-  .rests .r-h { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #7A6F58; margin-bottom: 8px; }
+  .rests { margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(74,70,120,0.14); }
+  .rests .r-h { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #6E6A92; margin-bottom: 8px; }
   .rests .r-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
   /* gap panel — absence is load-bearing, always open */
-  .gap { border: 1px dashed rgba(74,67,53,0.4); border-radius: var(--r-3); padding: 14px 18px; margin-top: 16px; }
-  .gap .g-h { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #6B5A3E; margin-bottom: 6px; }
+  .gap { border: 1px dashed rgba(74,70,120,0.4); border-radius: var(--r-3); padding: 14px 18px; margin-top: 16px; }
+  .gap .g-h { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #5A5390; margin-bottom: 6px; }
   .gap p { font-size: var(--fs-14); color: var(--press-ink); }
 
   /* condensed metric row */
   .metric-thin { padding: 18px 28px; margin-bottom: 16px; }
   .metric-thin .m-head { margin-bottom: 8px; }
   .metric-thin p { font-size: var(--fs-14); color: var(--press-ink); line-height: 1.65; max-width: 66ch; }
-  .cap-note { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.08em; color: #6B5A3E; text-transform: uppercase; margin-top: 10px; }
+  .cap-note { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.08em; color: #5A5390; text-transform: uppercase; margin-top: 10px; }
 
   /* TC equation */
-  .tc-eq { display: flex; align-items: stretch; gap: 0; margin-top: 16px; border: 1px solid rgba(74,67,53,0.2); border-radius: var(--r-3); overflow: hidden; }
-  .tc-term { flex: 1; padding: 18px 20px; text-align: center; background: rgba(252,251,247,0.7); }
-  .tc-term + .tc-term { border-left: 1px solid rgba(74,67,53,0.16); }
-  .tc-term .t-num { font-family: var(--font-instrument); font-size: 24px; font-weight: 600; color: #2A2519; }
-  .tc-term .t-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A6F58; margin-top: 4px; }
+  .tc-eq { display: flex; align-items: stretch; gap: 0; margin-top: 16px; border: 1px solid rgba(74,70,120,0.2); border-radius: var(--r-3); overflow: hidden; }
+  .tc-term { flex: 1; padding: 18px 20px; text-align: center; background: rgba(255,255,255,0.7); }
+  .tc-term + .tc-term { border-left: 1px solid rgba(74,70,120,0.16); }
+  .tc-term .t-num { font-family: var(--font-instrument); font-size: 24px; font-weight: 600; color: #221F3A; }
+  .tc-term .t-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #6E6A92; margin-top: 4px; }
   .tc-term .t-v { font-size: var(--fs-12); color: var(--press-ink); margin-top: 2px; }
-  .tc-op { display: flex; align-items: center; padding: 0 6px; font-family: var(--font-instrument); font-size: 20px; color: #7A6F58; background: rgba(252,251,247,0.7); }
+  .tc-op { display: flex; align-items: center; padding: 0 6px; font-family: var(--font-instrument); font-size: 20px; color: #6E6A92; background: rgba(255,255,255,0.7); }
 
   /* the field */
-  .actor { display: grid; grid-template-columns: 130px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid rgba(74,67,53,0.14); }
-  .actor:last-of-type { border-bottom: 1px solid rgba(74,67,53,0.14); }
-  .actor .ac-class { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #7A6F58; padding-top: 3px; }
+  .actor { display: grid; grid-template-columns: 130px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid rgba(74,70,120,0.14); }
+  .actor:last-of-type { border-bottom: 1px solid rgba(74,70,120,0.14); }
+  .actor .ac-class { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #6E6A92; padding-top: 3px; }
   .actor .ac-body { font-size: var(--fs-14); color: var(--press-ink); line-height: 1.65; }
 
   /* build beats */
   .beat { display: grid; grid-template-columns: 26px 1fr; gap: 14px; padding: 12px 0; }
-  .beat .b-n { font-family: var(--font-instrument); font-size: 12px; color: #7A6F58; padding-top: 2px; }
+  .beat .b-n { font-family: var(--font-instrument); font-size: 12px; color: #6E6A92; padding-top: 2px; }
   .beat .b-body { font-size: var(--fs-14); color: var(--press-ink); line-height: 1.65; }
   .beat .b-body b { color: var(--ink); font-weight: 600; }
 
   /* the hinge */
-  .hinge-fact { font-family: var(--font-author); font-size: 19px; line-height: 1.55; color: #2A2519; max-width: 58ch; }
+  .hinge-fact { font-family: var(--font-author); font-size: 19px; line-height: 1.55; color: #221F3A; max-width: 58ch; }
   .hinge-doors { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
   .hdoor { padding: 16px 20px; }
-  .hdoor .hd-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #7A6F58; }
+  .hdoor .hd-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #6E6A92; }
   .hdoor p { font-size: var(--fs-14); color: var(--press-ink); margin-top: 6px; line-height: 1.6; }
-  .hclose { font-family: var(--font-author); font-style: italic; font-size: 19px; color: #2A2519; margin-top: 28px; }
+  .hclose { font-family: var(--font-author); font-style: italic; font-size: 19px; color: #221F3A; margin-top: 28px; }
 
   /* from here */
   .fromhere { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px; }
-  .fh { padding: 18px 20px; text-align: left; cursor: pointer; font: inherit; border: 1px solid rgba(74,67,53,0.2); background: rgba(252,251,247,0.78); border-radius: var(--r-3); text-decoration: none; display: block; transition: border-color var(--t-fast) var(--ease); }
-  .fh:hover { border-color: rgba(74,67,53,0.45); }
-  .fh .fh-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #7A6F58; }
-  .fh h5 { font-family: var(--font-author); font-size: 16px; font-weight: 600; color: #2A2519; margin: 6px 0 3px; }
+  .fh { padding: 18px 20px; text-align: left; cursor: pointer; font: inherit; border: 1px solid rgba(74,70,120,0.2); background: rgba(255,255,255,0.78); border-radius: var(--r-3); text-decoration: none; display: block; transition: border-color var(--t-fast) var(--ease); }
+  .fh:hover { border-color: rgba(74,70,120,0.45); }
+  .fh .fh-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #6E6A92; }
+  .fh h5 { font-family: var(--font-author); font-size: 16px; font-weight: 600; color: #221F3A; margin: 6px 0 3px; }
   .fh p { font-size: var(--fs-12); color: var(--press-ink); line-height: 1.5; }
 </style>
 </head>
@@ -101,7 +117,7 @@
 
   <aside class="rail">
     <div class="rail-brand">
-      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#C2492F" stroke-width="7" stroke-linecap="round"/></svg>
+      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#4F46E5" stroke-width="7" stroke-linecap="round"/></svg>
       <span class="rb-name">IdeaLoop</span>
     </div>
     <nav class="rail-nav">
@@ -135,17 +151,15 @@
           <div class="tt-name">Forward-to-file: no app at all</div>
           <div class="tt-meta">branch of invoice hand-off · v2 · read jul 26</div>
         </div>
-        <div class="threadbar">
-          <span class="tb-stop is-done"><span class="tb-dot"></span>captured</span>
-          <span class="tb-line is-done"></span>
-          <a class="tb-stop is-done" href="04-explore.html" style="text-decoration:none;"><span class="tb-dot"></span>explored</a>
-          <span class="tb-line is-done"></span>
-          <span class="tb-stop is-here"><span class="tb-dot"></span>deep</span>
-          <span class="tb-line is-open"></span>
-          <a class="tb-stop is-open" href="06-evolve.html" style="text-decoration:none;"><span class="tb-dot"></span>evolve</a>
-          <span class="tb-line is-open"></span>
-          <a class="tb-stop is-open" href="09-brief.html" style="text-decoration:none;"><span class="tb-dot"></span>brief</a>
+        <div class="statelens st-deep">
+          <span class="sl-dot past" title="captured"></span>
+          <a class="sl-dot past" href="04-explore.html" title="explored"></a>
+          <span class="sl-here"><span class="sl-core"></span><span class="sl-label">deep</span></span>
+          <a class="sl-dot open" href="06-evolve.html" title="evolve"></a>
+          <a class="sl-dot open" href="07-compare.html" title="compare"></a>
+          <a class="sl-dot open" href="09-brief.html" title="brief"></a>
         </div>
+        <span class="tc-journey">one state in focus · <a href="08-lineage.html">the journey lives in lineage</a></span>
         <a class="btn btn-quiet tc-close" href="02-desk.html" style="font-size:12px;">put down ⟶ desk</a>
       </div>
     </div>
@@ -154,10 +168,25 @@
       <div class="room-inner">
         <span class="room-eyebrow">deep · harsh · fair · traceable</span>
         <h1 class="room-title">Does this hold?</h1>
-        <p class="room-lede">Five movements on one spine. Deep judges the evidence shape,
+        <p class="room-lede">Five movements, one at a time. Deep judges the evidence shape,
           not the underlying phenomenon — and the number never appears before the read.</p>
 
-        <div class="spined" style="margin-top:44px;">
+        <nav class="movestrip" aria-label="movements">
+          <span class="ms-seg is-done" style="flex:0.4;"></span>
+          <a class="ms-stop is-here" href="#"><span class="ms-dot"></span><span class="ms-label">Ⅰ · read</span></a>
+          <span class="ms-seg"></span>
+          <a class="ms-stop" href="#"><span class="ms-dot"></span><span class="ms-label">Ⅱ · findings</span></a>
+          <span class="ms-seg"></span>
+          <a class="ms-stop" href="#"><span class="ms-dot"></span><span class="ms-label">Ⅲ · field</span></a>
+          <span class="ms-seg"></span>
+          <a class="ms-stop" href="#"><span class="ms-dot"></span><span class="ms-label">Ⅳ · build</span></a>
+          <span class="ms-seg"></span>
+          <a class="ms-stop" href="#"><span class="ms-dot"></span><span class="ms-label">Ⅴ · hinge</span></a>
+          <span class="ms-seg" style="flex:0.4;"></span>
+        </nav>
+        <div class="movestrip-pad"></div>
+
+        <div class="spined" style="margin-top:24px;">
 
           <!-- Ⅰ · THE READ -->
           <section class="sp-sec is-here">
@@ -233,7 +262,7 @@
               <div class="gap">
                 <div class="g-h">what would change this read</div>
                 <p>A named bookkeeper paying for intake separately from ledger software.
-                  <span class="absence-chip" style="border-color:rgba(74,67,53,0.4); color:#6B5A3E;">not in the evidence</span>
+                  <span class="absence-chip" style="border-color:rgba(74,70,120,0.4); color:#5A5390;">not in the evidence</span>
                   &nbsp;The read is what new evidence changes — not the score.</p>
               </div>
             </article>
@@ -329,8 +358,8 @@
             <div class="sp-label">Ⅳ · the build</div>
             <div class="press-card" style="padding:20px 26px; margin-top:10px;">
               <div class="beat"><span class="b-n">01</span><div class="b-body"><b>The mail spine first.</b> Receiving, parsing, and returning a filed artifact — the whole product promise in one loop, provable in a week.</div></div>
-              <div class="beat" style="border-top:1px solid rgba(74,67,53,0.14);"><span class="b-n">02</span><div class="b-body"><b>Exports before dashboards.</b> The bookkeeper's deliverable is a clean CSV into her existing ledger — not another place to look.</div></div>
-              <div class="beat" style="border-top:1px solid rgba(74,67,53,0.14);"><span class="b-n">03</span><div class="b-body"><b>Trust surface last.</b> Retention policy, processing note, and a visible delete — the sale needs them before the software does.</div></div>
+              <div class="beat" style="border-top:1px solid rgba(74,70,120,0.14);"><span class="b-n">02</span><div class="b-body"><b>Exports before dashboards.</b> The bookkeeper's deliverable is a clean CSV into her existing ledger — not another place to look.</div></div>
+              <div class="beat" style="border-top:1px solid rgba(74,70,120,0.14);"><span class="b-n">03</span><div class="b-body"><b>Trust surface last.</b> Retention policy, processing note, and a visible delete — the sale needs them before the software does.</div></div>
             </div>
           </section>
 

@@ -1,7 +1,9 @@
-# ILC Design Doctrine — Ink & Field
+# ILC Design Doctrine — Cold Light
 
-**One field. One thread. Two apertures. Nine rooms.**
-Version 1.0 · July 2026 · governs every surface in `design/`
+**One field. One fiber of light. Two apertures. Nine rooms.**
+Version 2.0 · July 2026 · governs every surface in `design/`
+(v1 "Ink & Field" — warm paper, vermilion — retired by founder direction:
+ILC is a serious workspace; warm is not ILC.)
 
 This document is the design-side constitution. It derives from the product
 doctrine (Master Reference V111, Marketing Doctrine V1.2) and replaces every
@@ -43,10 +45,13 @@ What is structurally ILC's own, and what the design must carry:
   zoomed in, stepped back, or set things side by side. → Transitions are
   fast (150–240ms) with one invariant direction per motion.
 
-## 3. The main shape: the Thread
+## 3. The main shape: the Fiber of Light
 
 One line of thought runs through the whole product and never ends
-("once an idea, always in the loop").
+("once an idea, always in the loop"). It is drawn as light on a white
+field — the idea's state is where the light is: a diffuse cloud at
+rough, strands gathering at explore, a focused core at deep,
+interference at compare, rings at re-evaluate, a sealed dot at brief.
 
 - Explore — the thread **frays** into angles (fan order, not ranked).
 - Deep — the strands **pull taut and converge** (pressure).
@@ -58,33 +63,40 @@ One line of thought runs through the whole product and never ends
 
 The thread exists at exactly **three scales, nowhere else**:
 
-1. **The Spine** — a hairline rule down every content page; sections,
-   receipts, and reading position tick off it.
-2. **The Thread Bar** — inside an idea: its own loop on one horizontal
-   line (captured → explored → deep → evolved → compared → brief),
-   every stop real and clickable. Primary navigation within an idea.
+1. **The Spine** — a hairline rule down every content page; the reading
+   position is the single lit tick.
+2. **The State Lens** — inside an idea: ONE lit state with its label;
+   the other states are unlabeled ghost dots (past filled, future
+   hollow), clickable but never unrolled. One persistent idea holds many
+   states without losing identity or history — and the interface shows
+   one state at a time. The full journey unrolls only in Lineage.
 3. **The Mark** — a line that loops once and continues.
 
-## 4. The theme: Ink & Field
+**The luminosity law:** glow appears only where the thread IS the
+content — landing hero, the state lens, Explore's spine node, Deep's
+movement strip, Lineage's braid. Everywhere else the field is flat.
 
-Analyst's dossier, not machine dashboard. The page feels **written**, not
-generated. Plainness is the premium signal.
+## 4. The theme: Cold Light
 
-- **Paper ground** (`#F6F4EE` family), flat. No glows, glass, gradients.
-  Depth = hairline rules + paper layering. One shadow, overlays only.
-- **Warm ink** (`#1C1B17` family). Grays are warm, never blue.
-- **The red thread** (`#C2492F`) — reserved exclusively for the thread
-  motif: spine ticks, thread bar, the mark, lineage edges, "you are here."
-  **Never on scores, warnings, or judgments.** The one warm beat in a dry
-  field.
+A serious workspace. White, cool, exact — the only warmth the product
+allows is accuracy. The one luminous thing is the thread itself.
+
+- **Ice ground** (`#FBFCFE` field, `#FFFFFF` sheets, `#F1F3F8` wells),
+  flat. Depth = hairline rules + layering. One soft shadow, overlays only.
+- **Cool ink** (`#16181D` family). Grays are cool, never warm.
+- **The fiber = the state spectrum:** rough `#A3B4EE` → explore `#3D68EE`
+  → deep `#4F46E5` → evolve `#6D5BE8` → compare `#7C5CEE` → brief
+  `#7C3AED`. Reserved for the thread motif: lens, spine tick, mark,
+  lineage fibers, movement strip. **Never on scores, warnings, or
+  judgments.**
 - **Registers by aperture, not hue floods:**
-  - *Open Air* (Explore): cool ink tint, lighter weights, wider whitespace.
-  - *Pressure* (Deep): warm graphite, denser layout, tighter leading.
-  - Neutral rooms: plain paper.
+  - *Open Air* (Explore): blue-washed ice, lighter weights, wide leading.
+  - *Pressure* (Deep): indigo-washed, denser layout, tighter leading.
+  - Neutral rooms: plain white.
 - **Semantics:** evidence = quiet green underline/chips; absence = dashed
-  graphite (amber is retired); score bands = muted dots on the pill only.
-- Explicitly not: Notion-white minimalism, Linear-dark, terminal-hacker,
-  AI-gradient shelf.
+  cool gray; score bands = muted dots on the pill only.
+- Explicitly not: warm paper, dark-mode AI shelf, glow-as-decoration,
+  Notion-white emptiness, terminal-hacker.
 
 ## 5. The language
 
@@ -93,7 +105,7 @@ Google Fonts `<link>` in mockups only):
 
 | Voice | Face | Speaks |
 |---|---|---|
-| Author | Literata (serif) | verdict prose, bet/handoff, editorial nudges — the analyst |
+| Author | Fraunces (serif) | room titles, verdict prose, bet/handoff — the analyst |
 | Interface | IBM Plex Sans | chrome, body, controls — the product |
 | Instrument | IBM Plex Mono | receipts, metrics, labels, eyebrows — the machine |
 
@@ -148,4 +160,6 @@ bar, rail, idea title). Zero-context hard cuts are forbidden.
 - **The display never repairs or editorializes against the engine.**
 - **A count is information; a red ✗ list is judgment. Never draw the ✗.**
 - **One user question per room. Overlap is not depth.**
+- **One state in focus.** The journey never unrolls outside Lineage.
+- **Glow only where the thread is the content.**
 - **More premium = subtract.** Nothing ships that isn't load-bearing.

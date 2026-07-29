@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ILC · Room 2 — The Desk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../tokens.css">
 <link rel="stylesheet" href="room.css">
 <style>
@@ -36,11 +36,11 @@
   .door h4 { font-family: var(--font-author); font-size: 19px; font-weight: 500; margin: 9px 0 5px; color: var(--ink); }
   .door p { font-size: var(--fs-12); color: var(--ink-3); line-height: 1.55; }
   .door-air { background: var(--air-tint); }
-  .door-air .d-tag { color: #5E7284; }
-  .door-air h4 { font-weight: 400; color: #2E3E4E; }
+  .door-air .d-tag { color: #5A6B94; }
+  .door-air h4 { font-weight: 400; color: #22304E; }
   .door-press { background: var(--press-tint); }
-  .door-press .d-tag { color: #7A6F58; }
-  .door-press h4 { font-weight: 600; color: #2A2519; }
+  .door-press .d-tag { color: #6E6A92; }
+  .door-press h4 { font-weight: 600; color: #221F3A; }
   .door .d-hint { font-family: var(--font-instrument); font-size: 10px; color: var(--ink-4); margin-top: 12px; letter-spacing: 0.04em; }
 
   /* the board — a ledger, not a dashboard */
@@ -81,7 +81,7 @@
 
   <aside class="rail">
     <div class="rail-brand">
-      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#C2492F" stroke-width="7" stroke-linecap="round"/></svg>
+      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#4F46E5" stroke-width="7" stroke-linecap="round"/></svg>
       <span class="rb-name">IdeaLoop</span>
     </div>
     <nav class="rail-nav">
@@ -121,14 +121,13 @@
           <div class="card resume">
             <span class="c-eyebrow">continue where you left off</span>
             <h3>Invoice hand-off for solo bookkeepers</h3>
-            <div class="threadbar">
-              <span class="tb-stop is-done"><span class="tb-dot"></span>captured</span>
-              <span class="tb-line is-done"></span>
-              <span class="tb-stop is-done"><span class="tb-dot"></span>explored</span>
-              <span class="tb-line is-open"></span>
-              <span class="tb-stop is-open"><span class="tb-dot"></span>deep</span>
-              <span class="tb-line is-open"></span>
-              <span class="tb-stop is-open"><span class="tb-dot"></span>brief</span>
+            <div class="statelens st-explore" style="margin:14px 0 12px;">
+              <span class="sl-dot past" title="captured"></span>
+              <span class="sl-here"><span class="sl-core"></span><span class="sl-label">explored</span></span>
+              <span class="sl-dot open" title="deep"></span>
+              <span class="sl-dot open" title="evolve"></span>
+              <span class="sl-dot open" title="compare"></span>
+              <span class="sl-dot open" title="brief"></span>
             </div>
             <p>Explored six days ago. Three angles open — the email-native one carries the
               sharpest disconfirmer. None taken forward yet.</p>

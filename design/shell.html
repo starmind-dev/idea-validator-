@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ILC · The Main Shape — Shell</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
 <style>
   /* ============ THE FIELD ============ */
@@ -30,7 +30,7 @@
     padding: 8px 10px; border-radius: var(--r-2); text-align: left;
     transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
   }
-  .rail-item:hover { background: rgba(28,27,23,0.05); color: var(--ink); }
+  .rail-item:hover { background: rgba(22,24,29,0.05); color: var(--ink); }
   .rail-item.is-active { background: var(--paper-high); color: var(--ink); border: 1px solid var(--rule); padding: 7px 9px; }
   .rail-item svg { flex: none; stroke: currentColor; }
   .rail-spacer { flex: 1; }
@@ -71,7 +71,8 @@
   .threadctx .tc-title { min-width: 0; }
   .threadctx .tc-title .tt-name { font-family: var(--font-author); font-weight: 500; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .threadctx .tc-title .tt-meta { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.08em; color: var(--ink-3); text-transform: uppercase; margin-top: 1px; }
-  .threadctx .threadbar { flex: 1; max-width: 640px; }
+  .threadctx .statelens { flex: none; margin-left: 16px; }
+  .threadctx .tc-journey { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.08em; color: var(--ink-4); text-transform: uppercase; margin-left: 16px; }
   .threadctx .tc-close { margin-left: auto; }
 
   /* ============ THE ROOM (content viewport) ============ */
@@ -87,12 +88,12 @@
   .room-lede { font-size: var(--fs-15); color: var(--ink-2); max-width: var(--measure); }
 
   /* register modulation — same parts, different aperture */
-  .room[data-register="air"] .room-title { font-weight: 400; letter-spacing: 0.002em; color: #2E3E4E; }
+  .room[data-register="air"] .room-title { font-weight: 400; letter-spacing: 0.002em; color: #22304E; }
   .room[data-register="air"] .room-lede { color: var(--air-ink); line-height: 1.85; }
-  .room[data-register="air"] .room-eyebrow { color: #5E7284; }
-  .room[data-register="press"] .room-title { font-weight: 600; color: #2A2519; }
+  .room[data-register="air"] .room-eyebrow { color: #5A6B94; }
+  .room[data-register="press"] .room-title { font-weight: 600; color: #221F3A; }
   .room[data-register="press"] .room-lede { color: var(--press-ink); line-height: 1.55; }
-  .room[data-register="press"] .room-eyebrow { color: #7A6F58; }
+  .room[data-register="press"] .room-eyebrow { color: #6E6A92; }
 
   /* ---------- desk pieces ---------- */
   .desk-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; margin-top: 36px; }
@@ -114,22 +115,22 @@
   .door h4 { font-family: var(--font-author); font-size: 19px; font-weight: 500; margin: 9px 0 5px; }
   .door p { font-size: var(--fs-12); color: var(--ink-3); line-height: 1.55; }
   .door-air { background: var(--air-tint); }
-  .door-air .d-tag { color: #5E7284; }
-  .door-air h4 { font-weight: 400; color: #2E3E4E; }
+  .door-air .d-tag { color: #5A6B94; }
+  .door-air h4 { font-weight: 400; color: #22304E; }
   .door-press { background: var(--press-tint); }
-  .door-press .d-tag { color: #7A6F58; }
-  .door-press h4 { font-weight: 600; color: #2A2519; }
+  .door-press .d-tag { color: #6E6A92; }
+  .door-press h4 { font-weight: 600; color: #221F3A; }
 
   /* ---------- explore fan ---------- */
   .fan-wrap { margin-top: 40px; position: relative; }
   .fan-svg { display: block; width: 100%; height: 120px; }
-  .fan-svg path { fill: none; stroke: rgba(68, 88, 106, 0.45); stroke-width: 1.2; transition: stroke var(--t-fast) var(--ease), opacity var(--t-fast) var(--ease); }
+  .fan-svg path { fill: none; stroke: rgba(70, 85, 122, 0.45); stroke-width: 1.2; transition: stroke var(--t-fast) var(--ease), opacity var(--t-fast) var(--ease); }
   .fan-svg .seed-line { stroke: var(--rule-strong); }
-  .fan-note { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.12em; text-transform: uppercase; color: #5E7284; text-align: center; margin-top: 4px; }
+  .fan-note { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.12em; text-transform: uppercase; color: #5A6B94; text-align: center; margin-top: 4px; }
   .angles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 10px; }
-  .angle-card { background: rgba(252, 251, 247, 0.8); border: 1px solid rgba(68,88,106,0.2); border-radius: var(--r-3); padding: 20px 22px; transition: opacity var(--t-slow) var(--ease), border-color var(--t-fast) var(--ease); }
-  .angle-card .a-basis { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.14em; text-transform: uppercase; color: #5E7284; }
-  .angle-card h4 { font-family: var(--font-author); font-weight: 400; font-size: 18px; color: #2E3E4E; margin: 9px 0 7px; }
+  .angle-card { background: rgba(252, 251, 247, 0.8); border: 1px solid rgba(70,85,122,0.2); border-radius: var(--r-3); padding: 20px 22px; transition: opacity var(--t-slow) var(--ease), border-color var(--t-fast) var(--ease); }
+  .angle-card .a-basis { font-family: var(--font-instrument); font-size: var(--fs-10); letter-spacing: 0.14em; text-transform: uppercase; color: #5A6B94; }
+  .angle-card h4 { font-family: var(--font-author); font-weight: 400; font-size: 18px; color: #22304E; margin: 9px 0 7px; }
   .angle-card p { font-size: var(--fs-12); color: var(--air-ink); line-height: 1.7; }
   .angle-card .a-actions { display: flex; gap: 8px; margin-top: 16px; }
   .angle-card .btn { font-size: var(--fs-12); padding: 5px 12px; }
@@ -140,15 +141,15 @@
 
   /* ---------- deep spine ---------- */
   .deep-spine { position: relative; margin-top: 40px; padding-left: 46px; }
-  .deep-spine::before { content: ""; position: absolute; left: 18px; top: 6px; bottom: 6px; width: 1px; background: rgba(74, 67, 53, 0.3); }
+  .deep-spine::before { content: ""; position: absolute; left: 18px; top: 6px; bottom: 6px; width: 1px; background: rgba(74, 70, 120, 0.3); }
   .mv { position: relative; padding: 0 0 26px; }
-  .mv::before { content: ""; position: absolute; left: -32.5px; top: 7px; width: 10px; height: 10px; border-radius: 50%; background: var(--press-tint); border: 1.5px solid rgba(74,67,53,0.45); }
+  .mv::before { content: ""; position: absolute; left: -32.5px; top: 7px; width: 10px; height: 10px; border-radius: 50%; background: var(--press-tint); border: 1.5px solid rgba(74,70,120,0.45); }
   .mv.is-here::before { background: var(--thread); border-color: var(--thread); }
-  .mv .mv-label { font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.14em; text-transform: uppercase; color: #7A6F58; }
+  .mv .mv-label { font-family: var(--font-instrument); font-size: var(--fs-11); letter-spacing: 0.14em; text-transform: uppercase; color: #6E6A92; }
   .mv.is-here .mv-label { color: var(--ink); font-weight: 600; }
-  .mv .mv-card { background: rgba(252, 251, 247, 0.75); border: 1px solid rgba(74,67,53,0.18); border-radius: var(--r-3); padding: 16px 20px; margin-top: 8px; }
+  .mv .mv-card { background: rgba(252, 251, 247, 0.75); border: 1px solid rgba(74,70,120,0.18); border-radius: var(--r-3); padding: 16px 20px; margin-top: 8px; }
   .mv .mv-card p { font-size: var(--fs-14); color: var(--press-ink); line-height: 1.6; }
-  .mv .mv-card .v-author { font-size: 17px; color: #2A2519; }
+  .mv .mv-card .v-author { font-size: 17px; color: #221F3A; }
 
   /* ---------- compare seam ---------- */
   .seam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 40px; position: relative; }
@@ -188,7 +189,7 @@
     <div class="rail-brand">
       <svg width="34" height="16" viewBox="0 0 150 54" fill="none">
         <path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36"
-              stroke="#C2492F" stroke-width="7" stroke-linecap="round"/>
+              stroke="#4F46E5" stroke-width="7" stroke-linecap="round"/>
       </svg>
       <span class="rb-name">IdeaLoop</span>
     </div>
@@ -228,17 +229,8 @@
           <div class="tt-name">Invoice hand-off for solo bookkeepers</div>
           <div class="tt-meta">family of 3 · root · watched quarterly</div>
         </div>
-        <div class="threadbar" id="threadbar">
-          <button class="tb-stop is-done" data-goto="explore"><span class="tb-dot"></span>captured</button>
-          <span class="tb-line is-done"></span>
-          <button class="tb-stop is-done" data-goto="explore"><span class="tb-dot"></span>explored</button>
-          <span class="tb-line" id="tbl-deep"></span>
-          <button class="tb-stop" id="tbs-deep" data-goto="deep"><span class="tb-dot"></span>deep</button>
-          <span class="tb-line is-open"></span>
-          <button class="tb-stop is-open" data-goto="compare"><span class="tb-dot"></span>compare</button>
-          <span class="tb-line is-open"></span>
-          <button class="tb-stop is-open" data-goto="brief"><span class="tb-dot"></span>brief</button>
-        </div>
+        <div class="statelens" id="statelens"></div>
+        <span class="tc-journey" id="tcjourney">one state in focus · the journey lives in lineage</span>
         <button class="btn btn-quiet tc-close" data-goto="desk" style="font-size:12px;">put down ⟶ desk</button>
       </div>
     </div>
@@ -260,12 +252,13 @@
           <div class="card">
             <span class="c-eyebrow">continue</span>
             <h3>Invoice hand-off for solo bookkeepers</h3>
-            <div class="resume-thread threadbar" style="height:auto;">
-              <span class="tb-stop is-done"><span class="tb-dot"></span>captured</span>
-              <span class="tb-line is-done"></span>
-              <span class="tb-stop is-done"><span class="tb-dot"></span>explored</span>
-              <span class="tb-line is-open"></span>
-              <span class="tb-stop is-open"><span class="tb-dot"></span>deep</span>
+            <div class="statelens st-explore" style="margin:14px 0 12px;">
+              <span class="sl-dot past" title="captured"></span>
+              <span class="sl-here"><span class="sl-core"></span><span class="sl-label">explored</span></span>
+              <span class="sl-dot open" title="deep"></span>
+              <span class="sl-dot open" title="evolve"></span>
+              <span class="sl-dot open" title="compare"></span>
+              <span class="sl-dot open" title="brief"></span>
             </div>
             <p>Explored six days ago — three angles open, none taken forward yet.</p>
             <div class="c-actions">
@@ -485,20 +478,20 @@
         <div class="braid">
           <svg width="820" height="220" viewBox="0 0 820 220" fill="none">
             <!-- trunk -->
-            <path d="M30 110 L200 110" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M30 110 L200 110" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round"/>
             <!-- branch up (live, lead) -->
-            <path d="M200 110 C 260 110 270 50 330 46 L 560 46" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round"/>
-            <path d="M560 46 L 790 46" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1 7"/>
+            <path d="M200 110 C 260 110 270 50 330 46 L 560 46" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M560 46 L 790 46" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1 7"/>
             <!-- branch mid (parked) -->
-            <path class="b-dead" d="M200 110 L 470 110" stroke="#524E44" stroke-width="1.4" stroke-linecap="round"/>
+            <path class="b-dead" d="M200 110 L 470 110" stroke="#767C8C" stroke-width="1.4" stroke-linecap="round"/>
             <!-- branch down (killed) -->
-            <path class="b-dead" d="M200 110 C 250 110 260 172 320 176 L 430 176" stroke="#524E44" stroke-width="1.4" stroke-linecap="round"/>
-            <path class="b-dead" d="M424 170 L 436 182 M436 170 L 424 182" stroke="#524E44" stroke-width="1.4" stroke-linecap="round"/>
+            <path class="b-dead" d="M200 110 C 250 110 260 172 320 176 L 430 176" stroke="#767C8C" stroke-width="1.4" stroke-linecap="round"/>
+            <path class="b-dead" d="M424 170 L 436 182 M436 170 L 424 182" stroke="#767C8C" stroke-width="1.4" stroke-linecap="round"/>
             <!-- nodes -->
-            <circle cx="30" cy="110" r="5" fill="#F6F4EE" stroke="#524E44" stroke-width="1.5"/>
-            <circle cx="200" cy="110" r="5" fill="#524E44"/>
-            <circle cx="560" cy="46" r="6" fill="#C2492F"/>
-            <circle cx="470" cy="110" r="5" fill="#F6F4EE" stroke="#524E44" stroke-width="1.5"/>
+            <circle cx="30" cy="110" r="5" fill="#FBFCFE" stroke="#767C8C" stroke-width="1.5"/>
+            <circle cx="200" cy="110" r="5" fill="#767C8C"/>
+            <circle cx="560" cy="46" r="6" fill="#4F46E5"/>
+            <circle cx="470" cy="110" r="5" fill="#FBFCFE" stroke="#767C8C" stroke-width="1.5"/>
             <text x="22" y="132">root · captured</text>
             <text x="168" y="132">explored · 3 angles</text>
             <text x="520" y="26">v3 · deep 5.8 · lead</text>
@@ -506,7 +499,7 @@
             <text x="300" y="200" class="b-dead">v1 · killed — evidence, kept</text>
           </svg>
         </div>
-        <div class="demo-hint">shell demo · arrived by zooming out · the red thread marks the live line only —
+        <div class="demo-hint">shell demo · arrived by zooming out · the light marks the live line only —
           liveness, not merit</div>
       </div>
     </div>
@@ -530,8 +523,8 @@
           <span class="c-eyebrow">the handoff</span>
           <p class="v-author-italic" style="margin-top:10px;">Over to you — it's yours now.</p>
           <svg class="brief-exit-svg" viewBox="0 0 880 40" preserveAspectRatio="none">
-            <path d="M0 20 L 640 20" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round"/>
-            <path d="M640 20 L 880 20" stroke="#C2492F" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1 8"/>
+            <path d="M0 20 L 640 20" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M640 20 L 880 20" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1 8"/>
           </svg>
         </div>
         <div class="demo-hint">shell demo · the thread runs off the page edge, uncut — handed over, never ended</div>
@@ -595,19 +588,39 @@
     tpRoom.textContent = room.label;
     railItems.forEach(b => b.classList.toggle('is-active', b.dataset.goto === key));
     document.querySelector('.room-viewport').scrollTop = 0;
-
-    // thread bar state: deep lights up once visited
-    if (key === 'deep') deepDone = true;
-    const tbsDeep = document.getElementById('tbs-deep');
-    const tblDeep = document.getElementById('tbl-deep');
-    tbsDeep.classList.toggle('is-here', key === 'deep');
-    tbsDeep.classList.toggle('is-done', deepDone && key !== 'deep');
-    tbsDeep.classList.toggle('is-open', !deepDone && key !== 'deep');
-    tblDeep.classList.toggle('is-done', deepDone);
-    tblDeep.classList.toggle('is-open', !deepDone);
+    if (room.thread) renderLens(key);
 
     current = key;
     wire(host);
+  }
+
+  // the state lens: one state lit, the rest are ghost dots.
+  // the full journey never unrolls here — that's lineage's job.
+  const STATES = ['captured', 'explored', 'deep', 'evolve', 'compare', 'brief'];
+  const ST_CLASS = ['st-rough', 'st-explore', 'st-deep', 'st-evolve', 'st-compare', 'st-brief'];
+  const ROOM_STATE = { explore: 1, deep: 2, compare: 4, brief: 5, lineage: -1 };
+  function renderLens(key) {
+    const lens = document.getElementById('statelens');
+    const journey = document.getElementById('tcjourney');
+    const idx = ROOM_STATE[key];
+    if (idx === undefined) { lens.style.display = 'none'; return; }
+    if (key === 'deep') deepDone = true;
+    if (idx === -1) {
+      lens.style.display = 'none';
+      journey.textContent = 'the one place the journey unrolls — every state, every fork';
+      return;
+    }
+    lens.style.display = '';
+    journey.textContent = 'one state in focus · the journey lives in lineage';
+    lens.className = 'statelens ' + ST_CLASS[idx];
+    const visited = i => i <= 1 || (i === 2 && deepDone);
+    lens.innerHTML = STATES.map((s, i) => i === idx
+      ? '<span class="sl-here"><span class="sl-core"></span><span class="sl-label">' + s + '</span></span>'
+      : '<button class="sl-dot ' + (visited(i) ? 'past' : 'open') + '" data-goto="' +
+        (['explore','explore','deep','deep','compare','brief'][i]) + '" title="' + s + '" style="cursor:pointer;"></button>'
+    ).join('');
+    lens.querySelectorAll('[data-goto]').forEach(b =>
+      b.addEventListener('click', () => render(b.dataset.goto)));
   }
 
   function wire(scope) {

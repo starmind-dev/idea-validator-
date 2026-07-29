@@ -1,8 +1,9 @@
 /* ============================================================
-   ILC · Ink & Field — shared room chrome
+   ILC · Cold Light — shared room chrome
    Linked by every room mockup after ../tokens.css.
    The chrome IS the continuity: rail (global memory),
-   topbar, thread context (survives every cut inside an idea).
+   topbar, idea context with the STATE LENS (one state in
+   focus; the journey lives in Lineage).
    ============================================================ */
 
 body { display: flex; min-height: 100vh; }
@@ -26,7 +27,7 @@ body { display: flex; min-height: 100vh; }
   padding: 8px 10px; border-radius: var(--r-2); text-align: left;
   text-decoration: none;
 }
-.rail-item:hover { background: rgba(28,27,23,0.05); color: var(--ink); }
+.rail-item:hover { background: rgba(22,24,29,0.05); color: var(--ink); }
 .rail-item.is-active { background: var(--paper-high); color: var(--ink); border: 1px solid var(--rule); padding: 7px 9px; }
 .rail-item svg { flex: none; stroke: currentColor; }
 .rail-spacer { flex: 1; }
@@ -60,7 +61,9 @@ body { display: flex; min-height: 100vh; }
 .threadctx .tc-title { min-width: 0; }
 .threadctx .tt-name { font-family: var(--font-author); font-weight: 500; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .threadctx .tt-meta { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.08em; color: var(--ink-3); text-transform: uppercase; margin-top: 1px; }
-.threadctx .threadbar { flex: 1; max-width: 640px; }
+.threadctx .statelens { flex: none; margin-left: 16px; }
+.threadctx .tc-journey { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.08em; color: var(--ink-4); text-transform: uppercase; margin-left: 16px; }
+.threadctx .tc-journey a { color: var(--ink-3); }
 .threadctx .tc-close { margin-left: auto; }
 
 /* ---------- room scaffold ---------- */
@@ -72,12 +75,12 @@ body { display: flex; min-height: 100vh; }
 .room-title { font-family: var(--font-author); font-weight: 500; font-size: var(--fs-34); line-height: 1.2; margin: 10px 0 6px; }
 .room-lede { font-size: var(--fs-15); color: var(--ink-2); max-width: var(--measure); }
 
-.room[data-register="air"] .room-title { font-weight: 400; color: #2E3E4E; }
+.room[data-register="air"] .room-title { font-weight: 400; color: #22304E; }
 .room[data-register="air"] .room-lede { color: var(--air-ink); line-height: 1.85; }
-.room[data-register="air"] .room-eyebrow { color: #5E7284; }
-.room[data-register="press"] .room-title { font-weight: 600; color: #2A2519; }
+.room[data-register="air"] .room-eyebrow { color: #5A6B94; }
+.room[data-register="press"] .room-title { font-weight: 600; color: #221F3A; }
 .room[data-register="press"] .room-lede { color: var(--press-ink); line-height: 1.55; }
-.room[data-register="press"] .room-eyebrow { color: #7A6F58; }
+.room[data-register="press"] .room-eyebrow { color: #6E6A92; }
 
 /* ---------- cards ---------- */
 .card { background: var(--paper-high); border: 1px solid var(--rule); border-radius: var(--r-3); padding: 22px 24px; }
@@ -99,15 +102,17 @@ body { display: flex; min-height: 100vh; }
 .sp-sec.is-here > .sp-label { color: var(--ink); font-weight: 600; }
 .sp-title { font-family: var(--font-author); font-weight: 500; font-size: var(--fs-21); margin: 6px 0 4px; }
 
-/* register spine tints */
-.room[data-register="air"] .spined::before { background: rgba(68,88,106,0.3); }
-.room[data-register="air"] .spined .sp-sec::before { background: var(--air-tint); border-color: rgba(68,88,106,0.45); }
-.room[data-register="air"] .spined .sp-sec.is-here::before { background: var(--thread); border-color: var(--thread); }
-.room[data-register="air"] .sp-label { color: #5E7284; }
-.room[data-register="press"] .spined::before { background: rgba(74,67,53,0.3); }
-.room[data-register="press"] .spined .sp-sec::before { background: var(--press-tint); border-color: rgba(74,67,53,0.45); }
-.room[data-register="press"] .spined .sp-sec.is-here::before { background: var(--thread); border-color: var(--thread); }
-.room[data-register="press"] .sp-label { color: #7A6F58; }
+/* register spine tints — the current section is lit (a key moment:
+   the spine is the thread inside the room) */
+.spined .sp-sec.is-here::before { box-shadow: 0 0 0 3px rgba(79,70,229,0.13), 0 0 12px rgba(79,70,229,0.45); }
+.room[data-register="air"] .spined::before { background: rgba(70,85,122,0.3); }
+.room[data-register="air"] .spined .sp-sec::before { background: var(--air-tint); border-color: rgba(70,85,122,0.45); }
+.room[data-register="air"] .spined .sp-sec.is-here::before { background: var(--st-explore); border-color: var(--st-explore); box-shadow: 0 0 0 3px rgba(61,104,238,0.13), 0 0 12px rgba(61,104,238,0.5); }
+.room[data-register="air"] .sp-label { color: #5A6B94; }
+.room[data-register="press"] .spined::before { background: rgba(74,70,120,0.3); }
+.room[data-register="press"] .spined .sp-sec::before { background: var(--press-tint); border-color: rgba(74,70,120,0.45); }
+.room[data-register="press"] .spined .sp-sec.is-here::before { background: var(--st-deep); border-color: var(--st-deep); }
+.room[data-register="press"] .sp-label { color: #6E6A92; }
 
 /* ---------- footer ---------- */
 .room-foot { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--rule); display: flex; justify-content: space-between; gap: 20px; }

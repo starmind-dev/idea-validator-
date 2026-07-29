@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ILC · Room 6 — Evolve, the Return</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../tokens.css">
 <link rel="stylesheet" href="room.css">
 <style>
   /* pressure strip — what the last read established, carried into the return */
-  .pstrip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 34px; background: var(--press-tint); border: 1px solid rgba(74,67,53,0.2); border-radius: var(--r-3); overflow: hidden; }
+  .pstrip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 34px; background: var(--press-tint); border: 1px solid rgba(74,70,120,0.2); border-radius: var(--r-3); overflow: hidden; }
   .pcell { padding: 16px 20px; }
-  .pcell + .pcell { border-left: 1px solid rgba(74,67,53,0.16); }
-  .pcell .p-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #7A6F58; }
+  .pcell + .pcell { border-left: 1px solid rgba(74,70,120,0.16); }
+  .pcell .p-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #6E6A92; }
   .pcell .p-v { font-size: var(--fs-14); color: var(--press-ink); margin-top: 5px; line-height: 1.55; }
   .pcell .p-v b { color: var(--ink); font-weight: 600; }
 
@@ -35,20 +35,20 @@
   .vnode.is-next::before { border-style: dashed; background: var(--paper-high); border-color: var(--ink-4); }
 
   /* the canvas: the idea, its load-bearing parts tagged */
-  .canvas { padding: 26px 30px; background: var(--air-tint); border: 1px solid rgba(68,88,106,0.22); border-radius: var(--r-3); }
+  .canvas { padding: 26px 30px; background: var(--air-tint); border: 1px solid rgba(70,85,122,0.22); border-radius: var(--r-3); }
   .canvas .cv-h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
-  .canvas .cv-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #5E7284; }
+  .canvas .cv-k { font-family: var(--font-instrument); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #5A6B94; }
   .canvas .cv-edit { font-family: var(--font-instrument); font-size: 10px; color: var(--ink-3); letter-spacing: 0.05em; }
   .canvas .cv-text { font-family: var(--font-author); font-size: 18px; line-height: 2.0; color: #24313D; }
-  .part { text-decoration: none; border-bottom: 1px solid rgba(68,88,106,0.45); padding-bottom: 1px; position: relative; cursor: text; }
+  .part { text-decoration: none; border-bottom: 1px solid rgba(70,85,122,0.45); padding-bottom: 1px; position: relative; cursor: text; }
   .part .part-tag {
     font-family: var(--font-instrument); font-size: 8.5px; letter-spacing: 0.1em;
-    text-transform: uppercase; color: #5E7284; display: inline-block;
+    text-transform: uppercase; color: #5A6B94; display: inline-block;
     vertical-align: super; margin-left: 3px; font-style: normal;
   }
   .part.is-changed { border-bottom: 2px solid var(--ink); }
   .part.is-changed .part-tag::after { content: " · changed"; color: var(--ink); }
-  .canvas .cv-note { font-family: var(--font-instrument); font-size: 10px; color: #5E7284; letter-spacing: 0.05em; margin-top: 16px; }
+  .canvas .cv-note { font-family: var(--font-instrument); font-size: 10px; color: #5A6B94; letter-spacing: 0.05em; margin-top: 16px; }
 
   /* the x-ray: what the last read pressured, per part */
   .xray { padding: 18px 20px; }
@@ -68,7 +68,7 @@
 
   <aside class="rail">
     <div class="rail-brand">
-      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#C2492F" stroke-width="7" stroke-linecap="round"/></svg>
+      <svg width="34" height="16" viewBox="0 0 150 54" fill="none"><path d="M2 36 C30 36 42 36 56 36 C80 36 88 10 73 10 C58 10 64 36 88 36 C108 36 124 36 148 36" stroke="#4F46E5" stroke-width="7" stroke-linecap="round"/></svg>
       <span class="rb-name">IdeaLoop</span>
     </div>
     <nav class="rail-nav">
@@ -102,17 +102,15 @@
           <div class="tt-name">Forward-to-file: no app at all</div>
           <div class="tt-meta">v2 · read jul 26 · returning</div>
         </div>
-        <div class="threadbar">
-          <span class="tb-stop is-done"><span class="tb-dot"></span>captured</span>
-          <span class="tb-line is-done"></span>
-          <a class="tb-stop is-done" href="04-explore.html" style="text-decoration:none;"><span class="tb-dot"></span>explored</a>
-          <span class="tb-line is-done"></span>
-          <a class="tb-stop is-done" href="05-deep.html" style="text-decoration:none;"><span class="tb-dot"></span>deep</a>
-          <span class="tb-line is-done"></span>
-          <span class="tb-stop is-here"><span class="tb-dot"></span>evolve</span>
-          <span class="tb-line is-open"></span>
-          <a class="tb-stop is-open" href="09-brief.html" style="text-decoration:none;"><span class="tb-dot"></span>brief</a>
+        <div class="statelens st-evolve">
+          <span class="sl-dot past" title="captured"></span>
+          <a class="sl-dot past" href="04-explore.html" title="explored"></a>
+          <a class="sl-dot past" href="05-deep.html" title="deep"></a>
+          <span class="sl-here"><span class="sl-core"></span><span class="sl-label">evolve</span></span>
+          <a class="sl-dot open" href="07-compare.html" title="compare"></a>
+          <a class="sl-dot open" href="09-brief.html" title="brief"></a>
         </div>
+        <span class="tc-journey">one state in focus · <a href="08-lineage.html">the journey lives in lineage</a></span>
         <a class="btn btn-quiet tc-close" href="02-desk.html" style="font-size:12px;">put down ⟶ desk</a>
       </div>
     </div>
