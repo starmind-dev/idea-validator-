@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ILC v7 — Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ILC v6 — Control
+   Top: the state ribbon (image 2's drawing, drawn properly).
+   Then: continue where you left off · start a new loop.
+   Body: the canvas (image 1) — the whole messy process,
+   with inspector, focus mode, show completed, minimap.
+   ============================================================ */
+
+:root{
+  --navy:#0B1222; --navy-2:#101A36; --navy-line:rgba(255,255,255,.08);
+  --navy-ink:#EAEDF6; --navy-ink2:#98A1BC; --navy-ink3:#5F6883;
+  --ind-700:#4340CE; --ind-600:#5553E6; --ind-500:#6E6BF2; --ind-400:#8F8DF7;
+  --ind-300:#B4B2FB; --ind-200:#D6D5FD; --ind-100:#EBEAFE; --ind-50:#F5F5FF;
+  --vio-500:#8B5CF6; --blue-500:#3B6FE8;
+  --grn-600:#1D9A6C; --grn-100:#E4F6EE;
+  --bg:#F6F6FA; --card:#FFFFFF; --card-2:#FBFBFD;
+  --line:rgba(21,23,45,.07); --line-2:rgba(21,23,45,.13);
+  --ink:#141628; --ink-2:#474B63; --ink-3:#6E7289; --ink-4:#9DA1B5;
+  --sh-1:0 1px 2px rgba(21,23,45,.05);
+  --sh-2:0 2px 6px rgba(21,23,45,.06),0 1px 2px rgba(21,23,45,.04);
+  --sh-3:0 10px 26px rgba(21,23,45,.09),0 3px 8px rgba(21,23,45,.05);
+  --sh-glow:0 6px 26px rgba(85,83,230,.4);
+  --r-s:8px; --r-m:12px; --r-l:18px;
+  --serif:'Playfair Display',Georgia,serif;
+  --sans:'Inter',-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --t:180ms cubic-bezier(.2,0,0,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{display:flex;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden}
+.mono{font-family:var(--mono)}
+
+/* ============ RAIL ============ */
+.side{width:204px;flex:none;background:var(--navy);color:var(--navy-ink);display:flex;flex-direction:column;padding:16px 10px 12px}
+.brand{display:flex;align-items:center;gap:9px;padding:2px 8px 16px}
+.brand .bm{width:26px;height:26px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(140deg,#1B2650,#101A36);border:1px solid var(--navy-line)}
+.brand .bn{font-size:14px;font-weight:600}
+.brand .bs{font-family:var(--mono);font-size:7.5px;letter-spacing:.22em;color:var(--navy-ink3);text-transform:uppercase;display:block;margin-top:-1px}
+.catch{margin:0 2px 14px;display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.05);
+  border:1px solid var(--navy-line);border-radius:8px;padding:7px 9px;cursor:text}
+.catch span{font-size:11.5px;color:var(--navy-ink3);flex:1}
+.catch kbd{font-family:var(--mono);font-size:8.5px;color:var(--navy-ink3);border:1px solid var(--navy-line);border-radius:4px;padding:0 4px}
+.nav{display:flex;flex-direction:column;gap:1px}
+.ngrp{font-family:var(--mono);font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--navy-ink3);padding:13px 8px 5px}
+.nit{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:7px;color:var(--navy-ink2);font-size:12.5px;cursor:pointer;transition:all var(--t)}
+.nit:hover{background:rgba(255,255,255,.06);color:var(--navy-ink)}
+.nit.on{background:linear-gradient(140deg,rgba(110,107,242,.22),rgba(110,107,242,.1));color:#fff;font-weight:550;box-shadow:inset 0 0 0 1px rgba(110,107,242,.25)}
+.nit .n{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--navy-ink3)}
+.nsp{flex:1}
+.usr{display:flex;align-items:center;gap:8px;padding:9px 8px 2px;border-top:1px solid var(--navy-line);margin-top:6px}
+.usr .av{width:24px;height:24px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:#fff;background:linear-gradient(140deg,var(--ind-500),var(--vio-500))}
+.usr .um{font-size:10.5px;color:var(--navy-ink2)}
+
+/* ============ MAIN ============ */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{height:58px;flex:none;display:flex;align-items:center;gap:14px;padding:0 26px;
+  background:rgba(255,255,255,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.search{flex:1;max-width:420px;display:flex;align-items:center;gap:8px;background:var(--card);
+  border:1px solid var(--line-2);border-radius:10px;padding:7px 12px;color:var(--ink-4);font-size:12.5px;box-shadow:var(--sh-1)}
+.search kbd{margin-left:auto;font-family:var(--mono);font-size:9px;border:1px solid var(--line-2);border-radius:4px;padding:0 5px}
+.top .rt{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;color:var(--ink-3);
+  background:var(--ind-50);border:1px solid var(--ind-200);border-radius:999px;padding:4px 12px}
+.top .rt b{color:var(--ind-700)}
+.pip{width:5px;height:5px;border-radius:50%;background:var(--ind-600)}.pip.off{background:var(--ink-4);opacity:.35}
+.avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(140deg,var(--ind-500),var(--vio-500));
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;box-shadow:var(--sh-2)}
+
+/* page head */
+.phead{display:flex;align-items:flex-end;gap:16px;padding:18px 28px 8px}
+.phead h1{font-family:var(--serif);font-weight:500;font-size:40px;line-height:1.02}
+.phead .psub{font-size:13.5px;color:var(--ink-3);padding-bottom:6px}
+.phead .pdt{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-4);padding-bottom:8px}
+
+/* ============ THE STATE RIBBON (image 2's drawing) ============ */
+.ribbon{margin:6px 28px 0;padding:6px 10px 0}
+.ribbon svg{display:block;width:100%;height:132px}
+.ribbon .rlbl{font-family:var(--sans);font-size:13px;font-weight:550;fill:var(--ink-2)}
+.ribbon .rlbl.here{fill:var(--ind-600);font-weight:700}
+.ribbon .tick{fill:var(--ink-4)}
+
+/* ============ resume + new loop ============ */
+.rowgrid{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin:10px 28px 12px}
+.resume{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-m);padding:12px 16px;box-shadow:var(--sh-2);min-width:0;position:relative;overflow:hidden}
+.resume::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--ind-500),var(--vio-500))}
+.resume .rl{font-family:var(--mono);font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ind-600);flex:none}
+.resume .rt2{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.resume .rs{font-size:12px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.resume .ra{display:flex;gap:7px;flex:none}
+.newloop{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-m);padding:12px 16px;box-shadow:var(--sh-2)}
+.newloop .nl{font-family:var(--mono);font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-4)}
+.newloop .doors{display:flex;gap:7px;margin-left:auto}
+.btn{font-size:12.5px;font-weight:550;padding:7px 13px;border-radius:9px;border:1px solid var(--line-2);
+  background:var(--card);color:var(--ink);cursor:pointer;box-shadow:var(--sh-1);transition:all var(--t)}
+.btn:hover{box-shadow:var(--sh-2);transform:translateY(-1px)}
+.btn-p{background:linear-gradient(150deg,var(--ind-500),var(--ind-700));border-color:transparent;color:#fff;box-shadow:var(--sh-glow)}
+.btn-p:hover{filter:brightness(1.07)}
+.btn-g{border-color:transparent;background:transparent;box-shadow:none;color:var(--ink-3)}
+.btn-g:hover{background:var(--ind-50);color:var(--ink);transform:none}
+
+/* ============ THE CANVAS (image 1) ============ */
+.stage{flex:1;position:relative;margin:0 28px;border:1px solid var(--line);border-radius:var(--r-l);
+  background:
+    radial-gradient(600px 300px at 46% 44%, rgba(110,107,242,.07), transparent 70%),
+    radial-gradient(1.2px 1.2px at 12% 30%, rgba(85,83,230,.18) 49%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 80% 22%, rgba(85,83,230,.14) 49%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 30% 78%, rgba(85,83,230,.12) 49%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 68% 70%, rgba(85,83,230,.15) 49%, transparent 51%),
+    linear-gradient(175deg,#FFFFFF,#F8F8FE 70%,#F3F3FC);
+  box-shadow:var(--sh-2);overflow:hidden;min-height:0}
+.edges{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.edges path{fill:none;transition:opacity var(--t)}
+.nd{position:absolute;transform:translate(-50%,-50%);cursor:pointer;transition:opacity var(--t),filter var(--t)}
+.nd .box{background:rgba(255,255,255,.92);border:1px solid var(--ind-200);border-radius:14px;
+  padding:10px 14px;box-shadow:var(--sh-2);min-width:116px;max-width:170px;transition:all var(--t)}
+.nd:hover .box{box-shadow:var(--sh-3);transform:translateY(-1px);border-color:var(--ind-400)}
+.nd.sel .box{border-color:var(--ind-500);box-shadow:0 0 0 3px var(--ind-100),var(--sh-3)}
+.nd .t{font-size:12px;font-weight:600;line-height:1.35}
+.nd .m{display:flex;align-items:center;gap:6px;margin-top:5px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:8px;letter-spacing:.08em;
+  text-transform:uppercase;font-weight:600;border-radius:999px;padding:2px 7px}
+.chip.deep{background:var(--ind-100);color:var(--ind-700)}
+.chip.expl{background:#EAF0FE;color:#2D5BC8}
+.chip.rough{background:#F1F2F6;color:#6E7289}
+.chip.done{background:var(--grn-100);color:var(--grn-600)}
+.nd .cnt{font-family:var(--mono);font-size:9px;color:var(--ink-4)}
+.nd.rough .box{border-style:dashed;background:rgba(255,255,255,.75)}
+.nd.done .box{border-color:#BBE6D2}
+.nd.dead .box{border-color:var(--line-2);background:rgba(247,247,250,.85)}
+.nd.dead .t{color:var(--ink-3);text-decoration:line-through;text-decoration-color:var(--ink-4)}
+.nd.center .box{background:linear-gradient(150deg,var(--ind-600),#4643D6 55%,#3B38C2);border:none;
+  box-shadow:var(--sh-glow),0 2px 8px rgba(21,23,45,.15);padding:14px 18px;max-width:205px;border-radius:17px;position:relative}
+.nd.center .box::after{content:"";position:absolute;inset:-14px;border-radius:28px;z-index:-1;
+  background:radial-gradient(closest-side,rgba(110,107,242,.28),transparent)}
+.nd.center .t{color:#fff;font-size:13.5px}
+.nd.center .m .chip{background:rgba(255,255,255,.18);color:#fff}
+.nd.center .cnt{color:rgba(255,255,255,.75)}
+.nd.center .star{position:absolute;top:8px;right:11px;color:#FFD873;font-size:11px}
+body.focus .nd.dim{opacity:.16;filter:saturate(.4)}
+body.focus .edges path.dim{opacity:.12}
+body.nocomp .nd.done{display:none}
+body.nocomp .edges path.toDone{display:none}
+
+/* inspector */
+.insp{position:absolute;top:14px;right:14px;width:258px;background:rgba(255,255,255,.96);
+  border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh-3);padding:15px 16px;backdrop-filter:blur(6px)}
+.insp .ih{display:flex;align-items:center;gap:7px}
+.insp .ih .x{margin-left:auto;color:var(--ink-4);cursor:pointer;font-size:14px;padding:1px 5px;border-radius:5px}
+.insp .ih .x:hover{background:var(--ind-50);color:var(--ink)}
+.insp h3{font-family:var(--serif);font-weight:500;font-size:18px;line-height:1.25;margin:8px 0 6px}
+.insp .desc{font-size:11.5px;color:var(--ink-3);line-height:1.55;margin-bottom:10px}
+.insp .isec{border-top:1px solid var(--line);padding:9px 0}
+.insp .sk{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4);margin-bottom:6px;display:block}
+.mrow{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.mrow .mn{font-size:11px;color:var(--ink-2);width:60px}
+.dots{display:flex;gap:3px;margin-left:auto}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--ind-100);font-style:normal}
+.dots i.f{background:var(--ind-500)}
+.insp .kv{display:flex;font-size:10.5px;color:var(--ink-3);gap:5px;margin-top:2px}
+.insp .kv b{color:var(--ink-2);font-weight:550}
+.insp .acts{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.insp .btn{display:flex;align-items:center;gap:8px}
+.insp .btn-p{justify-content:center}
+.insp .btn .ar{margin-left:auto;color:var(--ink-4)}
+
+/* ============ FOOT ============ */
+.foot{height:50px;flex:none;display:flex;align-items:center;gap:20px;padding:0 28px;margin:10px 0 2px}
+.foot .lock{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3)}
+.cnt2{display:flex;align-items:center;gap:14px;font-size:12px;color:var(--ink-2)}
+.cnt2 .d{display:inline-flex;align-items:center;gap:6px}
+.cnt2 .d i{width:7px;height:7px;border-radius:50%;font-style:normal}
+.minimap{margin:0 auto;width:150px;height:32px;border:1px solid var(--line-2);border-radius:8px;
+  background:var(--card);box-shadow:var(--sh-1);position:relative;overflow:hidden}
+.minimap i{position:absolute;border-radius:50%;background:var(--ind-300);font-style:normal}
+.minimap .vp{position:absolute;left:34%;top:12%;width:34%;height:76%;border:1.5px solid var(--ind-500);
+  border-radius:5px;background:rgba(110,107,242,.08)}
+.tgl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2);cursor:pointer;user-select:none}
+.sw{width:34px;height:19px;border-radius:999px;background:#E3E4EC;position:relative;transition:all var(--t)}
+.sw::after{content:"";position:absolute;top:2.5px;left:3px;width:14px;height:14px;border-radius:50%;
+  background:#fff;box-shadow:var(--sh-2);transition:all var(--t)}
+.tgl.on .sw{background:linear-gradient(150deg,var(--ind-500),var(--ind-700))}
+.tgl.on .sw::after{left:17px}
+</style>
+</head>
+<body>
+
+<aside class="side">
+  <div class="brand">
+    <span class="bm"><svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+      <defs><linearGradient id="bg1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8F8DF7"/><stop offset="1" stop-color="#C4B0FA"/></linearGradient></defs>
+      <path d="M2 17c5 0 7 0 9 0 5 0 7-10 3.5-10S12.5 17 19 17c2 0 3 0 3 0" stroke="url(#bg1)" stroke-width="1.9" stroke-linecap="round"/></svg></span>
+    <span><span class="bn">IdeaLoop</span><span class="bs">core</span></span>
+  </div>
+  <div class="catch"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#5F6883" stroke-width="1.5"><path d="M8 3.5v9M3.5 8h9" stroke-linecap="round"/></svg><span>Catch a thought…</span><kbd>C</kbd></div>
+  <nav class="nav">
+    <div class="nit on"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg><span>Workspace</span></div>
+    <div class="nit"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h7" stroke-linecap="round"/></svg><span>My ideas</span><span class="n">8</span></div>
+    <div class="ngrp">analysis</div>
+    <div class="nit"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="5.5"/><path d="M10.2 5.8 6.9 7.1 5.8 10.2 9.1 8.9z" stroke-linejoin="round"/></svg><span>Explore</span></div>
+    <div class="nit"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="5.5"/><circle cx="8" cy="8" r="2"/></svg><span>Deep analysis</span></div>
+    <div class="ngrp">across ideas</div>
+    <div class="nit"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="3" width="5" height="10" rx="1.2"/><rect x="9" y="3" width="5" height="10" rx="1.2"/></svg><span>Comparison</span></div>
+    <div class="nit"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 13V6a3 3 0 0 1 3-3h4" stroke-linecap="round"/><path d="M8.5 1.5 10.8 3 8.5 4.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="3" cy="13" r="1.4"/></svg><span>Re-evaluation</span></div>
+    <div class="nsp"></div>
+    <div class="nit"><span>Settings</span></div>
+    <div class="nit"><span>Feedback</span></div>
+    <div class="usr"><span class="av">E</span><span class="um">emre@idealoopcore.com</span></div>
+  </nav>
+</aside>
+
+<div class="main">
+  <div class="top">
+    <div class="search"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3" stroke-linecap="round"/></svg>
+      Search ideas, threads, notes…<kbd>⌘K</kbd></div>
+    <span class="rt"><span class="pip"></span><span class="pip"></span><span class="pip off"></span><b>2</b> runs · refills thu</span>
+    <span class="avatar">E</span>
+  </div>
+
+  <div class="phead">
+    <h1>Workspace</h1>
+    <span class="psub">Your ideas in motion — one structured place.</span>
+    <span class="pdt">wed 29 jul · 02:14</span>
+  </div>
+
+  <!-- ============ THE STATE RIBBON — image 2's drawing ============ -->
+  <div class="ribbon">
+    <svg viewBox="0 0 1100 132" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="rib" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#8FA7EE"/><stop offset="0.42" stop-color="#5553E6"/>
+          <stop offset="0.72" stop-color="#8B5CF6"/><stop offset="1" stop-color="#7C3AED"/>
+        </linearGradient>
+        <linearGradient id="ribf1" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#6E6BF2" stop-opacity=".0"/>
+          <stop offset="0.45" stop-color="#6E6BF2" stop-opacity=".22"/>
+          <stop offset="1" stop-color="#8B5CF6" stop-opacity=".05"/>
+        </linearGradient>
+        <linearGradient id="ribf2" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#6E6BF2" stop-opacity=".0"/>
+          <stop offset="0.5" stop-color="#8F8DF7" stop-opacity=".16"/>
+          <stop offset="1" stop-color="#8B5CF6" stop-opacity=".04"/>
+        </linearGradient>
+        <radialGradient id="ribcore" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stop-color="#7C7AF5"/><stop offset="0.65" stop-color="#5553E6"/>
+          <stop offset="1" stop-color="#5553E6" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="rsoft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4"/></filter>
+      </defs>
+
+      <!-- labels + ticks -->
+      <text class="rlbl" x="86" y="26" text-anchor="middle">Rough</text>
+      <text class="rlbl" x="290" y="26" text-anchor="middle">Explore</text>
+      <text class="rlbl here" x="500" y="26" text-anchor="middle">Deep</text>
+      <text class="rlbl" x="700" y="26" text-anchor="middle">Compare</text>
+      <text class="rlbl" x="880" y="26" text-anchor="middle">Re-evaluate</text>
+      <text class="rlbl" x="1035" y="26" text-anchor="middle">Brief</text>
+      <circle class="tick" cx="86" cy="40" r="2"/><circle class="tick" cx="290" cy="40" r="2"/>
+      <circle class="tick" cx="500" cy="40" r="2" fill="#5553E6"/><circle class="tick" cx="700" cy="40" r="2"/>
+      <circle class="tick" cx="880" cy="40" r="2"/><circle class="tick" cx="1035" cy="40" r="2"/>
+
+      <!-- the ribbon: two soft crossing waves, swelling at deep -->
+      <path filter="url(#rsoft)" fill="url(#ribf1)"
+        d="M60 84 C 180 84 220 62 320 62 C 420 62 430 48 500 48 C 570 48 590 76 690 80 C 780 83 800 70 880 72 C 950 74 990 82 1040 84
+           C 990 86 950 92 880 92 C 800 92 780 100 690 96 C 590 92 570 120 500 120 C 430 120 420 96 320 96 C 220 96 180 84 60 84 Z"/>
+      <path filter="url(#rsoft)" fill="url(#ribf2)"
+        d="M60 84 C 190 84 240 100 330 100 C 430 100 440 116 505 116 C 575 116 600 90 695 88 C 785 86 810 96 885 94 C 950 92 995 86 1040 84
+           C 995 82 950 78 885 76 C 810 74 785 80 695 80 C 600 80 575 52 505 52 C 440 52 430 68 330 68 C 240 68 190 84 60 84 Z"/>
+
+      <!-- the line -->
+      <path d="M60 84 H1040" stroke="url(#rib)" stroke-width="1.6"/>
+
+      <!-- stations -->
+      <circle cx="86" cy="84" r="7" fill="#fff" stroke="#8FA7EE" stroke-width="2"/>
+      <circle cx="290" cy="84" r="7" fill="#fff" stroke="#6E6BF2" stroke-width="2"/>
+      <!-- deep: the big filled node with halo -->
+      <circle cx="500" cy="84" r="30" fill="url(#ribcore)" opacity=".35" filter="url(#rsoft)"/>
+      <circle cx="500" cy="84" r="15" fill="url(#ribcore)"/>
+      <circle cx="500" cy="84" r="15" fill="none" stroke="#fff" stroke-width="1.4" opacity=".5"/>
+      <!-- compare: twin circles -->
+      <circle cx="700" cy="72" r="8" fill="#fff" stroke="#8B72E8" stroke-width="2"/>
+      <circle cx="700" cy="96" r="8" fill="#fff" stroke="#8B72E8" stroke-width="2"/>
+      <!-- re-evaluate: dashed ring -->
+      <circle cx="880" cy="84" r="10" fill="#fff" stroke="#9B7CF0" stroke-width="1.8" stroke-dasharray="4 3.5"/>
+      <!-- brief: square -->
+      <rect x="1026" y="75" width="18" height="18" rx="4" fill="#fff" stroke="#7C3AED" stroke-width="2"/>
+    </svg>
+  </div>
+
+  <!-- ============ resume + new loop ============ -->
+  <div class="rowgrid">
+    <div class="resume">
+      <span class="rl">left unfinished</span>
+      <span class="rt2">Invoice hand-off</span>
+      <span class="rs">three angles open, none taken forward · 6d</span>
+      <span class="ra"><button class="btn btn-p">Pick it up</button><button class="btn btn-g">Later</button></span>
+    </div>
+    <div class="newloop">
+      <span class="nl">start a new loop</span>
+      <span class="doors"><button class="btn">◐ Explore</button><button class="btn">◎ Deep</button></span>
+    </div>
+  </div>
+
+  <!-- ============ THE CANVAS ============ -->
+  <div class="stage" id="stage">
+    <svg class="edges" id="edges" preserveAspectRatio="none"></svg>
+    <span style="position:absolute;left:18px;top:14px;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4);z-index:2">your ideas</span>
+
+    <div class="nd center sel" style="left:38%;top:38%" data-id="fwd">
+      <div class="box"><span class="star">★</span>
+        <div class="t">Forward-to-file: no app at all</div>
+        <div class="m"><span class="chip">Deep · 5.8</span><span class="cnt">⑂3</span></div>
+      </div>
+    </div>
+    <div class="nd" style="left:20%;top:20%" data-id="root">
+      <div class="box"><div class="t">Invoice hand-off for solo bookkeepers</div>
+        <div class="m"><span class="chip expl">Explored</span><span class="cnt">root · ⑂3</span></div></div>
+    </div>
+    <div class="nd" style="left:21%;top:56%" data-id="glove">
+      <div class="box"><div class="t">Trades first: glove-box ledger</div>
+        <div class="m"><span class="chip deep">Deep · 4.2</span></div></div>
+    </div>
+    <div class="nd done" style="left:52%;top:20%" data-id="brief">
+      <div class="box"><div class="t">Execution brief v1.0</div>
+        <div class="m"><span class="chip done">✓ Drawn</span><span class="cnt">jul 26</span></div></div>
+    </div>
+    <div class="nd" style="left:55%;top:56%" data-id="v3">
+      <div class="box"><div class="t">v3 — re-billed pricing</div>
+        <div class="m"><span class="chip expl">Re-eval queued</span></div></div>
+    </div>
+
+    <!-- second family -->
+    <div class="nd" style="left:66%;top:22%" data-id="receipt">
+      <div class="box"><div class="t">Receipt inbox</div>
+        <div class="m"><span class="chip expl">Explored</span><span class="cnt">root · ⑂2</span></div></div>
+    </div>
+    <div class="nd done dead" style="left:68%;top:67%" data-id="meal">
+      <div class="box"><div class="t">Meal-plan hand-me-downs</div>
+        <div class="m"><span class="chip done">✓ Parked</span><span class="cnt">3.9</span></div></div>
+    </div>
+    <div class="nd" style="left:58%;top:40%" data-id="practor">
+      <div class="box"><div class="t">Practitioner lane angle</div>
+        <div class="m"><span class="chip rough">Rough</span><span class="cnt">saved angle</span></div></div>
+    </div>
+
+    <!-- loose rough ideas, unconnected -->
+    <div class="nd rough" style="left:14%;top:82%" data-id="punch">
+      <div class="box"><div class="t">Contractor punch-list voice notes</div>
+        <div class="m"><span class="chip rough">Rough</span><span class="cnt">jul 20</span></div></div>
+    </div>
+    <div class="nd rough" style="left:42%;top:84%" data-id="warranty">
+      <div class="box"><div class="t">Warranty expiry ledger</div>
+        <div class="m"><span class="chip rough">Rough</span><span class="cnt">jul 14</span></div></div>
+    </div>
+    <div class="nd rough" style="left:68%;top:82%" data-id="thought">
+      <div class="box"><div class="t">"per-client pricing the bookkeeper re-bills"</div>
+        <div class="m"><span class="chip rough">Caught</span><span class="cnt">jul 24</span></div></div>
+    </div>
+
+    <!-- inspector -->
+    <div class="insp" id="insp">
+      <div class="ih"><span class="chip deep" id="ichip">Deep · 5.8</span><span class="x">×</span></div>
+      <h3 id="ititle">Forward-to-file: no app at all</h3>
+      <p class="desc" id="idesc">The entire product is an email address. Anything forwarded comes
+        back filed, coded and export-ready.</p>
+      <div class="isec">
+        <span class="sk">the read</span>
+        <div class="mrow"><span class="mn">Demand</span><span class="dots"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i></span></div>
+        <div class="mrow"><span class="mn">Payment</span><span class="dots"><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i></span></div>
+        <div class="mrow"><span class="mn">Position</span><span class="dots"><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i></span></div>
+      </div>
+      <div class="isec">
+        <span class="sk">family</span>
+        <div class="kv"><b>⑂ 3 versions</b> · lead</div>
+        <div class="kv">Updated <b>today, 01:47</b> · 14 sources</div>
+      </div>
+      <div class="acts">
+        <button class="btn btn-p">Open the read ↗</button>
+        <button class="btn">Compare<span class="ar">›</span></button>
+        <button class="btn">Branch<span class="ar">›</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FOOT ============ -->
+  <div class="foot">
+    <span class="lock"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="7" width="10" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>
+      Private &amp; secure — your ideas stay yours</span>
+    <span class="cnt2">
+      <span class="d"><i style="background:var(--blue-500)"></i>8 ideas</span>
+      <span class="d"><i style="background:var(--vio-500)"></i>3 deep</span>
+    </span>
+    <div class="minimap">
+      <i style="left:16%;top:34%;width:4px;height:4px"></i><i style="left:30%;top:18%;width:3px;height:3px"></i>
+      <i style="left:42%;top:44%;width:6px;height:6px;background:var(--ind-500)"></i>
+      <i style="left:58%;top:26%;width:3px;height:3px"></i><i style="left:62%;top:60%;width:4px;height:4px"></i>
+      <i style="left:30%;top:74%;width:3px;height:3px"></i>
+      <span class="vp"></span>
+    </div>
+    <label class="tgl" id="tglFocus"><span class="sw"></span>Focus mode</label>
+    <label class="tgl on" id="tglComp"><span class="sw"></span>Show completed</label>
+  </div>
+</div>
+
+<script>
+const EDGES=[
+  ["root","fwd",false],["root","glove",false],
+  ["fwd","brief",true],["fwd","v3",false],["thought","v3",false],
+  ["receipt","meal",true],["receipt","practor",false]
+];
+const CORE=new Set(["fwd","root","v3","brief","thought"]);
+const stage=document.getElementById('stage'),svg=document.getElementById('edges');
+function draw(){
+  const r=stage.getBoundingClientRect();
+  svg.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);
+  svg.innerHTML=EDGES.map(([a,b,toDone])=>{
+    const na=document.querySelector(`[data-id="${a}"]`),nb=document.querySelector(`[data-id="${b}"]`);
+    if(!na||!nb)return '';
+    const ra=na.getBoundingClientRect(),rb=nb.getBoundingClientRect();
+    const x1=ra.left-r.left+ra.width/2,y1=ra.top-r.top+ra.height/2;
+    const x2=rb.left-r.left+rb.width/2,y2=rb.top-r.top+rb.height/2;
+    const mx=(x1+x2)/2;
+    const dim=!(CORE.has(a)&&CORE.has(b));
+    return `<path class="${dim?'dim':''} ${toDone?'toDone':''}" d="M${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}"
+      stroke="rgba(110,107,242,.4)" stroke-width="1.3" ${toDone?'stroke-dasharray="3 4"':''}/>`;
+  }).join('');
+}
+draw();window.addEventListener('resize',draw);
+
+const INSP={
+ fwd:{chip:"Deep · 5.8",cls:"chip deep",t:"Forward-to-file: no app at all",d:"The entire product is an email address. Anything forwarded comes back filed, coded and export-ready."},
+ root:{chip:"Explored",cls:"chip expl",t:"Invoice hand-off for solo bookkeepers",d:"A hand-off problem, not a scanning problem. Three angles opened; one taken forward."},
+ inbox:{chip:"Rough",cls:"chip rough",t:"The bookkeeper's inbox angle",d:"Saved angle — sell to the professional who receives the mess."},
+ glove:{chip:"Deep · 4.2",cls:"chip deep",t:"Trades first: glove-box ledger",d:"Loudest pain, thinnest paper trail. No named buyer in the evidence."},
+ v3:{chip:"Re-eval queued",cls:"chip expl",t:"v3 — target narrowed",d:"Target narrowed; pricing reframed as a re-billable per-client line."},
+ brief:{chip:"✓ Drawn",cls:"chip done",t:"Execution brief v1.0",d:"The bet, what to prove next, and the order — drawn jul 26."},
+ scanner:{chip:"✓ Killed",cls:"chip done",t:"Scanner app v1",d:"Killed jul 18 — evidence kept."},
+ thought:{chip:"Caught",cls:"chip rough",t:"Caught thought",d:"\"per-client pricing the bookkeeper re-bills\" — feeds v3."},
+ receipt:{chip:"Explored",cls:"chip expl",t:"Receipt inbox",d:"Consumer lane crowded; practitioner lane still open. The landscape moved since this read."},
+ practor:{chip:"Rough",cls:"chip rough",t:"Practitioner lane angle",d:"Saved angle from Receipt inbox — the unclaimed professional lane."},
+ meal:{chip:"✓ Parked",cls:"chip done",t:"Meal-plan hand-me-downs",d:"Parked jun 30 — read and evidence kept."}
+};
+document.querySelectorAll('.nd').forEach(n=>n.addEventListener('click',()=>{
+  document.querySelectorAll('.nd').forEach(x=>x.classList.remove('sel'));n.classList.add('sel');
+  const d=INSP[n.dataset.id];if(!d)return;
+  document.getElementById('ichip').textContent=d.chip;document.getElementById('ichip').className=d.cls;
+  document.getElementById('ititle').textContent=d.t;document.getElementById('idesc').textContent=d.d;
+}));
+const tf=document.getElementById('tglFocus');
+tf.onclick=()=>{tf.classList.toggle('on');document.body.classList.toggle('focus');
+  document.querySelectorAll('.nd').forEach(n=>n.classList.toggle('dim',!CORE.has(n.dataset.id)));};
+const tc=document.getElementById('tglComp');
+tc.onclick=()=>{tc.classList.toggle('on');document.body.classList.toggle('nocomp');draw();};
+</script>
+</body>
+</html>
