@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ILC v6 — Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ILC v6 — Control · reference intensity
+   Structure of v5 (the Loop Strip portfolio, pull-to-split),
+   rendered big, colorful, luminous, finished.
+   Serif titles · sans everything else · dark navy rail.
+   ============================================================ */
+
+:root{
+  --navy:#0B1222; --navy-2:#101A36; --navy-line:rgba(255,255,255,.08);
+  --navy-ink:#EAEDF6; --navy-ink2:#98A1BC; --navy-ink3:#5F6883;
+
+  --ind-900:#2E2E96; --ind-700:#4340CE; --ind-600:#5553E6; --ind-500:#6E6BF2;
+  --ind-400:#8F8DF7; --ind-300:#B4B2FB; --ind-200:#D6D5FD; --ind-100:#EBEAFE; --ind-50:#F5F5FF;
+  --vio-500:#8B5CF6; --vio-300:#C4B0FA;
+  --blue-500:#3B6FE8; --blue-300:#9DB9F6;
+
+  --bg:#F6F6FA; --card:#FFFFFF; --card-2:#FBFBFD;
+  --line:rgba(21,23,45,.07); --line-2:rgba(21,23,45,.13);
+  --ink:#141628; --ink-2:#474B63; --ink-3:#6E7289; --ink-4:#9DA1B5;
+
+  --sh-1:0 1px 2px rgba(21,23,45,.05);
+  --sh-2:0 2px 6px rgba(21,23,45,.06),0 1px 2px rgba(21,23,45,.04);
+  --sh-3:0 10px 26px rgba(21,23,45,.09),0 3px 8px rgba(21,23,45,.05);
+  --sh-4:0 24px 56px rgba(67,64,206,.16),0 8px 18px rgba(21,23,45,.07);
+  --sh-glow:0 4px 20px rgba(85,83,230,.35);
+
+  --r-s:8px; --r-m:12px; --r-l:18px;
+  --serif:'Playfair Display',Georgia,serif;
+  --sans:'Inter',-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --t:180ms cubic-bezier(.2,0,0,1);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{display:flex;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow:hidden}
+.mono{font-family:var(--mono)}
+.lbl{font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-4)}
+
+/* ================= RAIL ================= */
+.side{width:204px;flex:none;background:var(--navy);color:var(--navy-ink);display:flex;flex-direction:column;
+  padding:16px 10px 12px;transition:width var(--t)}
+body.rail .side{width:54px;padding:16px 7px 12px}
+.brand{display:flex;align-items:center;gap:9px;padding:2px 8px 16px;min-height:36px}
+.brand .bm{width:26px;height:26px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(140deg,#1B2650,#101A36);border:1px solid var(--navy-line)}
+.brand .bt{white-space:nowrap;overflow:hidden}
+.brand .bn{font-size:14px;font-weight:600;letter-spacing:-.01em}
+.brand .bs{font-family:var(--mono);font-size:7.5px;letter-spacing:.22em;color:var(--navy-ink3);text-transform:uppercase;display:block;margin-top:-1px}
+body.rail .bt{display:none}
+.collapse{margin-left:auto;width:20px;height:20px;border:none;background:none;color:var(--navy-ink3);cursor:pointer;
+  border-radius:5px;display:flex;align-items:center;justify-content:center;flex:none}
+.collapse:hover{background:rgba(255,255,255,.08);color:var(--navy-ink)}
+body.rail .collapse{margin:0 auto}
+.catch{margin:0 2px 14px;display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.05);
+  border:1px solid var(--navy-line);border-radius:var(--r-s);padding:7px 9px;cursor:text;transition:all var(--t);overflow:hidden}
+.catch:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.16)}
+.catch span{font-size:11.5px;color:var(--navy-ink3);flex:1;white-space:nowrap}
+.catch kbd{font-family:var(--mono);font-size:8.5px;color:var(--navy-ink3);border:1px solid var(--navy-line);border-radius:4px;padding:0 4px}
+body.rail .catch span,body.rail .catch kbd{display:none}
+body.rail .catch{justify-content:center;padding:7px 0}
+.nav{display:flex;flex-direction:column;gap:1px}
+.ngrp{font-family:var(--mono);font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--navy-ink3);
+  padding:13px 8px 5px;white-space:nowrap}
+body.rail .ngrp{visibility:hidden;height:10px;padding:6px 0 0}
+.nit{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:7px;color:var(--navy-ink2);font-size:12.5px;
+  cursor:pointer;transition:all var(--t);white-space:nowrap;overflow:hidden}
+.nit svg{flex:none}
+.nit:hover{background:rgba(255,255,255,.06);color:var(--navy-ink)}
+.nit.on{background:linear-gradient(140deg,rgba(110,107,242,.22),rgba(110,107,242,.1));color:#fff;font-weight:550;
+  box-shadow:inset 0 0 0 1px rgba(110,107,242,.25)}
+.nit .n{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--navy-ink3)}
+body.rail .nit{justify-content:center;padding:8px 0}
+body.rail .nit span,body.rail .nit .n{display:none}
+.nsp{flex:1}
+.usr{display:flex;align-items:center;gap:8px;padding:9px 8px 2px;border-top:1px solid var(--navy-line);margin-top:6px;overflow:hidden}
+.usr .av{width:24px;height:24px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:#fff;background:linear-gradient(140deg,var(--ind-500),var(--vio-500))}
+.usr .um{font-size:10.5px;color:var(--navy-ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.rail .usr .um{display:none} body.rail .usr{justify-content:center}
+
+/* ================= MAIN ================= */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{height:58px;flex:none;display:flex;align-items:center;gap:14px;padding:0 26px;
+  background:rgba(255,255,255,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.search{flex:1;max-width:420px;display:flex;align-items:center;gap:8px;background:var(--card);
+  border:1px solid var(--line-2);border-radius:10px;padding:7px 12px;color:var(--ink-4);font-size:12.5px;box-shadow:var(--sh-1)}
+.search kbd{margin-left:auto;font-family:var(--mono);font-size:9px;border:1px solid var(--line-2);border-radius:4px;padding:0 5px;color:var(--ink-4)}
+.top .rt{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;color:var(--ink-3);
+  background:var(--ind-50);border:1px solid var(--ind-200);border-radius:999px;padding:4px 12px}
+.top .rt b{color:var(--ind-700)}
+.pip{width:5px;height:5px;border-radius:50%;background:var(--ind-600)} .pip.off{background:var(--ink-4);opacity:.35}
+.avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(140deg,var(--ind-500),var(--vio-500));
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;box-shadow:var(--sh-2)}
+
+.body{flex:1;display:flex;min-height:0}
+.scroll{flex:1;overflow-y:auto;padding:26px 30px 60px;min-width:0}
+
+/* ---------- page head: the serif signature ---------- */
+.phead{display:flex;align-items:flex-end;gap:18px;margin-bottom:18px}
+.phead h1{font-family:var(--serif);font-weight:500;font-size:44px;line-height:1.02;letter-spacing:-.01em}
+.phead .psub{font-size:14px;color:var(--ink-3);padding-bottom:7px}
+.phead .pdt{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-4);padding-bottom:9px}
+
+/* ---------- THE LOOP STRIP — luminous ---------- */
+.strip{background:linear-gradient(175deg,#FFFFFF 0%,#F7F7FE 60%,#F1F1FD 100%);
+  border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--sh-3);
+  padding:18px 22px 10px;position:relative;overflow:hidden}
+.strip::after{content:"";position:absolute;left:30%;top:-60px;width:340px;height:160px;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(110,107,242,.14),transparent)}
+.strip .st-h{display:flex;align-items:baseline;gap:10px;margin-bottom:4px;position:relative;z-index:1}
+.strip .st-h h2{font-size:14px;font-weight:600}
+.strip .st-h .s{font-size:12px;color:var(--ink-3)}
+.strip .st-h .hint{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--ink-4)}
+.strip svg{display:block;width:100%;height:196px;position:relative;z-index:1}
+.strip text{font-family:var(--mono);letter-spacing:.09em}
+.strip .stn{font-size:9px;fill:var(--ink-4);text-transform:uppercase}
+.strip .stn.here{fill:var(--ind-600);font-weight:600}
+.strip .nodelbl{font-family:var(--sans);font-size:10.5px;fill:var(--ink-2);letter-spacing:0}
+.strip .node{cursor:pointer}
+.strip .node:hover .nodelbl{fill:var(--ink);font-weight:600}
+
+/* ---------- resume + new loop ---------- */
+.rowgrid{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-top:14px}
+.resume{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-m);padding:13px 16px;box-shadow:var(--sh-2);min-width:0;position:relative;overflow:hidden}
+.resume::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--ind-500),var(--vio-500))}
+.resume .rl{font-family:var(--mono);font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ind-600);flex:none}
+.resume .rt2{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.resume .rs{font-size:12px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.resume .ra{display:flex;gap:7px;flex:none}
+.newloop{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-m);padding:13px 16px;box-shadow:var(--sh-2)}
+.newloop .nl{font-family:var(--mono);font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-4)}
+.newloop .doors{display:flex;gap:7px;margin-left:auto}
+
+/* ---------- pulse ---------- */
+.pulse{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px}
+.pt{background:var(--card);border:1px solid var(--line);border-radius:var(--r-m);padding:14px 16px;box-shadow:var(--sh-2);
+  transition:all var(--t)}
+.pt:hover{box-shadow:var(--sh-3);transform:translateY(-1px)}
+.pt .pk{font-family:var(--mono);font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-4)}
+.pt .pv{font-size:24px;font-weight:650;letter-spacing:-.02em;margin-top:3px}
+.pt .pv small{font-size:11.5px;font-weight:450;color:var(--ink-3);letter-spacing:0;margin-left:5px}
+.pt .ps{font-size:11px;color:var(--ink-3);margin-top:2px}
+.pt.hero{background:linear-gradient(150deg,var(--ind-600),var(--ind-700) 55%,#3A38B8);border-color:transparent;
+  color:#fff;box-shadow:var(--sh-glow)}
+.pt.hero .pk{color:rgba(255,255,255,.65)} .pt.hero .pv small,.pt.hero .ps{color:rgba(255,255,255,.72)}
+
+/* ---------- idea cards ---------- */
+.sec{margin-top:22px}
+.sech{display:flex;align-items:baseline;gap:10px;margin-bottom:11px}
+.sech h2{font-size:15px;font-weight:600}
+.sech .s{font-size:12px;color:var(--ink-3)}
+.sech a{margin-left:auto;font-size:12px;color:var(--ind-600);text-decoration:none;font-weight:550;cursor:pointer}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+body.holding .cards{grid-template-columns:repeat(2,1fr)}
+body.holding2 .cards{grid-template-columns:1fr}
+.idea{background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--sh-2);
+  padding:16px 17px 13px;cursor:pointer;transition:all var(--t);display:flex;flex-direction:column}
+.idea:hover{box-shadow:var(--sh-4);transform:translateY(-2px);border-color:var(--ind-200)}
+.idea .it{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.state{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:8.5px;letter-spacing:.09em;
+  text-transform:uppercase;font-weight:600;border-radius:999px;padding:3px 10px 3px 8px}
+.state i{width:5px;height:5px;border-radius:50%;font-style:normal}
+.state.rough{background:#F1F2F6;color:#6E7289}.state.rough i{background:#9DA1B5}
+.state.expl{background:#EAF0FE;color:#2D5BC8}.state.expl i{background:var(--blue-500)}
+.state.deep{background:var(--ind-100);color:var(--ind-700)}.state.deep i{background:var(--ind-600)}
+.idea .age{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--ink-4)}
+.idea h3{font-size:14px;font-weight:600;line-height:1.3;margin-bottom:5px}
+.idea .say{font-size:12px;color:var(--ink-3);line-height:1.55;margin-bottom:11px;flex:1}
+.meters{display:flex;gap:16px;padding:9px 0;border-top:1px solid var(--line)}
+.meter .mk{font-family:var(--mono);font-size:8px;letter-spacing:.08em;color:var(--ink-4);text-transform:uppercase;display:block;margin-bottom:4px}
+.dots{display:flex;gap:3px}
+.dots i{width:5.5px;height:5.5px;border-radius:50%;background:var(--ind-100);font-style:normal}
+.dots i.f{background:var(--ind-500)}
+.meters .mnote{margin-left:auto;align-self:flex-end;font-family:var(--mono);font-size:9px;color:var(--ink-4)}
+.idea .ift{display:flex;align-items:center;gap:8px;padding-top:9px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:9px;color:var(--ink-4)}
+.idea .ift .sc{font-size:13px;font-weight:650;color:var(--ink)}
+.idea .ift .tag{border:1px solid var(--line-2);border-radius:5px;padding:0 5px;color:var(--ink-3)}
+.idea .ift .tag.live{color:var(--ind-600);border-color:var(--ind-200);background:var(--ind-50)}
+.idea .ift .go{margin-left:auto;color:var(--ind-400)}
+
+/* ---------- lower panels ---------- */
+.low{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}
+body.holding .low,body.holding2 .low{grid-template-columns:1fr}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--sh-2);overflow:hidden}
+.ph{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--card-2)}
+.ph h3{font-size:12.5px;font-weight:600}
+.ph .pn{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--ink-4)}
+.row{display:flex;gap:11px;padding:12px 16px;border-bottom:1px solid var(--line);align-items:flex-start}
+.row:last-child{border-bottom:none}
+.row .rd{width:7px;height:7px;border-radius:50%;background:var(--ind-500);margin-top:5px;flex:none;box-shadow:0 0 0 3.5px var(--ind-100)}
+.row .rb{flex:1;min-width:0}
+.row .rt3{font-size:12.5px;font-weight:550}
+.row .rs2{font-size:11.5px;color:var(--ink-3);line-height:1.5}
+.tr{display:flex;align-items:baseline;gap:10px;padding:6px 16px;font-size:12px}
+.tr .w{font-family:var(--mono);font-size:9px;color:var(--ink-4);width:38px;flex:none}
+.tr .v{font-family:var(--mono);font-size:9.5px;color:var(--ind-600);font-weight:500;width:60px;flex:none}
+.tr .t{color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- hold / split ---------- */
+.hold{width:0;flex:none;background:var(--card);border-left:1px solid var(--line);display:flex;flex-direction:column;
+  overflow:hidden;transition:width 220ms cubic-bezier(.2,0,0,1);box-shadow:-12px 0 32px rgba(21,23,45,.06)}
+.hold.open{width:480px}.hold.two{width:720px}
+.holdh{height:40px;flex:none;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid var(--line);background:var(--card-2)}
+.holdh .hl{font-family:var(--mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ind-600)}
+.holdh .x{margin-left:auto;cursor:pointer;color:var(--ink-4);font-size:15px;padding:2px 6px;border-radius:5px}
+.holdh .x:hover{background:var(--ind-50);color:var(--ink)}
+.panes{flex:1;display:flex;min-height:0}
+.pane{flex:1;min-width:0;overflow-y:auto;padding:16px 17px;border-right:1px solid var(--line)}
+.pane:last-child{border-right:none}
+.pane h4{font-size:16px;font-weight:600;line-height:1.3;margin:6px 0 8px}
+.pane .praw{font-size:12px;color:var(--ink-2);line-height:1.6;padding:11px 13px;background:var(--ind-50);
+  border:1px solid var(--ind-100);border-radius:var(--r-s);margin-bottom:11px}
+.pane .prow{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:12px}
+.pane .prow .k{font-family:var(--mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-4);width:74px;flex:none;padding-top:2px}
+.pane .prow .v{color:var(--ink-2);flex:1}
+.pane .pacts{display:flex;gap:7px;margin-top:13px;flex-wrap:wrap}
+.dropzone{margin:12px;border:1.5px dashed var(--ind-200);border-radius:var(--r-m);flex:1;display:flex;align-items:center;
+  justify-content:center;text-align:center;padding:20px;color:var(--ink-4);font-size:12px;transition:all var(--t)}
+.dropzone.dragover{border-color:var(--ind-500);background:var(--ind-50);color:var(--ind-600)}
+
+.btn{font-family:var(--sans);font-size:12.5px;font-weight:550;padding:7px 13px;border-radius:9px;
+  border:1px solid var(--line-2);background:var(--card);color:var(--ink);cursor:pointer;box-shadow:var(--sh-1);transition:all var(--t)}
+.btn:hover{background:var(--card-2);box-shadow:var(--sh-2);transform:translateY(-1px)}
+.btn-p{background:linear-gradient(150deg,var(--ind-500),var(--ind-700));border-color:transparent;color:#fff;box-shadow:var(--sh-glow)}
+.btn-p:hover{filter:brightness(1.07)}
+.btn-g{border-color:transparent;background:transparent;box-shadow:none;color:var(--ink-3)}
+.btn-g:hover{background:var(--ind-50);color:var(--ink);transform:none}
+</style>
+</head>
+<body>
+
+<aside class="side">
+  <div class="brand">
+    <span class="bm"><svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+      <defs><linearGradient id="bg1" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#8F8DF7"/><stop offset="1" stop-color="#C4B0FA"/></linearGradient></defs>
+      <path d="M2 17c5 0 7 0 9 0 5 0 7-10 3.5-10S12.5 17 19 17c2 0 3 0 3 0" stroke="url(#bg1)" stroke-width="1.9" stroke-linecap="round"/></svg></span>
+    <span class="bt"><span class="bn">IdeaLoop</span><span class="bs">core</span></span>
+    <button class="collapse" id="collapse" title="Collapse (⌘\)">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3 5 8l5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+  <div class="catch">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#5F6883" stroke-width="1.5"><path d="M8 3.5v9M3.5 8h9" stroke-linecap="round"/></svg>
+    <span>Catch a thought…</span><kbd>C</kbd></div>
+  <nav class="nav">
+    <div class="nit on"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg><span>Control</span></div>
+    <div class="nit"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h7" stroke-linecap="round"/></svg><span>My ideas</span><span class="n">8</span></div>
+    <div class="ngrp">analysis</div>
+    <div class="nit"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="5.5"/><path d="M10.2 5.8 6.9 7.1 5.8 10.2 9.1 8.9z" stroke-linejoin="round"/></svg><span>Explore</span></div>
+    <div class="nit"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="5.5"/><circle cx="8" cy="8" r="2"/></svg><span>Deep analysis</span></div>
+    <div class="ngrp">across ideas</div>
+    <div class="nit"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="3" width="5" height="10" rx="1.2"/><rect x="9" y="3" width="5" height="10" rx="1.2"/></svg><span>Comparison</span></div>
+    <div class="nit"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 13V6a3 3 0 0 1 3-3h4" stroke-linecap="round"/><path d="M8.5 1.5 10.8 3 8.5 4.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="3" cy="13" r="1.4"/></svg><span>Re-evaluation</span></div>
+    <div class="nsp"></div>
+    <div class="nit"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v2M8 12.2v2M1.8 8h2M12.2 8h2M3.6 3.6l1.4 1.4M11 11l1.4 1.4M12.4 3.6 11 5M5 11l-1.4 1.4"/></svg><span>Settings</span></div>
+    <div class="nit"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c3 0 5.5 2.5 5.5 5.5Z"/><path d="M8 13.5V16" stroke-linecap="round"/></svg><span>Feedback</span></div>
+    <div class="usr"><span class="av">E</span><span class="um">emre@idealoopcore.com</span></div>
+  </nav>
+</aside>
+
+<div class="main">
+  <div class="top">
+    <div class="search">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3" stroke-linecap="round"/></svg>
+      Search ideas, threads, notes…<kbd>⌘K</kbd>
+    </div>
+    <span class="rt"><span class="pip"></span><span class="pip"></span><span class="pip off"></span><b>2</b> runs · refills thu</span>
+    <span class="avatar">E</span>
+  </div>
+
+  <div class="body">
+    <div class="scroll">
+
+      <div class="phead">
+        <h1>Control</h1>
+        <span class="psub">Your whole process, one structured place.</span>
+        <span class="pdt">wed 29 jul · 02:14</span>
+      </div>
+
+      <!-- ============ THE LOOP STRIP — luminous ============ -->
+      <div class="strip">
+        <div class="st-h">
+          <h2>The loop</h2><span class="s">8 ideas, placed by where your thinking took them</span>
+          <span class="hint">click a node to hold it · drag right to split</span>
+        </div>
+        <svg viewBox="0 0 1100 196" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="fiber" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#B7C4EE"/><stop offset="0.28" stop-color="#3B6FE8"/>
+              <stop offset="0.5" stop-color="#5553E6"/><stop offset="0.75" stop-color="#8B5CF6"/>
+              <stop offset="1" stop-color="#7C3AED"/>
+            </linearGradient>
+            <radialGradient id="coreg" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.4" stop-color="#8F8DF7"/>
+              <stop offset="1" stop-color="#5553E6" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="soft" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="5"/></filter>
+            <filter id="glow" x="-120%" y="-120%" width="340%" height="340%"><feGaussianBlur stdDeviation="3"/></filter>
+          </defs>
+
+          <!-- the fiber -->
+          <path d="M40 112 H1060" stroke="url(#fiber)" stroke-width="5" opacity=".22" filter="url(#soft)"/>
+          <path d="M40 112 H1060" stroke="url(#fiber)" stroke-width="1.8"/>
+          <path d="M1062 112 h26" stroke="#8B5CF6" stroke-width="1.4" stroke-dasharray="2 5" opacity=".5"/>
+          <path d="M12 112 h26" stroke="#B7C4EE" stroke-width="1.4" stroke-dasharray="2 5" opacity=".8"/>
+          <path d="M1084 108 l6 4 -6 4" stroke="#8B5CF6" stroke-width="1.2" fill="none" opacity=".5" stroke-linejoin="round"/>
+
+          <!-- stations -->
+          <g transform="translate(120,112)" opacity=".8">
+            <circle cx="-9" cy="-6" r="2.4" fill="#B7C4EE"/><circle cx="5" cy="7" r="1.8" fill="#B7C4EE"/>
+            <circle cx="10" cy="-8" r="1.5" fill="#C9D3F2"/><circle cx="-4" cy="9" r="1.5" fill="#C9D3F2"/>
+          </g>
+          <text class="stn" x="98" y="172">rough</text>
+          <g stroke="#7FA0EE" fill="none" stroke-width="1.3" opacity=".9">
+            <path d="M300 112 c15 0 20-11 35-12"/><path d="M300 112 c15 0 20 11 35 12"/><path d="M300 112 h37"/>
+          </g>
+          <text class="stn" x="288" y="172">explored</text>
+          <circle cx="520" cy="112" r="22" fill="url(#coreg)" opacity=".55" filter="url(#soft)"/>
+          <circle cx="520" cy="112" r="11" fill="url(#coreg)"/>
+          <circle cx="520" cy="112" r="4" fill="#fff"/>
+          <text class="stn here" x="504" y="172">deep</text>
+          <circle cx="720" cy="112" r="8" fill="none" stroke="#8B72E8" stroke-width="1.5" stroke-dasharray="3.5 3"/>
+          <text class="stn" x="690" y="172">re-evaluated</text>
+          <rect x="913" y="105" width="13" height="13" rx="3" fill="none" stroke="#8B5CF6" stroke-width="1.5"/>
+          <text class="stn" x="896" y="172">brief ready</text>
+
+          <!-- ideas as nodes -->
+          <g class="node" data-id="punch">
+            <circle cx="88" cy="74" r="6" fill="#fff" stroke="#AEB6CE" stroke-width="1.5" style="filter:drop-shadow(0 2px 4px rgba(21,23,45,.12))"/>
+            <text class="nodelbl" x="88" y="56" text-anchor="middle">Punch-list notes</text></g>
+          <g class="node" data-id="warranty">
+            <circle cx="178" cy="74" r="6" fill="#fff" stroke="#AEB6CE" stroke-width="1.5" style="filter:drop-shadow(0 2px 4px rgba(21,23,45,.12))"/>
+            <text class="nodelbl" x="178" y="56" text-anchor="middle">Warranty ledger</text></g>
+          <g class="node" data-id="invoice">
+            <circle cx="308" cy="66" r="11" fill="#3B6FE8" opacity=".22" filter="url(#glow)"/>
+            <circle cx="308" cy="66" r="6" fill="#fff" stroke="#3B6FE8" stroke-width="1.8" style="filter:drop-shadow(0 2px 5px rgba(59,111,232,.35))"/>
+            <text class="nodelbl" x="308" y="47" text-anchor="middle" font-weight="600">Invoice hand-off</text></g>
+          <g class="node" data-id="receipt">
+            <circle cx="384" cy="70" r="6" fill="#fff" stroke="#3B6FE8" stroke-width="1.8" style="filter:drop-shadow(0 2px 5px rgba(59,111,232,.3))"/>
+            <text class="nodelbl" x="384" y="52" text-anchor="middle">Receipt inbox</text></g>
+          <g class="node" data-id="fwd">
+            <circle cx="524" cy="64" r="13" fill="#5553E6" opacity=".28" filter="url(#glow)"/>
+            <circle cx="524" cy="64" r="6.5" fill="#5553E6" style="filter:drop-shadow(0 2px 6px rgba(85,83,230,.5))"/>
+            <text class="nodelbl" x="524" y="45" text-anchor="middle" font-weight="600">Forward-to-file · 5.8</text></g>
+          <g class="node" data-id="glove">
+            <circle cx="602" cy="70" r="6.5" fill="#5553E6" opacity=".8" style="filter:drop-shadow(0 2px 5px rgba(85,83,230,.4))"/>
+            <text class="nodelbl" x="602" y="52" text-anchor="middle">Glove-box · 4.2</text></g>
+          <g class="node" data-id="fwd2">
+            <circle cx="740" cy="68" r="6.5" fill="#fff" stroke="#8B72E8" stroke-width="2" style="filter:drop-shadow(0 2px 5px rgba(139,114,232,.4))"/>
+            <text class="nodelbl" x="740" y="50" text-anchor="middle">Forward-to-file v3</text></g>
+          <g class="node" data-id="meal" opacity=".55">
+            <circle cx="1020" cy="148" r="5.5" fill="#EFF0F5" stroke="#AEB6CE" stroke-width="1.4"/>
+            <text class="nodelbl" x="1008" y="152" text-anchor="end">Meal-plan · parked</text></g>
+          <path d="M530 68 C 552 88 580 88 596 74" stroke="rgba(85,83,230,.4)" stroke-width="1.1" stroke-dasharray="1 4" fill="none"/>
+        </svg>
+      </div>
+
+      <div class="rowgrid">
+        <div class="resume">
+          <span class="rl">left unfinished</span>
+          <span class="rt2">Invoice hand-off</span>
+          <span class="rs">three angles open, none taken forward · 6d</span>
+          <span class="ra"><button class="btn btn-p">Pick it up</button><button class="btn btn-g">Later</button></span>
+        </div>
+        <div class="newloop">
+          <span class="nl">start a new loop</span>
+          <span class="doors"><button class="btn">◐ Explore</button><button class="btn">◎ Deep</button></span>
+        </div>
+      </div>
+
+      <div class="pulse">
+        <div class="pt hero"><span class="pk">in play</span><div class="pv">8<small>ideas</small></div><div class="ps">2 rough · 2 explored · 3 deep · 1 parked</div></div>
+        <div class="pt"><span class="pk">this week</span><div class="pv">3<small>moves</small></div><div class="ps">1 widened · 1 pressured · 1 re-read</div></div>
+        <div class="pt"><span class="pk">waiting on you</span><div class="pv">2</div><div class="ps">1 signal · 1 caught thought</div></div>
+        <div class="pt"><span class="pk">briefs ready</span><div class="pv">1</div><div class="ps">Forward-to-file · drawn jul 26</div></div>
+      </div>
+
+      <div class="sec">
+        <div class="sech"><h2>Active</h2><span class="s">most recently touched</span><a>All ideas →</a></div>
+        <div class="cards">
+          <div class="idea" draggable="true" data-id="fwd">
+            <div class="it"><span class="state deep"><i></i>deep read</span><span class="age">jul 26</span></div>
+            <h3>Forward-to-file: no app at all</h3>
+            <p class="say">The friction is real and the build is cheap — so the bet lands on
+              distribution, where the evidence is thinnest.</p>
+            <div class="meters">
+              <div class="meter"><span class="mk">demand</span><span class="dots"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i></span></div>
+              <div class="meter"><span class="mk">payment</span><span class="dots"><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i></span></div>
+              <div class="meter"><span class="mk">position</span><span class="dots"><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i></span></div>
+              <span class="mnote">14 sources</span>
+            </div>
+            <div class="ift"><span class="sc">5.8</span><span>/10</span><span class="tag">⑂3</span><span class="tag live">brief ✓</span><span class="go">hold →</span></div>
+          </div>
+          <div class="idea" draggable="true" data-id="invoice">
+            <div class="it"><span class="state expl"><i></i>explored</span><span class="age">jul 22</span></div>
+            <h3>Invoice hand-off for solo bookkeepers</h3>
+            <p class="say">A hand-off problem, not a scanning problem. Three angles open —
+              email-native carries the sharpest disconfirmer.</p>
+            <div class="meters">
+              <div class="meter"><span class="mk">angles</span><span class="dots"><i class="f"></i><i class="f"></i><i class="f"></i></span></div>
+              <div class="meter"><span class="mk">open q</span><span class="dots"><i class="f"></i><i class="f"></i></span></div>
+              <span class="mnote">no verdict — by design</span>
+            </div>
+            <div class="ift"><span class="sc" style="color:var(--ink-4)">—</span><span class="tag">⑂3</span><span class="go">hold →</span></div>
+          </div>
+          <div class="idea" draggable="true" data-id="receipt">
+            <div class="it"><span class="state expl"><i></i>explored</span><span class="age">jul 22</span></div>
+            <h3>Receipt inbox</h3>
+            <p class="say">Consumer lane crowded; practitioner lane still open. The landscape
+              moved since this read.</p>
+            <div class="meters">
+              <div class="meter"><span class="mk">angles</span><span class="dots"><i class="f"></i><i class="f"></i></span></div>
+              <div class="meter"><span class="mk">signals</span><span class="dots"><i class="f"></i></span></div>
+              <span class="mnote">re-read suggested</span>
+            </div>
+            <div class="ift"><span class="sc" style="color:var(--ink-4)">—</span><span class="tag">⑂2</span><span class="tag live">world moved</span><span class="go">hold →</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="low">
+        <div class="panel">
+          <div class="ph"><h3>Needs your move</h3><span class="pn">2</span></div>
+          <div class="row"><span class="rd"></span><div class="rb">
+            <div class="rt3">The landscape moved under <em>Receipt inbox</em></div>
+            <div class="rs2">Two new actors near the wedge; one may affect monetization.</div>
+          </div><button class="btn" style="font-size:11.5px;padding:4px 10px">Re-read</button></div>
+          <div class="row"><span class="rd" style="background:var(--ink-4);box-shadow:0 0 0 3.5px #EFF0F5"></span><div class="rb">
+            <div class="rt3">A caught thought is unplaced</div>
+            <div class="rs2">"warranty expiry ledger — nudge before it lapses" · jul 24</div>
+          </div><button class="btn" style="font-size:11.5px;padding:4px 10px">Place it</button></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>Where you've been</h3><span class="pn">tonight</span></div>
+          <div style="padding:5px 0">
+            <div class="tr"><span class="w">01:47</span><span class="v">widened</span><span class="t">Invoice hand-off — 3 angles</span></div>
+            <div class="tr"><span class="w">01:31</span><span class="v">caught</span><span class="t">"warranty expiry ledger…"</span></div>
+            <div class="tr"><span class="w">01:12</span><span class="v">compared</span><span class="t">Forward-to-file × Glove-box</span></div>
+            <div class="tr"><span class="w">00:54</span><span class="v">pressured</span><span class="t">Forward-to-file · 5.8</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="hold" id="hold">
+      <div class="holdh"><span class="hl" id="holdlbl">holding</span><span class="x" id="holdx">×</span></div>
+      <div class="panes" id="panes"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const IDEAS={
+ punch:{t:"Contractor punch-list voice notes",st:"rough",raw:"Site leads narrate the day's punch list into their phone driving home — someone should turn that into the actual list.",rows:[["state","Rough — captured, not read"],["next","Explore it, or take it straight to deep"]]},
+ warranty:{t:"Warranty expiry ledger",st:"rough",raw:"One inbox for receipts, one nudge before the warranty lapses.",rows:[["state","Rough — captured, not read"],["next","Explore or deep"]]},
+ invoice:{t:"Invoice hand-off for solo bookkeepers",st:"explored",raw:"Solo bookkeepers drown in client receipts arriving as photos, PDFs and paper. Give the professional a branded drop-box instead of chasing by email.",rows:[["read","A hand-off problem, not a scanning problem."],["angles","3 open · positioning / mechanism / target"],["open","Who pays — the bookkeeper or the client?"]]},
+ receipt:{t:"Receipt inbox",st:"explored",raw:"Forward every receipt to one address; get it filed, coded, export-ready.",rows:[["read","Broad pain, noisy evidence."],["signal","2 new actors near the wedge — re-read suggested"]]},
+ fwd:{t:"Forward-to-file: no app at all",st:"deep · 5.8",raw:"The entire product is an email address. Anything forwarded comes back filed, coded and export-ready.",rows:[["the read","Friction real, build cheap — the bet lands on distribution."],["demand","6.0 · rung 4 of 7 — documented, unpriced"],["payment","5.5 · pros already pay Dext-tier prices"],["position","2.5 · capped — a wedge, not a moat"],["would move it","A named repeat buyer in the wedge"]]},
+ fwd2:{t:"Forward-to-file v3",st:"re-evaluated",raw:"V3 narrows the target and reframes pricing as a per-client re-billable line.",rows:[["changed","target narrowed · money reframed"],["vs v2","fresh read queued — 1 run"]]},
+ glove:{t:"Trades first: the glove-box ledger",st:"deep · 4.2",raw:"Narrow to trade contractors whose receipts live in vehicles until quarter's end.",rows:[["the read","Loudest pain, thinnest paper trail."],["not in evidence","A named buyer, or a live competitor in the wedge"]]},
+ meal:{t:"Meal-plan hand-me-downs",st:"parked",raw:"Pass finished meal plans to someone starting where you started.",rows:[["status","Parked jun 30 — read and evidence kept"]]}
+};
+const hold=document.getElementById('hold'),panes=document.getElementById('panes'),lbl=document.getElementById('holdlbl');
+let held=[];
+function paneHTML(id){const d=IDEAS[id];return `<div class="pane">
+  <span class="lbl" style="color:var(--ind-600)">${d.st}</span><h4>${d.t}</h4>
+  <div class="praw">${d.raw}</div>
+  ${d.rows.map(r=>`<div class="prow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')}
+  <div class="pacts"><button class="btn btn-p">Open</button><button class="btn">Compare</button>
+  <button class="btn btn-g" data-drop="${id}">Let go</button></div></div>`}
+function render(){
+  hold.classList.toggle('open',held.length>0);hold.classList.toggle('two',held.length>1);
+  document.body.classList.toggle('holding',held.length===1);
+  document.body.classList.toggle('holding2',held.length>1);
+  lbl.textContent=held.length>1?'holding two':'holding';
+  panes.innerHTML=held.map(paneHTML).join('')+(held.length===1?'<div class="dropzone" id="dz">pull a second idea in<br>to hold them side by side</div>':'');
+  panes.querySelectorAll('[data-drop]').forEach(b=>b.onclick=()=>{held=held.filter(x=>x!==b.dataset.drop);render();});
+  wireDrop();
+}
+function add(id){if(!IDEAS[id]||held.includes(id))return;if(held.length>=2)held.shift();held.push(id);render();}
+document.getElementById('holdx').onclick=()=>{held=[];render();};
+document.querySelectorAll('.idea[draggable]').forEach(c=>{
+  c.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',c.dataset.id));
+  c.addEventListener('click',()=>add(c.dataset.id));});
+document.querySelectorAll('.node').forEach(n=>n.addEventListener('click',()=>add(n.dataset.id)));
+function wireDrop(){[hold,document.getElementById('dz')].filter(Boolean).forEach(z=>{
+  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('dragover')});
+  z.addEventListener('dragleave',()=>z.classList.remove('dragover'));
+  z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('dragover');add(e.dataTransfer.getData('text/plain'))});});}
+wireDrop();
+document.getElementById('collapse').onclick=()=>document.body.classList.toggle('rail');
+window.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='\\\\')document.body.classList.toggle('rail');});
+</script>
+</body>
+</html>
